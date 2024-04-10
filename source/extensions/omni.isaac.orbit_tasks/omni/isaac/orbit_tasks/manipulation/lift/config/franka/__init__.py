@@ -6,7 +6,7 @@
 import gymnasium as gym
 import os
 
-from . import agents, ik_abs_env_cfg, ik_rel_env_cfg, joint_pos_env_cfg
+from . import agents, ik_abs_env_cfg, ik_rel_env_cfg, joint_pos_env_cfg, ik_rel_env_cfg_sac
 
 ##
 # Register Gym environments.
@@ -87,6 +87,16 @@ gym.register(
         "env_cfg_entry_point": ik_rel_env_cfg.FrankaCubeLiftEnvCfg_PLAY,
         "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.LiftCubePPORunnerCfg,
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
+    },
+    disable_env_checker=True,
+)
+
+gym.register(
+    id="Isaac-Lift-Cube-Franka-IK-Rel-SAC-v0",
+    entry_point="omni.isaac.orbit.envs:RLTaskEnv",
+    kwargs={
+        "env_cfg_entry_point": ik_rel_env_cfg_sac.FrankaCubeLiftEnvCfg,
+        "skrl_cfg_entry_point": f"{agents.__name__}:skrl_sac_cfg.yaml",
     },
     disable_env_checker=True,
 )
