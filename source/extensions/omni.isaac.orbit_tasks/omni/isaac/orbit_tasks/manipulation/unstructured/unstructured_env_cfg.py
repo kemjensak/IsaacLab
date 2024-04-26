@@ -19,7 +19,7 @@ from omni.isaac.orbit.sim.spawners.from_files.from_files_cfg import GroundPlaneC
 from omni.isaac.orbit.utils import configclass
 from omni.isaac.orbit.utils.assets import ISAAC_NUCLEUS_DIR
 from omni.isaac.orbit.sim.schemas.schemas_cfg import RigidBodyPropertiesCfg
-from omni.isaac.orbit_tasks.manipulation.unstructed import unstructed_env_tools as tools
+from omni.isaac.orbit_tasks.manipulation.unstructured import unstructured_env_tools as tools
 
 from . import mdp
 
@@ -29,8 +29,8 @@ from . import mdp
 
 
 @configclass
-class UnstructedTableSceneCfg(InteractiveSceneCfg):
-    """Configuration for the unstructed scene with a robot and a objects.
+class UnstructuredTableSceneCfg(InteractiveSceneCfg):
+    """Configuration for the unstructured scene with a robot and a objects.
     """
 
     # robots: will be populated by agent env cfg
@@ -39,29 +39,22 @@ class UnstructedTableSceneCfg(InteractiveSceneCfg):
     ee_frame: FrameTransformerCfg = MISSING
     # target object: will be populated by agent env cfg
     object: RigidObjectCfg = MISSING
-    # object_all: RigidObjectCfg = MISSING
-    # object_apple: RigidObjectCfg = MISSING
-    # object_orange: RigidObjectCfg = MISSING
-    # object_box: RigidObjectCfg = MISSING
-    # object_box_2: RigidObjectCfg = MISSING
-    # object_bottle: RigidObjectCfg = MISSING
-    # object_bottle_2: RigidObjectCfg = MISSING
-    # object_book: RigidObjectCfg = MISSING
-    # object_book_2: RigidObjectCfg = MISSING
 
-    camera_topDown: CameraCfg = MISSING
+    # camera_topDown: CameraCfg = MISSING
     # camera_wrist: CameraCfg = MISSING
     # contact_finger: ContactSensorCfg = MISSING
 
     # globals()["s{}".format(object_names[idn])] = tools.SetRigidObjectCfgFromUsdFile("book_01")
     apple_01 = tools.SetRigidObjectCfgFromUsdFile("Apple_01")
     book_01 = tools.SetRigidObjectCfgFromUsdFile("Book_01")
-    book_02 = tools.SetRigidObjectCfgFromUsdFile("Book_02")
-    book_11 = tools.SetRigidObjectCfgFromUsdFile("Book_11")
+    # book_02 = tools.SetRigidObjectCfgFromUsdFile("Book_02")
+    # book_11 = tools.SetRigidObjectCfgFromUsdFile("Book_11")
     kiwi01 = tools.SetRigidObjectCfgFromUsdFile("Kiwi01")
     lemon_01 = tools.SetRigidObjectCfgFromUsdFile("Lemon_01")
     NaturalBostonRoundBottle_A01_PR_NVD_01 = tools.SetRigidObjectCfgFromUsdFile("NaturalBostonRoundBottle_A01_PR_NVD_01")
-    
+    rubix_cube = tools.SetRigidObjectCfgFromUsdFile("RubixCube")
+    salt_box = tools.SetRigidObjectCfgFromUsdFile("salt_box")
+
     # Table
     table = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Table",
@@ -129,9 +122,21 @@ class ObservationsCfg:
 
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
+        # eef_pose = ObsTerm(func=mdp.eef_pose_in_robot_root_frame)
         object_position = ObsTerm(func=mdp.object_position_in_robot_root_frame)
         target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
         actions = ObsTerm(func=mdp.last_action)
+        apple_01_position = ObsTerm(func=mdp.object_position_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("apple_01")})
+        book_01_position = ObsTerm(func=mdp.object_position_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("book_01")})
+        # book_02_position = ObsTerm(func=mdp.object_position_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("book_02")})
+        # book_11_position = ObsTerm(func=mdp.object_position_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("book_11")})
+        kiwi01_position = ObsTerm(func=mdp.object_position_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("kiwi01")})
+        lemon_01_position = ObsTerm(func=mdp.object_position_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("lemon_01")})
+        NaturalBostonRoundBottle_A01_PR_NVD_01_position = ObsTerm(func=mdp.object_position_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01")})
+        rubix_cube_position = ObsTerm(func=mdp.object_position_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("rubix_cube")})
+        salt_box_position = ObsTerm(func=mdp.object_position_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("salt_box")})
+        
+
 
         def __post_init__(self):
             self.enable_corruption = True
@@ -141,8 +146,8 @@ class ObservationsCfg:
     policy: PolicyCfg = PolicyCfg()
 
 
-book_reset_pose_range : dict[str, tuple[float, float]] = {"x": (-0.15, 0.1), "y": (-0.2, 0.2), "z": (0.2, 0.2),
-                        "roll": (-15.0, 15.0), "pitch": (-15.0, 15.0), "yaw": (-45.0, 45.0)}
+book_reset_pose_range : dict[str, tuple[float, float]] = {"x": (-0.15, 0.1), "y": (-0.2, 0.2), "z": (0.0, 0.1),
+                        "roll": (-10.0, 15.0), "pitch": (-10.0, 15.0), "yaw": (-20.0, 20.0)}
 @configclass
 class EventCfg:
     """Configuration for events."""
@@ -155,7 +160,7 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.1, 0.1), "y": (-0.25, 0.25), "z": (0.0, 0.0)},
+            "pose_range": {"x": (-0.1, 0.1), "y": (-0.25, 0.25), "z": (0.1, 0.2)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("object"),
         },
@@ -171,25 +176,25 @@ class EventCfg:
         },
     )
 
-    reset_book_02_position = EventTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "pose_range": book_reset_pose_range,
-            "velocity_range": {},
-            "asset_cfg": SceneEntityCfg("book_02"),
-        },
-    )
+    # reset_book_02_position = EventTerm(
+    #     func=mdp.reset_root_state_uniform,
+    #     mode="reset",
+    #     params={
+    #         "pose_range": book_reset_pose_range,
+    #         "velocity_range": {},
+    #         "asset_cfg": SceneEntityCfg("book_02"),
+    #     },
+    # )
 
-    reset_book_11_position = EventTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "pose_range": book_reset_pose_range,
-            "velocity_range": {},
-            "asset_cfg": SceneEntityCfg("book_11"),
-        },
-    )
+    # reset_book_11_position = EventTerm(
+    #     func=mdp.reset_root_state_uniform,
+    #     mode="reset",
+    #     params={
+    #         "pose_range": book_reset_pose_range,
+    #         "velocity_range": {},
+    #         "asset_cfg": SceneEntityCfg("book_11"),
+    #     },
+    # )
 
     reset_apple_01_position = EventTerm(
         func=mdp.reset_root_state_uniform,
@@ -231,6 +236,26 @@ class EventCfg:
         },
     )
 
+    reset_RubixCube_position = EventTerm(
+        func=mdp.reset_root_state_uniform,
+        mode="reset",
+        params={
+            "pose_range": {"x": (-0.1, 0.1), "y": (-0.25, 0.25), "z": (0.0, 0.0)},
+            "velocity_range": {},
+            "asset_cfg": SceneEntityCfg("rubix_cube"),
+        },
+    )
+
+    reset_Saltbox_position = EventTerm(
+        func=mdp.reset_root_state_uniform,
+        mode="reset",
+        params={
+            "pose_range": {"x": (-0.1, 0.1), "y": (-0.25, 0.25), "z": (0.0, 0.0)},
+            "velocity_range": {},
+            "asset_cfg": SceneEntityCfg("salt_box"),
+        },
+    )
+
 
 @configclass
 class RewardsCfg:
@@ -268,22 +293,56 @@ class TerminationsCfg:
 
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
 
+    # max_consecutive_success = DoneTerm(
+    #     func=mdp.max_consecutive_success, params={"num_success": 50, "command_name": "object_pose"}
+    # )
+
     object_dropping = DoneTerm(
-        func=mdp.base_height, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("object")}
+        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("object")}
     )
+
+    apple_01_dropping = DoneTerm(
+        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("apple_01")}
+    )
+
+    book_01_dropping = DoneTerm(
+        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("book_01")}
+    )
+
+    kiwi01_dropping = DoneTerm(
+        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("kiwi01")}
+    )
+
+    lemon_01_dropping = DoneTerm(
+        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("lemon_01")}
+    )
+
+    NaturalBostonRoundBottle_A01_PR_NVD_01_dropping = DoneTerm(
+        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01")}
+    )
+
+    rubix_cube_dropping = DoneTerm(
+        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("rubix_cube")}
+    )
+
+    salt_box_dropping = DoneTerm(
+        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("salt_box")}
+    )
+
+        
 
 
 @configclass
 class CurriculumCfg:
     """Curriculum terms for the MDP."""
 
-    action_rate = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "action_rate", "weight": -1e-1, "num_steps": 10000}
-    )
+    # action_rate = CurrTerm(
+    #     func=mdp.modify_reward_weight, params={"term_name": "action_rate", "weight": -1e-1, "num_steps": 10000}
+    # )
 
-    joint_vel = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 10000}
-    )
+    # joint_vel = CurrTerm(
+    #     func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 10000}
+    # )
 
 
 ##
@@ -292,11 +351,11 @@ class CurriculumCfg:
 
 
 @configclass
-class UnstructedEnvCfg(RLTaskEnvCfg):
+class UnstructuredEnvCfg(RLTaskEnvCfg):
     """Configuration for the lifting environment."""
 
     # Scene settings
-    scene: UnstructedTableSceneCfg = UnstructedTableSceneCfg(num_envs=2048, env_spacing=2.5)
+    scene: UnstructuredTableSceneCfg = UnstructuredTableSceneCfg(num_envs=4096, env_spacing=2.5)
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
@@ -311,12 +370,13 @@ class UnstructedEnvCfg(RLTaskEnvCfg):
         """Post initialization."""
         # general settings
         self.decimation = 2
-        self.episode_length_s = 5.0
+        self.episode_length_s = 10.0
         # simulation settings
         self.sim.dt = 0.01  # 100Hz
 
         self.sim.physx.bounce_threshold_velocity = 0.2
         self.sim.physx.bounce_threshold_velocity = 0.01
-        self.sim.physx.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4
-        self.sim.physx.gpu_total_aggregate_pairs_capacity = 16 * 1024
+        self.sim.physx.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4 * 16
+        self.sim.physx.gpu_total_aggregate_pairs_capacity = 16 * 1024 * 16
+        self.sim.physx.gpu_max_rigid_patch_count = 5 * 2**20
         self.sim.physx.friction_correlation_distance = 0.00625

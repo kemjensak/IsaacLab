@@ -12,8 +12,8 @@ from omni.isaac.orbit.sim.spawners.from_files.from_files_cfg import UsdFileCfg
 from omni.isaac.orbit.utils import configclass
 from omni.isaac.orbit.utils.assets import ISAAC_NUCLEUS_DIR, NVIDIA_NUCLEUS_DIR
 
-from omni.isaac.orbit_tasks.manipulation.unstructed import mdp
-from omni.isaac.orbit_tasks.manipulation.unstructed.unstructed_env_cfg import UnstructedEnvCfg
+from omni.isaac.orbit_tasks.manipulation.unstructured import mdp
+from omni.isaac.orbit_tasks.manipulation.unstructured.unstructured_env_cfg import UnstructuredEnvCfg
 
 ##
 # Pre-defined configs
@@ -22,7 +22,7 @@ from omni.isaac.orbit.markers.config import FRAME_MARKER_CFG  # isort: skip
 from omni.isaac.orbit_assets.franka import FRANKA_PANDA_CFG  # isort: skip
 
 @configclass
-class FrankaGraspObjectEnvCfg(UnstructedEnvCfg):
+class FrankaGraspObjectEnvCfg(UnstructuredEnvCfg):
     def __post_init__(self):
         # post init of parent
         super().__post_init__()
@@ -44,17 +44,17 @@ class FrankaGraspObjectEnvCfg(UnstructedEnvCfg):
         self.commands.object_pose.body_name = "panda_hand"
 
         # Set Top-down RGB-D camera
-        self.scene.camera_topDown = CameraCfg(
-            prim_path="{ENV_REGEX_NS}/Robot/topDown_cam",
-            update_period=0.01,
-            height=480,
-            width=640,
-            data_types=["rgb", "distance_to_image_plane"],
-            spawn=sim_utils.PinholeCameraCfg(
-                focal_length=24.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 1.0e5)
-            ),
-            offset=CameraCfg.OffsetCfg(pos=(0.510, 0.0, 0.015), rot=(0.5, -0.5, 0.5, -0.5), convention="ros"),
-        )
+        # self.scene.camera_topDown = CameraCfg(
+        #     prim_path="{ENV_REGEX_NS}/Robot/topDown_cam",
+        #     update_period=0.01,
+        #     height=480,
+        #     width=640,
+        #     data_types=["rgb", "distance_to_image_plane"],
+        #     spawn=sim_utils.PinholeCameraCfg(
+        #         focal_length=24.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 1.0e5)
+        #     ),
+        #     offset=CameraCfg.OffsetCfg(pos=(0.510, 0.0, 0.015), rot=(0.5, -0.5, 0.5, -0.5), convention="ros"),
+        # )
 
         # Set writst attached RGB-D camera
         # self.scene.camera_wrist = CameraCfg(

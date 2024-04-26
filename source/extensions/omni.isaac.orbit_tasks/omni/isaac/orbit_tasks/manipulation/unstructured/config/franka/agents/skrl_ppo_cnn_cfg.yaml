@@ -43,7 +43,7 @@ agent:
   value_preprocessor: "RunningStandardScaler"
   value_preprocessor_kwargs: null
   random_timesteps: 0
-  learning_starts: 0
+  learning_starts: 100
   grad_norm_clip: 1.0
   ratio_clip: 0.2
   value_clip: 0.2
@@ -54,7 +54,7 @@ agent:
   rewards_shaper_scale: 0.01
   # logging and checkpoint
   experiment:
-    directory: "franka_lift"
+    directory: "franka_unstructured_ppo"
     experiment_name: ""
     write_interval: 120
     checkpoint_interval: 1200
@@ -63,4 +63,4 @@ agent:
 # Sequential trainer
 # https://skrl.readthedocs.io/en/latest/modules/skrl.trainers.sequential.html
 trainer:
-  timesteps: 24000
+  timesteps: 240000
