@@ -1,6 +1,27 @@
 Changelog
 ---------
 
+0.16.2 (2024-04-26)
+~~~~~~~~~~~~~~~~~~~
+
+Fixed
+^^^^^
+
+* Fixed parsing of filter prim path expressions in the :class:`omni.isaac.orbit.sensors.ContactSensor` class.
+  Earlier, the filter prim paths given to the physics view was not being parsed since they were specified as
+  regex expressions instead of glob expressions.
+
+
+0.16.1 (2024-04-20)
+~~~~~~~~~~~~~~~~~~~
+
+Added
+^^^^^
+
+* Added attribute :attr:`omni.isaac.orbit.sim.ArticulationRootPropertiesCfg.fix_root_link` to fix the root link
+  of an articulation to the world frame.
+
+
 0.16.0 (2024-04-16)
 ~~~~~~~~~~~~~~~~~~~
 
