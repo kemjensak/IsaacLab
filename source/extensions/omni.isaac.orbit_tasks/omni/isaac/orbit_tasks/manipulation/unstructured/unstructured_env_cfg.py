@@ -95,10 +95,10 @@ class CommandsCfg:
     object_pose = mdp.UniformPoseCommandCfg(
         asset_name="robot",
         body_name=MISSING,  # will be set by agent env cfg
-        resampling_time_range=(5.0, 5.0),
+        resampling_time_range=(10.0, 10.0),
         debug_vis=True,
         ranges=mdp.UniformPoseCommandCfg.Ranges(
-            pos_x=(0.4, 0.6), pos_y=(-0.25, 0.25), pos_z=(0.25, 0.5), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
+            pos_x=(-0.25, 0.25), pos_y=(-0.6, -0.4), pos_z=(0.25, 0.5), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
         ),
     )
 
@@ -123,18 +123,17 @@ class ObservationsCfg:
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
         # eef_pose = ObsTerm(func=mdp.eef_pose_in_robot_root_frame)
-        object_position = ObsTerm(func=mdp.object_position_in_robot_root_frame)
+        object_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame)
         target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
         actions = ObsTerm(func=mdp.last_action)
-        apple_01_position = ObsTerm(func=mdp.object_position_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("apple_01")})
-        book_01_position = ObsTerm(func=mdp.object_position_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("book_01")})
-        # book_02_position = ObsTerm(func=mdp.object_position_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("book_02")})
-        # book_11_position = ObsTerm(func=mdp.object_position_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("book_11")})
-        kiwi01_position = ObsTerm(func=mdp.object_position_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("kiwi01")})
-        lemon_01_position = ObsTerm(func=mdp.object_position_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("lemon_01")})
-        NaturalBostonRoundBottle_A01_PR_NVD_01_position = ObsTerm(func=mdp.object_position_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01")})
-        rubix_cube_position = ObsTerm(func=mdp.object_position_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("rubix_cube")})
-        salt_box_position = ObsTerm(func=mdp.object_position_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("salt_box")})
+
+        apple_01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("apple_01")})
+        book_01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("book_01")})
+        kiwi01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("kiwi01")})
+        lemon_01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("lemon_01")})
+        NaturalBostonRoundBottle_A01_PR_NVD_01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01")})
+        rubix_cube_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("rubix_cube")})
+        salt_box_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("salt_box")})
         
 
 
@@ -146,13 +145,11 @@ class ObservationsCfg:
     policy: PolicyCfg = PolicyCfg()
 
 
-book_reset_pose_range : dict[str, tuple[float, float]] = {"x": (-0.15, 0.1), "y": (-0.2, 0.2), "z": (0.0, 0.1),
+book_reset_pose_range : dict[str, tuple[float, float]] = {"x": (-0.15, 0.1), "y": (-0.2, 0.2), "z": (0.1, 0.1),
                         "roll": (-10.0, 15.0), "pitch": (-10.0, 15.0), "yaw": (-20.0, 20.0)}
 @configclass
 class EventCfg:
     """Configuration for events."""
-
-    # globals()["s{}".format("book_01")] = tools.reset("book_01")
 
     reset_all = EventTerm(func=mdp.reset_scene_to_default, mode="reset")
 
@@ -160,7 +157,7 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.1, 0.1), "y": (-0.25, 0.25), "z": (0.1, 0.2)},
+            "pose_range": {"x": (-0.1, 0.1), "y": (-0.25, 0.25), "z": (0.2, 0.2)}, # z: (0.0, 0.0)
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("object"),
         },
@@ -175,26 +172,6 @@ class EventCfg:
             "asset_cfg": SceneEntityCfg("book_01"),
         },
     )
-
-    # reset_book_02_position = EventTerm(
-    #     func=mdp.reset_root_state_uniform,
-    #     mode="reset",
-    #     params={
-    #         "pose_range": book_reset_pose_range,
-    #         "velocity_range": {},
-    #         "asset_cfg": SceneEntityCfg("book_02"),
-    #     },
-    # )
-
-    # reset_book_11_position = EventTerm(
-    #     func=mdp.reset_root_state_uniform,
-    #     mode="reset",
-    #     params={
-    #         "pose_range": book_reset_pose_range,
-    #         "velocity_range": {},
-    #         "asset_cfg": SceneEntityCfg("book_11"),
-    #     },
-    # )
 
     reset_apple_01_position = EventTerm(
         func=mdp.reset_root_state_uniform,
@@ -254,7 +231,7 @@ class EventCfg:
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("salt_box"),
         },
-    )
+    )        
 
 
 @configclass
@@ -297,37 +274,37 @@ class TerminationsCfg:
     #     func=mdp.max_consecutive_success, params={"num_success": 50, "command_name": "object_pose"}
     # )
 
-    object_dropping = DoneTerm(
-        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("object")}
-    )
+    # object_dropping = DoneTerm(
+    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("object")}
+    # )
 
-    apple_01_dropping = DoneTerm(
-        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("apple_01")}
-    )
+    # apple_01_dropping = DoneTerm(
+    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("apple_01")}
+    # )
 
-    book_01_dropping = DoneTerm(
-        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("book_01")}
-    )
+    # book_01_dropping = DoneTerm(
+    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("book_01")}
+    # )
 
-    kiwi01_dropping = DoneTerm(
-        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("kiwi01")}
-    )
+    # kiwi01_dropping = DoneTerm(
+    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("kiwi01")}
+    # )
 
-    lemon_01_dropping = DoneTerm(
-        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("lemon_01")}
-    )
+    # lemon_01_dropping = DoneTerm(
+    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("lemon_01")}
+    # )
 
-    NaturalBostonRoundBottle_A01_PR_NVD_01_dropping = DoneTerm(
-        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01")}
-    )
+    # NaturalBostonRoundBottle_A01_PR_NVD_01_dropping = DoneTerm(
+    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01")}
+    # )
 
-    rubix_cube_dropping = DoneTerm(
-        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("rubix_cube")}
-    )
+    # rubix_cube_dropping = DoneTerm(
+    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("rubix_cube")}
+    # )
 
-    salt_box_dropping = DoneTerm(
-        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("salt_box")}
-    )
+    # salt_box_dropping = DoneTerm(
+    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("salt_box")}
+    # )
 
         
 
@@ -336,13 +313,21 @@ class TerminationsCfg:
 class CurriculumCfg:
     """Curriculum terms for the MDP."""
 
-    # action_rate = CurrTerm(
-    #     func=mdp.modify_reward_weight, params={"term_name": "action_rate", "weight": -1e-1, "num_steps": 10000}
-    # )
+    action_rate = CurrTerm(
+        func=mdp.modify_reward_weight, params={"term_name": "action_rate", "weight": -1e-1, "num_steps": 10000}
+    )
 
-    # joint_vel = CurrTerm(
-    #     func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 10000}
-    # )
+    joint_vel = CurrTerm(
+        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 10000}
+    )
+
+    object_goal_tracking = CurrTerm(
+        func=mdp.modify_reward_weight, params={"term_name": "object_goal_tracking", "weight": 30.0, "num_steps": 10000}
+    )
+
+    object_goal_tracking_fine_grained = CurrTerm(
+        func=mdp.modify_reward_weight, params={"term_name": "object_goal_tracking_fine_grained", "weight": 10.0, "num_steps": 10000}
+    )
 
 
 ##
@@ -355,7 +340,7 @@ class UnstructuredEnvCfg(RLTaskEnvCfg):
     """Configuration for the lifting environment."""
 
     # Scene settings
-    scene: UnstructuredTableSceneCfg = UnstructuredTableSceneCfg(num_envs=4096, env_spacing=2.5)
+    scene: UnstructuredTableSceneCfg = UnstructuredTableSceneCfg(num_envs=4096, env_spacing=2.5) # 4096
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
@@ -370,7 +355,7 @@ class UnstructuredEnvCfg(RLTaskEnvCfg):
         """Post initialization."""
         # general settings
         self.decimation = 2
-        self.episode_length_s = 10.0
+        self.episode_length_s = 6.0
         # simulation settings
         self.sim.dt = 0.01  # 100Hz
 
@@ -379,4 +364,4 @@ class UnstructuredEnvCfg(RLTaskEnvCfg):
         self.sim.physx.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4 * 16
         self.sim.physx.gpu_total_aggregate_pairs_capacity = 16 * 1024 * 16
         self.sim.physx.gpu_max_rigid_patch_count = 5 * 2**20
-        self.sim.physx.friction_correlation_distance = 0.00625
+        self.sim.physx.friction_correlation_distance = 0.00625        
