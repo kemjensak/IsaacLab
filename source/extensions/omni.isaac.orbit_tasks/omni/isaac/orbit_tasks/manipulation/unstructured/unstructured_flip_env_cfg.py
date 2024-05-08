@@ -145,8 +145,8 @@ class ObservationsCfg:
     policy: PolicyCfg = PolicyCfg()
 
 
-book_reset_pose_range : dict[str, tuple[float, float]] = {"x": (-0.15, 0.1), "y": (-0.2, 0.2), "z": (0.1, 0.1),
-                        "roll": (-10.0, 15.0), "pitch": (-10.0, 15.0), "yaw": (-20.0, 20.0)}
+book_reset_pose_range : dict[str, tuple[float, float]] = {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.1, 0.1),
+                        "roll": (-0.0, 0.0), "pitch": (-0.0, 0.0), "yaw": (-180.0, 180.0)}
 @configclass
 class EventCfg:
     """Configuration for events."""
@@ -157,7 +157,8 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.1, 0.1), "y": (-0.25, 0.25), "z": (0.2, 0.2)}, # z: (0.0, 0.0)
+            "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.2, 0.2),
+                           "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("object"),
         },
@@ -177,7 +178,8 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.1, 0.1), "y": (-0.25, 0.25), "z": (0.0, 0.0)},
+            "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.02, 0.02),
+                           "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("apple_01"),
         },
@@ -187,7 +189,8 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.1, 0.1), "y": (-0.25, 0.25), "z": (0.0, 0.0)},
+            "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.02, 0.02),
+                           "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("kiwi01"),
         },
@@ -197,7 +200,8 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.1, 0.1), "y": (-0.25, 0.25), "z": (0.0, 0.0)},
+            "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.02, 0.02),
+                           "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("lemon_01"),
         },
@@ -207,7 +211,8 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.1, 0.1), "y": (-0.25, 0.25), "z": (0.0, 0.0)},
+            "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.02, 0.02),
+                           "roll": (-90.0, -90.0), "pitch": (-10.0, 10.0), "yaw": (-180.0, 180.0)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01"),
         },
@@ -217,7 +222,8 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.1, 0.1), "y": (-0.25, 0.25), "z": (0.0, 0.0)},
+            "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.02, 0.02),
+                           "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("rubix_cube"),
         },
@@ -227,11 +233,48 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.1, 0.1), "y": (-0.25, 0.25), "z": (0.0, 0.0)},
+            "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.02, 0.02),
+                           "roll": (-90.0, -90.0), "pitch": (-0.0, 0.0), "yaw": (-180.0, 180.0)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("salt_box"),
         },
-    )        
+    )
+
+    # reset_all_objects_position = EventTerm(
+    #     func=mdp.reset_root_state_from_file,
+    #     mode="reset",
+    #     params={
+    #         "pose_range": {"x": (-0.1, 0.1), "y": (-0.25, 0.25), "z": (0.0, 0.0)},
+    #         "velocity_range": {},
+    #         "asset_cfg": [SceneEntityCfg("object"),
+    #                        SceneEntityCfg("apple_01"),
+    #                        SceneEntityCfg("book_01"),
+    #                        SceneEntityCfg("kiwi01"),
+    #                        SceneEntityCfg("lemon_01"),
+    #                        SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01"),
+    #                        SceneEntityCfg("rubix_cube"),
+    #                        SceneEntityCfg("salt_box")]
+    #     },
+    # )
+
+    save_object_pose = EventTerm(
+        func=mdp.save_object_pose,
+        mode="interval",
+        interval_range_s=(0.0, 6.0),
+        params={
+            # "minimal_height": -0.06,
+            "object_cfg": [SceneEntityCfg("object"),
+                           SceneEntityCfg("apple_01"),
+                           SceneEntityCfg("book_01"),
+                           SceneEntityCfg("kiwi01"),
+                           SceneEntityCfg("lemon_01"),
+                           SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01"),
+                           SceneEntityCfg("rubix_cube"),
+                           SceneEntityCfg("salt_box")]
+
+        },
+    )
+       
 
 
 @configclass
@@ -336,7 +379,7 @@ class CurriculumCfg:
 
 
 @configclass
-class UnstructuredEnvCfg(RLTaskEnvCfg):
+class UnstructuredFlipEnvCfg(RLTaskEnvCfg):
     """Configuration for the lifting environment."""
 
     # Scene settings
