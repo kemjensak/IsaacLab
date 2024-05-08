@@ -6,7 +6,9 @@
 import gymnasium as gym
 import os
 
-from . import agents, ik_abs_env_cfg, ik_rel_env_cfg, joint_pos_env_cfg, ik_rel_env_cfg_sac
+from . import agents
+from .grasp import ik_abs_env_cfg, ik_rel_env_cfg, joint_pos_env_cfg, ik_rel_env_cfg_sac
+from .flip import ik_abs_env_cfg, ik_rel_env_cfg, joint_pos_env_cfg
 
 ##
 # Register Gym environments.
@@ -17,11 +19,33 @@ from . import agents, ik_abs_env_cfg, ik_rel_env_cfg, joint_pos_env_cfg, ik_rel_
 ##
 
 gym.register(
+    id="Isaac-Flip-Object-Franka-v0",
+    entry_point="omni.isaac.orbit.envs:RLTaskEnv",
+    kwargs={
+        "env_cfg_entry_point": flip.joint_pos_env_cfg.FrankaFlipObjectEnvCfg,
+        # "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.LiftCubePPORunnerCfg,
+        "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
+    },
+    disable_env_checker=True,
+)
+
+gym.register(
+    id="Isaac-Flip-Object-Franka-Play-v0",
+    entry_point="omni.isaac.orbit.envs:RLTaskEnv",
+    kwargs={
+        "env_cfg_entry_point": flip.joint_pos_env_cfg.FrankaFlipObjectEnvCfg_PLAY,
+        # "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.LiftCubePPORunnerCfg,
+        "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
+    },
+    disable_env_checker=True,
+)
+
+gym.register(
     id="Isaac-Grasp-Object-Franka-v0",
     entry_point="omni.isaac.orbit.envs:RLTaskEnv",
     kwargs={
-        "env_cfg_entry_point": joint_pos_env_cfg.FrankaGraspObjectEnvCfg,
-        "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.LiftCubePPORunnerCfg,
+        "env_cfg_entry_point": grasp.joint_pos_env_cfg.FrankaGraspObjectEnvCfg,
+        # "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.LiftCubePPORunnerCfg,
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
     },
     disable_env_checker=True,
@@ -31,8 +55,8 @@ gym.register(
     id="Isaac-Grasp-Object-Franka-Play-v0",
     entry_point="omni.isaac.orbit.envs:RLTaskEnv",
     kwargs={
-        "env_cfg_entry_point": joint_pos_env_cfg.FrankaGraspObjectEnvCfg_PLAY,
-        "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.LiftCubePPORunnerCfg,
+        "env_cfg_entry_point": grasp.joint_pos_env_cfg.FrankaGraspObjectEnvCfg_PLAY,
+        # "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.LiftCubePPORunnerCfg,
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
     },
     disable_env_checker=True,
@@ -42,27 +66,27 @@ gym.register(
 # # Inverse Kinematics - Absolute Pose Control
 # ##
 
-gym.register(
-    id="Isaac-Grasp-Object-Franka-IK-Abs-v0",
-    entry_point="omni.isaac.orbit.envs:RLTaskEnv",
-    kwargs={
-        "env_cfg_entry_point": ik_abs_env_cfg.FrankaGraspObjectEnvCfg,
-        "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.LiftCubePPORunnerCfg,
-        "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
-    },
-    disable_env_checker=True,
-)
+# gym.register(
+#     id="Isaac-Grasp-Object-Franka-IK-Abs-v0",
+#     entry_point="omni.isaac.orbit.envs:RLTaskEnv",
+#     kwargs={
+#         "env_cfg_entry_point": ik_abs_env_cfg.FrankaGraspObjectEnvCfg,
+#         "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.LiftCubePPORunnerCfg,
+#         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
+#     },
+#     disable_env_checker=True,
+# )
 
-gym.register(
-    id="Isaac-Grasp-Object-Franka-IK-Abs-Play-v0",
-    entry_point="omni.isaac.orbit.envs:RLTaskEnv",
-    kwargs={
-        "env_cfg_entry_point": ik_abs_env_cfg.FrankaGraspObjectEnvCfg_PLAY,
-        "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.LiftCubePPORunnerCfg,
-        "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
-    },
-    disable_env_checker=True,
-)
+# gym.register(
+#     id="Isaac-Grasp-Object-Franka-IK-Abs-Play-v0",
+#     entry_point="omni.isaac.orbit.envs:RLTaskEnv",
+#     kwargs={
+#         "env_cfg_entry_point": ik_abs_env_cfg.FrankaGraspObjectEnvCfg_PLAY,
+#         "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.LiftCubePPORunnerCfg,
+#         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
+#     },
+#     disable_env_checker=True,
+# )
 
 # ##
 # # Inverse Kinematics - Relative Pose Control

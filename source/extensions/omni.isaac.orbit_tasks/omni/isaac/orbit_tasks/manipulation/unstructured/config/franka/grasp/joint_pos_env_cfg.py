@@ -13,7 +13,7 @@ from omni.isaac.orbit.utils import configclass
 from omni.isaac.orbit.utils.assets import ISAAC_NUCLEUS_DIR, NVIDIA_NUCLEUS_DIR
 
 from omni.isaac.orbit_tasks.manipulation.unstructured import mdp
-from omni.isaac.orbit_tasks.manipulation.unstructured.unstructured_env_cfg import UnstructuredEnvCfg
+from omni.isaac.orbit_tasks.manipulation.unstructured.unstructured_grasp_env_cfg import UnstructuredGraspEnvCfg
 
 ##
 # Pre-defined configs
@@ -22,7 +22,7 @@ from omni.isaac.orbit.markers.config import FRAME_MARKER_CFG  # isort: skip
 from omni.isaac.orbit_assets.franka import FRANKA_PANDA_CFG  # isort: skip
 
 @configclass
-class FrankaGraspObjectEnvCfg(UnstructuredEnvCfg):
+class FrankaGraspObjectEnvCfg(UnstructuredGraspEnvCfg):
     def __post_init__(self):
         # post init of parent
         super().__post_init__()
