@@ -26,7 +26,7 @@ def save_object_pose(
     """Save pose of object on the table ."""
     if env.episode_length_buf[0] != 250:
         return
-    loaded_object_poses = torch.empty(1,8,7).to('cuda')
+    loaded_object_poses = torch.empty(1,8,7, device=env.device)
     try:
         loaded_object_poses = torch.from_numpy(np.load("/home/kjs-dt/RL/objcet_pose/object_poses.npy")).to('cuda')
     except:
@@ -55,29 +55,27 @@ def save_object_pose(
 def reset_root_state_from_file(
     env: BaseEnv,
     env_ids: torch.Tensor,
-    pose_range: dict[str, tuple[float, float]],
-    velocity_range: dict[str, tuple[float, float]],
-    asset_cfg: list[SceneEntityCfg],
+    object_cfg: list[SceneEntityCfg],
+    loaded_object_poses: torch.Tensor,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
 ):
-    #Reset the asset root state to a random position and velocity uniformly within the given ranges.
-
     # extract the used quantities (to enable type-hinting)
-    asset: RigidObject | Articulation = env.scene[asset_cfg[0].name]
+    asset: RigidObject | Articulation = env.scene[object_cfg[0].name]
     # get default root state
-    root_states = asset.data.default_root_state.clone()
-
-    loaded_object_poses = torch.from_numpy(np.load("/home/kjs-dt/RL/objcet_pose/object_poses.npy")).to('cuda')
-    # (env, object, pose/ num_envs, 8, 7)
-    # 뽑은것들에서 object pose 가져오기
-    # 가져온 object pose들을 각 object에 적용
+    root_states = asset.data.default_root_state.clone()[:len(env_ids)]
 
     # episode(env) 갯수만큼 랜덤하게 뽑고, idx 저장
-    env_indices = torch.randperm(len(loaded_object_poses))[:env.num_envs]
+    env_indices = torch.randperm(len(loaded_object_poses))[:len(env_ids)]
 
-    #각 env에 대해 object pose를 적용
-    for object_idx in range(len(asset_cfg)):
-        object_poses = loaded_object_poses[env_indices, object_idx, :]
-        object_poses[:, :3] += (env.scene.env_origins + root_states[:, 0:3])
-        asset = env.scene[asset_cfg[object_idx].name]
-        asset.write_root_pose_to_sim(object_poses)
+    # 각 env에 대해 object pose를 적용
+    for object_idx in range(len(object_cfg)):
+        positions = root_states[:, 0:3] + env.scene.env_origins[env_ids] + loaded_object_poses[env_indices, object_idx, 0:3] 
+        orientations = loaded_object_poses[env_indices, object_idx, 3:7]
+        asset = env.scene[object_cfg[object_idx].name]
+        asset.write_root_pose_to_sim(torch.cat([positions, orientations], dim=-1), env_ids=env_ids)
+        
+        velocities = root_states[:, 7:13]
+        asset.write_root_velocity_to_sim(velocities, env_ids=env_ids)
+
+    
 
