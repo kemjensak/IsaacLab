@@ -12,6 +12,7 @@ from omni.isaac.orbit.assets import RigidObject
 from omni.isaac.orbit.managers import SceneEntityCfg
 from omni.isaac.orbit.sensors import FrameTransformer
 from omni.isaac.orbit.utils.math import combine_frame_transforms
+from omni.isaac.orbit.managers import RewardTermCfg as RewTerm
 
 if TYPE_CHECKING:
     from omni.isaac.orbit.envs import RLTaskEnv
@@ -65,3 +66,18 @@ def object_goal_distance(
     distance = torch.norm(des_pos_w - object.data.root_pos_w[:, :3], dim=1)
     # rewarded if the object is lifted above the threshold
     return (object.data.root_pos_w[:, 2] > minimal_height) * (1 - torch.tanh(distance / std))
+
+
+# TODO: 타 object의 속도 기반 방법 추가하였음, 해당 부분 정상 작동 여부 확인 필요
+def touching_other_object(
+    env: RLTaskEnv,
+    asset_cfg_list: list[SceneEntityCfg] = [SceneEntityCfg("robot")],
+) -> torch.Tensor:
+    """Penalize the agent for touching the other object."""
+    # extract the used quantities (to enable type-hinting)
+    asset: RigidObject = env.scene[asset_cfg_list[0].name]
+    penalty = torch.zeros(env.num_envs, device=env.device)
+    for asset_cfg in asset_cfg_list:
+        asset = env.scene[asset_cfg.name]
+        penalty += torch.sum(torch.square(asset.data.root_lin_vel_b[:, :3]), dim=1)
+    return penalty
