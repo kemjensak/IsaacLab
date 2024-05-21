@@ -9,6 +9,7 @@ from omni.isaac.orbit.utils import configclass
 from omni.isaac.orbit.utils.assets import ISAAC_NUCLEUS_DIR
 from omni.isaac.orbit.sim.schemas.schemas_cfg import RigidBodyPropertiesCfg
 
+
 from . import mdp
 
 ##
@@ -18,9 +19,9 @@ from . import mdp
 def SetRigidObjectCfgFromUsdFile(usd_file_name: str):
     return RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/"+(usd_file_name),
-            init_state=RigidObjectCfg.InitialStateCfg(pos=[0.6, 0, 0.055], rot=[1, 0, 0, 0]),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.6, 0.0, 0.055), rot=(1.0, 0.0, 0.0, 0.0)),
             spawn=UsdFileCfg(
-                usd_path=f"/home/KTH_dt/usd/"+(usd_file_name)+".usd",
+                usd_path=f"/home/KTH_dt/usd/"+(usd_file_name)+".usd", #usd_path -> local directory
                 scale=(0.01, 0.01, 0.01),
                 rigid_props=RigidBodyPropertiesCfg(
                 solver_position_iteration_count=16,
