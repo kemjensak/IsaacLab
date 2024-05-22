@@ -3,7 +3,38 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""Configurations for the object flip environments."""
+import gymnasium as gym
+import os
 
-# We leave this file empty since we don't want to expose any configs in this package directly.
-# We still need this file to import the "config" module in the parent package.
+from . import agents
+from . import ik_abs_env_cfg, ik_rel_env_cfg, joint_pos_env_cfg
+
+##
+# Register Gym environments.
+##
+
+##
+# Joint Position Control
+##
+
+gym.register(
+    id="Isaac-Flip-Object-Franka-v0",
+    entry_point="omni.isaac.orbit.envs:RLTaskEnv",
+    kwargs={
+        "env_cfg_entry_point": joint_pos_env_cfg.FrankaFlipObjectEnvCfg,
+        # "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.LiftCubePPORunnerCfg,
+        "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
+    },
+    disable_env_checker=True,
+)
+
+gym.register(
+    id="Isaac-Flip-Object-Franka-Play-v0",
+    entry_point="omni.isaac.orbit.envs:RLTaskEnv",
+    kwargs={
+        "env_cfg_entry_point": joint_pos_env_cfg.FrankaFlipObjectEnvCfg_PLAY,
+        # "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.LiftCubePPORunnerCfg,
+        "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
+    },
+    disable_env_checker=True,
+)
