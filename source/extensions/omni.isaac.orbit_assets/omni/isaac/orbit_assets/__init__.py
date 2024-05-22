@@ -36,3 +36,4 @@ from .sawyer import *
 from .shadow_hand import *
 from .unitree import *
 from .universal_robots import *
+from .ur5e import *
