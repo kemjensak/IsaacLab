@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import MISSING
 
+import torch, numpy as np
+
 import omni.isaac.orbit.sim as sim_utils
 from omni.isaac.orbit.assets import ArticulationCfg, AssetBaseCfg, RigidObjectCfg
 from omni.isaac.orbit.envs import RLTaskEnvCfg
@@ -40,11 +42,6 @@ class UnstructuredTableSceneCfg(InteractiveSceneCfg):
     # target object: will be populated by agent env cfg
     object: RigidObjectCfg = MISSING
 
-    # camera_topDown: CameraCfg = MISSING
-    # camera_wrist: CameraCfg = MISSING
-    # contact_finger: ContactSensorCfg = MISSING
-
-    # globals()["s{}".format(object_names[idn])] = tools.SetRigidObjectCfgFromUsdFile("book_01")
     apple_01 = tools.SetRigidObjectCfgFromUsdFile("Apple_01")
     book_01 = tools.SetRigidObjectCfgFromUsdFile("Book_01")
     # book_02 = tools.SetRigidObjectCfgFromUsdFile("Book_02")
@@ -152,117 +149,97 @@ class EventCfg:
     """Configuration for events."""
 
     reset_all = EventTerm(func=mdp.reset_scene_to_default, mode="reset")
-
-    reset_object_position = EventTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.2, 0.2),
-                           "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
-            "velocity_range": {},
-            "asset_cfg": SceneEntityCfg("object"),
-        },
-    )
-
-    reset_book_01_position = EventTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "pose_range": book_reset_pose_range,
-            "velocity_range": {},
-            "asset_cfg": SceneEntityCfg("book_01"),
-        },
-    )
-
-    reset_apple_01_position = EventTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.02, 0.02),
-                           "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
-            "velocity_range": {},
-            "asset_cfg": SceneEntityCfg("apple_01"),
-        },
-    )
-
-    reset_kiwi01_position = EventTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.02, 0.02),
-                           "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
-            "velocity_range": {},
-            "asset_cfg": SceneEntityCfg("kiwi01"),
-        },
-    )
-
-    reset_lemon_01_position = EventTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.02, 0.02),
-                           "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
-            "velocity_range": {},
-            "asset_cfg": SceneEntityCfg("lemon_01"),
-        },
-    )
-
-    reset_NaturalBostonRoundBottle_A01_PR_NVD_01_position = EventTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.02, 0.02),
-                           "roll": (-90.0, -90.0), "pitch": (-10.0, 10.0), "yaw": (-180.0, 180.0)},
-            "velocity_range": {},
-            "asset_cfg": SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01"),
-        },
-    )
-
-    reset_RubixCube_position = EventTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.02, 0.02),
-                           "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
-            "velocity_range": {},
-            "asset_cfg": SceneEntityCfg("rubix_cube"),
-        },
-    )
-
-    reset_Saltbox_position = EventTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.02, 0.02),
-                           "roll": (-90.0, -90.0), "pitch": (-0.0, 0.0), "yaw": (-180.0, 180.0)},
-            "velocity_range": {},
-            "asset_cfg": SceneEntityCfg("salt_box"),
-        },
-    )
-
-    # reset_all_objects_position = EventTerm(
-    #     func=mdp.reset_root_state_from_file,
+    # reset_object_position = EventTerm(
+    #     func=mdp.reset_root_state_uniform,
     #     mode="reset",
     #     params={
-    #         "pose_range": {"x": (-0.1, 0.1), "y": (-0.25, 0.25), "z": (0.0, 0.0)},
+    #         "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.02, 0.02),
+    #                        "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
     #         "velocity_range": {},
-    #         "asset_cfg": [SceneEntityCfg("object"),
-    #                        SceneEntityCfg("apple_01"),
-    #                        SceneEntityCfg("book_01"),
-    #                        SceneEntityCfg("kiwi01"),
-    #                        SceneEntityCfg("lemon_01"),
-    #                        SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01"),
-    #                        SceneEntityCfg("rubix_cube"),
-    #                        SceneEntityCfg("salt_box")]
+    #         "asset_cfg": SceneEntityCfg("object"),
     #     },
     # )
 
-    save_object_pose = EventTerm(
-        func=mdp.save_object_pose,
-        mode="interval",
-        interval_range_s=(0.0, 6.0),
+    # reset_book_01_position = EventTerm(
+    #     func=mdp.reset_root_state_uniform,
+    #     mode="reset",
+    #     params={
+    #         "pose_range": book_reset_pose_range,
+    #         "velocity_range": {},
+    #         "asset_cfg": SceneEntityCfg("book_01"),
+    #     },
+    # )
+
+    # reset_apple_01_position = EventTerm(
+    #     func=mdp.reset_root_state_uniform,
+    #     mode="reset",
+    #     params={
+    #         "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.02, 0.02),
+    #                        "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
+    #         "velocity_range": {},
+    #         "asset_cfg": SceneEntityCfg("apple_01"),
+    #     },
+    # )
+
+    # reset_kiwi01_position = EventTerm(
+    #     func=mdp.reset_root_state_uniform,
+    #     mode="reset",
+    #     params={
+    #         "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.02, 0.02),
+    #                        "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
+    #         "velocity_range": {},
+    #         "asset_cfg": SceneEntityCfg("kiwi01"),
+    #     },
+    # )
+
+    # reset_lemon_01_position = EventTerm(
+    #     func=mdp.reset_root_state_uniform,
+    #     mode="reset",
+    #     params={
+    #         "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.02, 0.02),
+    #                        "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
+    #         "velocity_range": {},
+    #         "asset_cfg": SceneEntityCfg("lemon_01"),
+    #     },
+    # )
+
+    # reset_NaturalBostonRoundBottle_A01_PR_NVD_01_position = EventTerm(
+    #     func=mdp.reset_root_state_uniform,
+    #     mode="reset",
+    #     params={
+    #         "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.02, 0.02),
+    #                        "roll": (-90.0, -90.0), "pitch": (-10.0, 10.0), "yaw": (-180.0, 180.0)},
+    #         "velocity_range": {},
+    #         "asset_cfg": SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01"),
+    #     },
+    # )
+
+    # reset_RubixCube_position = EventTerm(
+    #     func=mdp.reset_root_state_uniform,
+    #     mode="reset",
+    #     params={
+    #         "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.02, 0.02),
+    #                        "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
+    #         "velocity_range": {},
+    #         "asset_cfg": SceneEntityCfg("rubix_cube"),
+    #     },
+    # )
+
+    # reset_Saltbox_position = EventTerm(
+    #     func=mdp.reset_root_state_uniform,
+    #     mode="reset",
+    #     params={
+    #         "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.02, 0.02),
+    #                        "roll": (-90.0, -90.0), "pitch": (-0.0, 0.0), "yaw": (-180.0, 180.0)},
+    #         "velocity_range": {},
+    #         "asset_cfg": SceneEntityCfg("salt_box"),
+    #     },
+    # )
+
+    load_object_pose = EventTerm(
+        func=mdp.reset_root_state_from_file,
+        mode="reset",
         params={
-            # "minimal_height": -0.06,
             "object_cfg": [SceneEntityCfg("object"),
                            SceneEntityCfg("apple_01"),
                            SceneEntityCfg("book_01"),
@@ -270,11 +247,10 @@ class EventCfg:
                            SceneEntityCfg("lemon_01"),
                            SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01"),
                            SceneEntityCfg("rubix_cube"),
-                           SceneEntityCfg("salt_box")]
-
+                           SceneEntityCfg("salt_box")],
+            "loaded_object_poses": torch.from_numpy(np.load("/home/kjs-dt/RL/objcet_pose/object_poses_grasp.npy")).to('cuda')
         },
     )
-       
 
 
 @configclass
@@ -285,23 +261,30 @@ class RewardsCfg:
 
     # 1. Approach the point
 
-    # 2. Flip the object
+    # 2. Grasp the object
 
-    reaching_object = RewTerm(func=mdp.object_ee_distance, params={"std": 0.1}, weight=1.0)
+    # 3. Specify axis of rotation and angle
 
-    lifting_object = RewTerm(func=mdp.object_is_lifted, params={"minimal_height": 0.06}, weight=15.0)
+    # 4. Flip the object
 
-    object_goal_tracking = RewTerm(
-        func=mdp.object_goal_distance,
-        params={"std": 0.3, "minimal_height": 0.06, "command_name": "object_pose"},
-        weight=16.0,
+    reaching_object = RewTerm(
+        func=mdp.object_ee_distance,
+        params={"std": 0.1, "object_cfg": SceneEntityCfg("book_01")},
+        weight=1.0
     )
 
-    object_goal_tracking_fine_grained = RewTerm(
-        func=mdp.object_goal_distance,
-        params={"std": 0.05, "minimal_height": 0.06, "command_name": "object_pose"},
-        weight=5.0,
+    lifting_object = RewTerm(
+        func=mdp.object_is_lifted_from_initial,
+        params={"minimal_height": 0.06, "asset_cfg": SceneEntityCfg("book_01")},
+        weight=15.0
     )
+
+    object_rotation = RewTerm(
+        func=mdp.target_object_rotation,
+        params={"std": 0.1, "asset_cfg": SceneEntityCfg("book_01")},
+        weight=5.0
+    )
+
 
     # action penalty
     action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-3)
@@ -323,37 +306,37 @@ class TerminationsCfg:
     #     func=mdp.max_consecutive_success, params={"num_success": 50, "command_name": "object_pose"}
     # )
 
-    # object_dropping = DoneTerm(
-    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("object")}
-    # )
+    object_dropping = DoneTerm(
+        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("object")}
+    )
 
-    # apple_01_dropping = DoneTerm(
-    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("apple_01")}
-    # )
+    apple_01_dropping = DoneTerm(
+        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("apple_01")}
+    )
 
-    # book_01_dropping = DoneTerm(
-    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("book_01")}
-    # )
+    book_01_dropping = DoneTerm(
+        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("book_01")}
+    )
 
-    # kiwi01_dropping = DoneTerm(
-    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("kiwi01")}
-    # )
+    kiwi01_dropping = DoneTerm(
+        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("kiwi01")}
+    )
 
-    # lemon_01_dropping = DoneTerm(
-    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("lemon_01")}
-    # )
+    lemon_01_dropping = DoneTerm(
+        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("lemon_01")}
+    )
 
-    # NaturalBostonRoundBottle_A01_PR_NVD_01_dropping = DoneTerm(
-    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01")}
-    # )
+    NaturalBostonRoundBottle_A01_PR_NVD_01_dropping = DoneTerm(
+        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01")}
+    )
 
-    # rubix_cube_dropping = DoneTerm(
-    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("rubix_cube")}
-    # )
+    rubix_cube_dropping = DoneTerm(
+        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("rubix_cube")}
+    )
 
-    # salt_box_dropping = DoneTerm(
-    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("salt_box")}
-    # )
+    salt_box_dropping = DoneTerm(
+        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("salt_box")}
+    )
 
         
 
@@ -368,14 +351,6 @@ class CurriculumCfg:
 
     joint_vel = CurrTerm(
         func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 10000}
-    )
-
-    object_goal_tracking = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "object_goal_tracking", "weight": 30.0, "num_steps": 10000}
-    )
-
-    object_goal_tracking_fine_grained = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "object_goal_tracking_fine_grained", "weight": 10.0, "num_steps": 10000}
     )
 
 
