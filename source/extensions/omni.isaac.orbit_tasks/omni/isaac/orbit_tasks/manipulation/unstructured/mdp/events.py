@@ -16,8 +16,9 @@ if TYPE_CHECKING:
 
 def save_object_pose(
     env: RLTaskEnv,
-    minimal_height: float,
     object_cfg: list[SceneEntityCfg],
+    save_path: str = "/home/kjs-dt/RL/objcet_pose/object_poses_new.npy",
+    minimal_height: float = -0.06,
 ):
     asset: RigidObject | Articulation = env.scene[object_cfg[0].name]
     # get default root state
@@ -41,7 +42,7 @@ def save_object_pose(
     for env_idx in all_object_poses:
         object_dropped = False
         for object_idx in env_idx:
-            if object_idx[2] < -0.06:
+            if object_idx[2] < -minimal_height:
                 object_dropped = True
                 break
         if object_dropped:
