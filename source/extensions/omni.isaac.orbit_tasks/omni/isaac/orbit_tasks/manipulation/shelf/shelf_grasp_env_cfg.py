@@ -90,8 +90,8 @@ class ActionsCfg:
     """
 
     # will be set by agent env cfg
-    body_joint_pos: mdp.JointPositionAction = MISSING
-    finger_joint_pos: mdp.BinaryJointPositionActionCfg = MISSING
+    body_joint_pos: mdp.JointPositionActionCfg = MISSING
+    # finger_joint_pos: mdp.BinaryJointPositionActionCfg = MISSING
 
 @configclass
 class ObservationsCfg:
@@ -117,6 +117,14 @@ class ObservationsCfg:
 
     # observation groups
     policy: PolicyCfg =  PolicyCfg()
+
+@configclass
+class EventCfg:
+    """
+    Configuration for events
+    """
+
+    reset_all = EventTerm(func=mdp.reset_scene_to_default, mode="reset")
 
 
 @configclass
@@ -203,6 +211,7 @@ class ShelfGraspEnvCfg(RLTaskEnvCfg):
     # MDP settings
     rewards: RewardsCfg = RewardsCfg()
     terminations: TerminationsCfg = TerminationsCfg()
+    events: EventCfg = EventCfg()
     curriculum: CurriculumCfg = CurriculumCfg()
 
     def __post_init__(self):
