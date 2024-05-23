@@ -14,7 +14,7 @@ from . import mdp
 
 ##
 # Scene definition
-##s
+##
 
 def SetRigidObjectCfgFromUsdFile(usd_file_name: str):
     return RigidObjectCfg(
