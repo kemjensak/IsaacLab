@@ -45,8 +45,8 @@ class ShelfSceneCfg(InteractiveSceneCfg):
     # Shelf
     shelf = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Shelf",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=(0.5, 0, 0), rot=(0.707, 0, 0, 0.707)),
-        spawn=UsdFileCfg(usd_path=f"") # directory of the Shelf usd file
+        init_state=AssetBaseCfg.InitialStateCfg(pos=(0.5, 0, 0), rot=(1.0, 0.0, 0.0, 0.0)),
+        spawn=UsdFileCfg(usd_path=f"/home/irol/KTH_dt/usd/Arena/Shelf.usd") # directory of the Shelf usd file
     )
 
     # Plane

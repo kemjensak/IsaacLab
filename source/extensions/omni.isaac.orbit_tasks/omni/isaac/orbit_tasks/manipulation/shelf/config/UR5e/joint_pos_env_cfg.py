@@ -24,7 +24,7 @@ class UR5eTargetGraspEnvCfg(ShelfGraspEnvCfg):
 
         self.scene.robot = UR5e_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
         # override events
-        self.events.reset_robot_joints.params["position_range"] = (0.75, 1.25)
+        # self.events.reset_robot_joints.params["position_range"] = (0.75, 1.25)
         # override rewards
         # self.rewards.
 
@@ -33,6 +33,56 @@ class UR5eTargetGraspEnvCfg(ShelfGraspEnvCfg):
             asset_name="robot", joint_names=[".*"], scale=0.5, use_default_offset=True
         )
 
-        # override command generator body
-        # end-effector is along x-direction
+        # set the body name for the end effector
         self.commands.object_pose.body_name =  "ee_link"
+
+        # Set Cup as object
+        self.scene.object = RigidObjectCfg(
+            prim_path="{ENV_REGEX_NS}/Object",
+            init_state=RigidObjectCfg.InitialStateCfg(pos=[0.5, 0, 0.055], rot=[1, 0, 0, 0]),
+            spawn=UsdFileCfg(
+                usd_path=f"/home/irol/KTH_dt/usd/Object/SM_Cup_empty.usd",
+                scale=(1.0, 1.0, 1.0),
+                rigid_props=RigidBodyPropertiesCfg(
+                    solver_position_iteration_count=16,
+                    solver_velocity_iteration_count=1,
+                    max_angular_velocity=1000.0,
+                    max_linear_velocity=1000.0,
+                    max_depenetration_velocity=5.0,
+                    disable_gravity=False,
+                ),
+            ),
+        )
+
+        # Listens to the required transforms
+        marker_cfg = FRAME_MARKER_CFG.copy()
+        marker_cfg.markers["frame"].scale = (0.1, 0.1, 0.1)
+        marker_cfg.prim_path = "/Visuals/FrameTransformer"
+        self.scene.ee_frame = FrameTransformerCfg(
+            prim_path="{ENV_REGEX_NS}/Robot/base_link",
+            debug_vis=False,
+            visualizer_cfg=marker_cfg,
+            target_frames=[
+                FrameTransformerCfg.FrameCfg(
+                    prim_path="{ENV_REGEX_NS}/Robot/tool0",
+                    name="end_effector",
+                    offset=OffsetCfg(
+                        pos=[0.0, 0.0, 0.1],
+                    ),
+                ),
+            ],
+        )
+
+
+@configclass
+class UR5eTargetGraspEnvCfg_PLAY(UR5eTargetGraspEnvCfg):
+    def __post_init__(self):
+        # post init of parent
+        super().__post_init__()
+
+        # make a smaller scene for play
+        self.scene.num_envs = 50
+        self.scene.env_spacing = 3.0
+        # disable randomization for play
+        self.observations.policy.enable_corruption = False
+        
