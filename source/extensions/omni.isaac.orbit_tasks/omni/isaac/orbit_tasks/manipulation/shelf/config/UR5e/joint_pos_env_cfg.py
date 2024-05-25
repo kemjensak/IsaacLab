@@ -1,58 +1,50 @@
-import omni.isaac.orbit.sim as sim_utils
-from omni.isaac.orbit.assets import RigidObjectCfg
-from omni.isaac.orbit.sensors import FrameTransformerCfg, CameraCfg, ContactSensorCfg, RayCasterCfg, patterns 
-from omni.isaac.orbit.sensors.frame_transformer.frame_transformer_cfg import OffsetCfg
-from omni.isaac.orbit.sim.schemas.schemas_cfg import RigidBodyPropertiesCfg, CollisionPropertiesCfg
-from omni.isaac.orbit.sim.spawners.from_files.from_files_cfg import UsdFileCfg
+import math
 from omni.isaac.orbit.utils import configclass
+
+import omni.isaac.orbit_tasks.manipulation.shelf.mdp as mdp
+from omni.isaac.orbit_tasks.manipulation.shelf.shelf_grasp_env_cfg_v2 import ShelfEnvCfg
+
+"""
+Pre-defined configs
+"""
+
+from omni.isaac.orbit_assets import UR5e_CFG
+from omni.isaac.orbit.assets import ArticulationCfg, AssetBaseCfg, RigidObjectCfg
+from omni.isaac.orbit.sim.schemas.schemas_cfg import RigidBodyPropertiesCfg
+from omni.isaac.orbit.sim.spawners.from_files.from_files_cfg import UsdFileCfg
+from omni.isaac.orbit.markers.config import FRAME_MARKER_CFG  # isort: skip
+from omni.isaac.orbit_assets.franka import FRANKA_PANDA_CFG  # isort: skip
+from omni.isaac.orbit.sensors import FrameTransformerCfg
+from omni.isaac.orbit.sensors.frame_transformer.frame_transformer_cfg import OffsetCfg
 from omni.isaac.orbit.utils.assets import ISAAC_NUCLEUS_DIR, NVIDIA_NUCLEUS_DIR
 
-from omni.isaac.orbit_tasks.manipulation.shelf import mdp
-from omni.isaac.orbit_tasks.manipulation.shelf.shelf_grasp_env_cfg import ShelfGraspEnvCfg
 
-##
-# Pre-defined configs
-##
-from omni.isaac.orbit.markers.config import FRAME_MARKER_CFG 
-from omni.isaac.orbit_assets.ur5e import UR5e_CFG
 
+"""
+Environment configuration
+"""
 @configclass
-class UR5eTargetGraspEnvCfg(ShelfGraspEnvCfg):
+class UR5eShelfEnvCfg(ShelfEnvCfg):
     def __post_init__(self):
         # post init of parent
         super().__post_init__()
 
+        # switch robot to ur5e
         self.scene.robot = UR5e_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
         # override events
-        # self.events.reset_robot_joints.params["position_range"] = (0.75, 1.25)
+        self.events.reset_robot_joint.params["position_range"] = (0.75, 1.25)
         # override rewards
-        # self.rewards.
-
+        self.rewards.end_effector_position_tracking.params["asset_cfg"].body_names = ["tool0"]
+        self.rewards.end_effector_orientation_tracking.params["asset_cfg"].body_names = ["tool0"]
         # override actions
-        self.actions.body_joint_pos = mdp.JointPositionActionCfg(
+        self.actions.arm_action = mdp.JointPositionActionCfg(
             asset_name="robot", joint_names=[".*"], scale=0.5, use_default_offset=True
         )
+        # override command generator body
+        # end-effector is along x-direction
+        self.commands.ee_pose.body_name = "tool0"
+        self.commands.ee_pose.ranges.pitch = (math.pi / 2, math.pi / 2)
 
-        # set the body name for the end effector
-        self.commands.object_pose.body_name =  "ee_link"
-
-        # Set Cup as object
-        self.scene.object = RigidObjectCfg(
-            prim_path="{ENV_REGEX_NS}/Object",
-            init_state=RigidObjectCfg.InitialStateCfg(pos=[0.5, 0, 0.055], rot=[1, 0, 0, 0]),
-            spawn=UsdFileCfg(
-                usd_path=f"/home/irol/KTH_dt/usd/Object/SM_Cup_empty.usd",
-                scale=(1.0, 1.0, 1.0),
-                rigid_props=RigidBodyPropertiesCfg(
-                    solver_position_iteration_count=16,
-                    solver_velocity_iteration_count=1,
-                    max_angular_velocity=1000.0,
-                    max_linear_velocity=1000.0,
-                    max_depenetration_velocity=5.0,
-                    disable_gravity=False,
-                ),
-            ),
-        )
 
         # Listens to the required transforms
         marker_cfg = FRAME_MARKER_CFG.copy()
@@ -67,22 +59,19 @@ class UR5eTargetGraspEnvCfg(ShelfGraspEnvCfg):
                     prim_path="{ENV_REGEX_NS}/Robot/tool0",
                     name="end_effector",
                     offset=OffsetCfg(
-                        pos=[0.0, 0.0, 0.1],
+                        pos=[0.0, 0.0, 0.1034],
                     ),
                 ),
             ],
         )
 
-
 @configclass
-class UR5eTargetGraspEnvCfg_PLAY(UR5eTargetGraspEnvCfg):
+class UR5eShelfEnvCfg_PLAY(UR5eShelfEnvCfg):
     def __post_init__(self):
         # post init of parent
         super().__post_init__()
-
         # make a smaller scene for play
         self.scene.num_envs = 50
-        self.scene.env_spacing = 3.0
+        self.scene.env_spacing = 2.5
         # disable randomization for play
         self.observations.policy.enable_corruption = False
-        
