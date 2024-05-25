@@ -40,8 +40,6 @@ class ShelfSceneCfg(InteractiveSceneCfg):
     # target object: will be popluated by agent env cfg
     object: RigidObjectCfg = MISSING
 
-
-
     # Shelf
     shelf = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Shelf",

@@ -19,10 +19,9 @@ from . import mdp
 def SetRigidObjectCfgFromUsdFile(usd_file_name: str):
     return RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/"+(usd_file_name),
-            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.6, 0.0, 0.055), rot=(1.0, 0.0, 0.0, 0.0)),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=(0.7, 0.0, 0.405), rot=(1.0, 0.0, 0.0, 0.0)),
             spawn=UsdFileCfg(
-                usd_path=f"/home/KTH_dt/usd/"+(usd_file_name)+".usd", #usd_path -> local directory
-                scale=(0.01, 0.01, 0.01),
+                usd_path=f"/home/irol/KTH_dt/usd/Object/"+(usd_file_name)+".usd", #usd_path -> local directory
                 rigid_props=RigidBodyPropertiesCfg(
                 solver_position_iteration_count=16,
                 solver_velocity_iteration_count=1,

@@ -24,7 +24,7 @@ from omni.isaac.orbit.utils.assets import ISAAC_ORBIT_NUCLEUS_DIR
 
 UR5e_CFG = ArticulationCfg(
     spawn=sim_utils.UsdFileCfg(
-        usd_path=f"/home/irol/KTH_dt/usd/Robots/UR5e/ur5e_instanceable.usd",
+        usd_path="/home/irol/KTH_dt/usd/Robots/UR5e/UR5e.usd",
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
             disable_gravity=False,
             max_depenetration_velocity=5.0,
@@ -32,6 +32,8 @@ UR5e_CFG = ArticulationCfg(
         activate_contact_sensors=False,
     ),
     init_state=ArticulationCfg.InitialStateCfg(
+        pos=(0.0, 0.0, 0.0),
+        rot=(0.7071,0 ,0 ,0.7071),
         joint_pos={
             "shoulder_pan_joint": 0.0,
             "shoulder_lift_joint": -1.712,
@@ -51,4 +53,4 @@ UR5e_CFG = ArticulationCfg(
         ),
     },
 )
-"""Configuration of UR-10 arm using implicit actuator models."""
+

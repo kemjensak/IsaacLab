@@ -14,6 +14,7 @@ from omni.isaac.orbit_tasks.manipulation.reach.reach_env_cfg import ReachEnvCfg
 # Pre-defined configs
 ##
 from omni.isaac.orbit_assets import UR10_CFG  # isort: skip
+from omni.isaac.orbit_assets import UR5e_CFG
 
 
 ##
