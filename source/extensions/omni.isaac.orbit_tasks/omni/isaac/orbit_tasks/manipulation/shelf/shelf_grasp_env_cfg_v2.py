@@ -35,16 +35,26 @@ class ShelfSceneCfg(InteractiveSceneCfg):
         spawn=GroundPlaneCfg(),
     )
 
-    # table = AssetBaseCfg(
-    #     prim_path="{ENV_REGEX_NS}/Table",
-    #     init_state=AssetBaseCfg.InitialStateCfg(pos=[0.5, 0, 0], rot=[0.707, 0, 0, 0.707]),
-    #     spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd"),
-    # )
+    table = AssetBaseCfg(
+        prim_path="{ENV_REGEX_NS}/Table",
+        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.0, 0.8, 0], rot=[0.707, 0, 0, 0.707]),
+        spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd"),
+    )
 
     shelf = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Shelf",
-        spawn=UsdFileCfg(usd_path=f"/home/irol/KTH_dt/usd/Arena/Shelf2.usd",),
-        init_state=AssetBaseCfg.InitialStateCfg(pos=(0.7, 0.0, 0.0), rot=(1.0, 0.0, 0.0, 0.0)),
+        spawn=UsdFileCfg(usd_path=f"/home/irol/KTH_dt/usd/Arena/Shelf3.usd",),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=(0.9, 0.0, 0.0), rot=(0.0, 0.0, 0.0, 1.0)),
+    )
+
+    mount_cfg = RigidObjectCfg(
+        prim_path="{ENV_REGEX_NS}/Mount",
+        spawn=sim_utils.CuboidCfg(
+            size=(0.3, 0.3, 0.3),
+            rigid_props=sim_utils.RigidBodyPropertiesCfg(),
+            collision_props=sim_utils.CollisionPropertiesCfg(),
+        ),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.15), rot=(0.0, 0.0, 0.0, 1.0))
     )
 
     # objects
@@ -77,8 +87,8 @@ class CommandsCfg:
             pos_y=(-0.2, 0.2),
             pos_z=(0.15, 0.5),
             roll=(0.0, 0.0),
-            pitch=MISSING,
-            yaw=(-3.14, 3.14),
+            pitch=(0.0, 0.0),
+            yaw=(0.0, 0.0),
         ),
     )
 
@@ -86,8 +96,8 @@ class CommandsCfg:
 class ActionsCfg:
     """Action specifications for the MDP"""
 
-    arm_action: ActionTerm = MISSING
-    gripper_aciton: ActionTerm | None = None
+    arm_action: mdp.JointPositionActionCfg = MISSING
+    gripper_aciton: mdp.BinaryJointPositionActionCfg = MISSING
 
 @configclass
 class ObservationsCfg:
@@ -119,7 +129,7 @@ class EventCfg:
         func=mdp.reset_joints_by_scale,
         mode="reset",
         params={
-            "position_range": (0.5, 1.5),
+            "position_range": (0.0, 0.0),
             "velocity_range": (0.0, 0.0),
         },
     )
