@@ -38,7 +38,7 @@ class ShelfSceneCfg(InteractiveSceneCfg):
     table = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Table",
         init_state=AssetBaseCfg.InitialStateCfg(pos=[0.0, 0.8, 0], rot=[0.707, 0, 0, 0.707]),
-        spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd"),
+        spawn=UsdFileCfg(usd_path=f"/home/irol/KTH_dt/usd/Arena/Table.usd"),
     )
 
     shelf = AssetBaseCfg(
@@ -124,13 +124,17 @@ class ObservationsCfg:
 @configclass
 class EventCfg:
     """Configuration for events"""
+    
+    reset_all = EventTerm(func=mdp.reset_scene_to_default, mode="reset")
 
-    reset_robot_joint = EventTerm(
-        func=mdp.reset_joints_by_scale,
+    # 처음 asset 생성한 coordinate 기준으로 pose range 세팅 (not global frame!!)
+    reset_object_position = EventTerm(
+        func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "position_range": (0.0, 0.0),
-            "velocity_range": (0.0, 0.0),
+            "pose_range": {"x": (-0.1, 0.1), "y": (-0.25, 0.25), "z": (0.0, 0.0)},
+            "velocity_range": {},
+            "asset_cfg": SceneEntityCfg("cup", body_names="SM_Cup_empty")
         },
     )
 

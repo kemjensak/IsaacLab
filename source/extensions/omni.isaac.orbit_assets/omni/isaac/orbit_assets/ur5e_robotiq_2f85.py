@@ -41,8 +41,8 @@ UR5e_2f85_CFG = ArticulationCfg(
             "wrist_1_joint": 0.0,
             "wrist_2_joint": 0.0,
             "wrist_3_joint": 0.0,
-            "left_outer_knuckle_joint" : 0.0,
-            "right_outer_knuckle_joint": 0.0,
+            "left_outer_knuckle_joint" : 0.5,
+            "right_outer_knuckle_joint": -0.5,
         },
     ),
     actuators={
