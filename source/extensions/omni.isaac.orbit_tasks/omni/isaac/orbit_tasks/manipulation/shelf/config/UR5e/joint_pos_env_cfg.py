@@ -31,10 +31,7 @@ class UR5eShelfEnvCfg(ShelfEnvCfg):
 
         # switch robot to ur5e
         self.scene.robot = UR5e_2f85_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
-        # override rewards
-        self.rewards.end_effector_position_tracking.params["asset_cfg"].body_names = ["robotiq_arg2f_base_link"]
-        self.rewards.end_effector_orientation_tracking.params["asset_cfg"].body_names = ["robotiq_arg2f_base_link"]
-        # override actions
+        # Set actions for the specific robot type (UR5e with Gripper)
         self.actions.arm_action = mdp.JointPositionActionCfg(
             asset_name="robot", 
             joint_names=["shoulder_pan_joint",
@@ -48,15 +45,34 @@ class UR5eShelfEnvCfg(ShelfEnvCfg):
         )
         self.actions.gripper_aciton = mdp.BinaryJointPositionActionCfg(
             asset_name="robot",
-            joint_names=["left_inner_knuckle_joint", "right_inner_knuckle_joint"],
-            open_command_expr={"left_inner_knuckle_joint": 0.0, "right_inner_knuckle_joint": 0.0},
-            close_command_expr={"left_inner_knuckle_joint": 0.5, "right_inner_knuckle_joint": -0.5},
+            joint_names=["left_outer_knuckle_joint", "right_outer_knuckle_joint"],
+            open_command_expr={"left_outer_knuckle_joint": 0.0, "right_outer_knuckle_joint": 0.0},
+            close_command_expr={"left_outer_knuckle_joint": 0.4, "right_outer_knuckle_joint": -0.4},
         )
+                
+        # Listens to the required transforms
+        marker_cfg = FRAME_MARKER_CFG.copy()
+        marker_cfg.markers["frame"].scale = (0.1, 0.1, 0.1)
+        marker_cfg.prim_path = "/Visual/FrameTransformer"
+        self.scene.ee_frame = FrameTransformerCfg(
+            prim_path="{ENV_REGEX_NS}/Robot/base_link",
+            debug_vis=True,
+            visualizer_cfg=marker_cfg,
+            target_frames=[FrameTransformerCfg.FrameCfg(
+                            prim_path="{ENV_REGEX_NS}/Robot/robotiq_arg2f_base_link",
+                            name="end_effector",
+                            offset=OffsetCfg(
+                                pos=[0.0, 0.0, 0.1770],
+                            ),
+                ),
+            ],
+        )
+
         
-        # override command generator body
-        # end-effector is along x-direction
-        self.commands.ee_pose.body_name = "robotiq_arg2f_base_link"
-        
+
+
+        self.rewards.grasp_target.params["open_joint_pos"] = 0.0
+        self.rewards.grasp_target.params["asset_cfg"].joint_names = ["left_outer_knuckle_joint", "right_outer_knuckle_joint"]
 
 @configclass
 class UR5eShelfEnvCfg_PLAY(UR5eShelfEnvCfg):

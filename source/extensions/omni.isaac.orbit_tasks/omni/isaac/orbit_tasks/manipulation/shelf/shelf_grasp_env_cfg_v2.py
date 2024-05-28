@@ -20,6 +20,10 @@ from omni.isaac.orbit.utils.noise import AdditiveUniformNoiseCfg as Unoise
 from omni.isaac.orbit_tasks.manipulation.shelf import shelf_env_tools as tools
 import omni.isaac.orbit_tasks.manipulation.shelf.mdp as mdp
 
+from omni.isaac.orbit.markers.config import FRAME_MARKER_CFG 
+
+
+
 
 """
 Scene definition
@@ -29,24 +33,29 @@ Scene definition
 class ShelfSceneCfg(InteractiveSceneCfg):
     """Configuration for the scene with a robotic arm"""
 
+    # plane
     plane = AssetBaseCfg(
         prim_path="/World/GroundPlane",
         init_state=AssetBaseCfg.InitialStateCfg(pos=[0, 0, 0]),
         spawn=GroundPlaneCfg(),
     )
 
+    # table
     table = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Table",
         init_state=AssetBaseCfg.InitialStateCfg(pos=[0.0, 0.8, 0], rot=[0.707, 0, 0, 0.707]),
         spawn=UsdFileCfg(usd_path=f"/home/irol/KTH_dt/usd/Arena/Table.usd"),
     )
 
+    #shelf
     shelf = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Shelf",
         spawn=UsdFileCfg(usd_path=f"/home/irol/KTH_dt/usd/Arena/Shelf3.usd",),
         init_state=AssetBaseCfg.InitialStateCfg(pos=(0.9, 0.0, 0.0), rot=(0.0, 0.0, 0.0, 1.0)),
+        debug_vis=True,
     )
 
+    # robot mount
     mount_cfg = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/Mount",
         spawn=sim_utils.CuboidCfg(
@@ -54,8 +63,10 @@ class ShelfSceneCfg(InteractiveSceneCfg):
             rigid_props=sim_utils.RigidBodyPropertiesCfg(),
             collision_props=sim_utils.CollisionPropertiesCfg(),
         ),
-        init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.15), rot=(0.0, 0.0, 0.0, 1.0))
+        init_state=RigidObjectCfg.InitialStateCfg(),
     )
+
+
 
     # objects
     cup = tools.SetRigidObjectCfgFromUsdFile("SM_Cup_empty")
@@ -69,6 +80,7 @@ class ShelfSceneCfg(InteractiveSceneCfg):
         spawn=sim_utils.DomeLightCfg(color=(0.75, 0.75, 0.75), intensity=2500.0),
     )
 
+
 """
 MDP settings
 """
@@ -77,20 +89,7 @@ MDP settings
 class CommandsCfg:
     """Command terms for the MDP"""
 
-    ee_pose = mdp.UniformPoseCommandCfg(
-        asset_name="robot",
-        body_name=MISSING,
-        resampling_time_range=(4.0, 4.0),
-        debug_vis=True,
-        ranges=mdp.UniformPoseCommandCfg.Ranges(
-            pos_x=(0.35, 0.65),
-            pos_y=(-0.2, 0.2),
-            pos_z=(0.15, 0.5),
-            roll=(0.0, 0.0),
-            pitch=(0.0, 0.0),
-            yaw=(0.0, 0.0),
-        ),
-    )
+    null_command = mdp.NullCommandCfg() 
 
 @configclass
 class ActionsCfg:
@@ -110,7 +109,6 @@ class ObservationsCfg:
         # observation terms (order preserved)
         joint_pos = ObsTerm(func=mdp.joint_pos_rel, noise=Unoise(n_min=-0.01, n_max=0.01))
         joint_vel = ObsTerm(func=mdp.joint_vel_rel, noise=Unoise(n_min=-0.01, n_max=0.01))
-        pose_command = ObsTerm(func=mdp.generated_commands, params={"command_name": "ee_pose"})
         actions = ObsTerm(func=mdp.last_action)
 
 
@@ -143,17 +141,9 @@ class RewardsCfg:
     """Reward terms  for the MDP"""
 
     # task terms
-    end_effector_position_tracking = RewTerm(
-        func=mdp.position_command_error,
-        weight=-0.2,
-        params={"asset_cfg": SceneEntityCfg("robot", body_names=MISSING), "command_name": "ee_pose"},
-    )
-    end_effector_orientation_tracking = RewTerm(
-        func=mdp.orientation_command_error,
-        weight=-0.05,
-        params={"asset_cfg": SceneEntityCfg("robot", body_names=MISSING), "command_name": "ee_pose"},
-    )
-
+    # align_ee_target = RewTerm(func=mdp.align_ee_target, weight=0.5)
+    reaching_object = RewTerm(func=mdp.object_ee_distance, params={"std": 0.1}, weight=1.0)
+    grasp_target = RewTerm(func=mdp.object_is_grasped, weight= 0.5, params={"threshold": 0.03, "open_joint_pos": MISSING, "asset_cfg": SceneEntityCfg("robot", joint_names=MISSING)})
     # action penalty
     action_rate = RewTerm(func=mdp.action_rate_l2, weight=-0.0001)
     joint_vel = RewTerm(

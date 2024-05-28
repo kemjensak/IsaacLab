@@ -31,5 +31,5 @@ def SetRigidObjectCfgFromUsdFile(usd_file_name: str):
                 disable_gravity=False,
                 ),
                 mass_props=sim_utils.MassPropertiesCfg(mass=0.3)
-            )
+            ),
         )

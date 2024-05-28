@@ -35,9 +35,9 @@ UR5e_2f85_CFG = ArticulationCfg(
         pos=(0.0, 0.0, 0.3),
         rot=(0.7071,0 ,0 ,0.7071),
         joint_pos={
-            "shoulder_pan_joint": -1.712,
-            "shoulder_lift_joint": -1.712,
-            "elbow_joint": 1.712,
+            "shoulder_pan_joint": 0.0,
+            "shoulder_lift_joint": -2.7,
+            "elbow_joint": 2.6,
             "wrist_1_joint": 0.0,
             "wrist_2_joint": 0.0,
             "wrist_3_joint": 0.0,
