@@ -14,6 +14,7 @@ from omni.isaac.orbit.utils.assets import ISAAC_NUCLEUS_DIR, NVIDIA_NUCLEUS_DIR
 
 from omni.isaac.orbit_tasks.manipulation.unstructured import mdp
 from omni.isaac.orbit_tasks.manipulation.unstructured.unstructured_flip_env_cfg import UnstructuredFlipEnvCfg
+from omni.isaac.orbit.assets.articulation import ArticulationCfg
 
 ##
 # Pre-defined configs
@@ -28,7 +29,20 @@ class FrankaFlipObjectEnvCfg(UnstructuredFlipEnvCfg):
         super().__post_init__()
 
         # Set Franka as robot
-        self.scene.robot = FRANKA_PANDA_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
+        self.scene.robot = FRANKA_PANDA_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot",
+                                                    init_state=ArticulationCfg.InitialStateCfg(
+                                                        joint_pos={
+                                                            "panda_joint1": -1.5708,
+                                                            "panda_joint2": 0.0,
+                                                            "panda_joint3": 0.785398,
+                                                            "panda_joint4": -3.05433,
+                                                            "panda_joint5": 2.04204, # 0.0
+                                                            "panda_joint6": 1.67552,
+                                                            "panda_joint7": 0.837758,
+                                                            "panda_finger_joint.*": 0.04,
+                                                        },
+                                                    )
+        )
 
         # Set actions for the specific robot type (franka)
         self.actions.body_joint_pos = mdp.JointPositionActionCfg(
@@ -40,26 +54,24 @@ class FrankaFlipObjectEnvCfg(UnstructuredFlipEnvCfg):
             open_command_expr={"panda_finger_.*": 0.04},
             close_command_expr={"panda_finger_.*": 0.0},
         )
-        # Set the body name for the end effector
-        self.commands.object_pose.body_name = "panda_hand"
 
         # Set Cube as object
-        self.scene.object = RigidObjectCfg(
-            prim_path="{ENV_REGEX_NS}/Object",
-            init_state=RigidObjectCfg.InitialStateCfg(pos=[0.5, 0, 0.055], rot=[1, 0, 0, 0]),
-            spawn=UsdFileCfg(
-                usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Blocks/DexCube/dex_cube_instanceable.usd",
-                scale=(0.8, 0.8, 0.8),
-                rigid_props=RigidBodyPropertiesCfg(
-                    solver_position_iteration_count=16,
-                    solver_velocity_iteration_count=1,
-                    max_angular_velocity=1000.0,
-                    max_linear_velocity=1000.0,
-                    max_depenetration_velocity=5.0,
-                    disable_gravity=False,
-                ),
-            ),
-        )
+        # self.scene.object = RigidObjectCfg(
+        #     prim_path="{ENV_REGEX_NS}/Object",
+        #     init_state=RigidObjectCfg.InitialStateCfg(pos=[0.5, 0, 0.055], rot=[1, 0, 0, 0]),
+        #     spawn=UsdFileCfg(
+        #         usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Blocks/DexCube/dex_cube_instanceable.usd",
+        #         scale=(0.8, 0.8, 0.8),
+        #         rigid_props=RigidBodyPropertiesCfg(
+        #             solver_position_iteration_count=16,
+        #             solver_velocity_iteration_count=1,
+        #             max_angular_velocity=1000.0,
+        #             max_linear_velocity=1000.0,
+        #             max_depenetration_velocity=5.0,
+        #             disable_gravity=False,
+        #         ),
+        #     ),
+        # )
 
         # Listens to the required transforms
         marker_cfg = FRAME_MARKER_CFG.copy()
