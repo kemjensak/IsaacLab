@@ -65,7 +65,8 @@ class UnstructuredTableSceneCfg(InteractiveSceneCfg):
     table = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Table",
         init_state=AssetBaseCfg.InitialStateCfg(pos=[0.5, 0, 0], rot=[0.707, 0, 0, 0.707]),
-        spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd"),
+        spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd",
+                         scale=(1.5, 1.5, 1.0),),
     )
     
     # plane
@@ -144,7 +145,7 @@ class ObservationsCfg:
     policy: PolicyCfg = PolicyCfg()
 
 
-book_reset_pose_range : dict[str, tuple[float, float]] = {"x": (-0.1, -0.0), "y": (0.05, 0.15), "z": (0.03, 0.03),
+book_reset_pose_range : dict[str, tuple[float, float]] = {"x": (-0.12, -0.08), "y": (0.07, 0.13), "z": (0.03, 0.03),
                         "roll": (-0.0, 0.0), "pitch": (-0.0, 0.0), "yaw": (89.0, 91.0)}
 @configclass
 class EventCfg:
@@ -231,7 +232,7 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.13, -0.13), "y": (-0.0, 0.0), "z": (0.0, 0.0),
+            "pose_range": {"x": (-0.23, -0.20), "y": (-0.0, 0.0), "z": (0.0, 0.0),
                            "roll": (-90.0, -90.0), "pitch": (-0.0, 0.0), "yaw": (-0.0, 0.0)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("salt_box"),
@@ -268,20 +269,27 @@ class RewardsCfg:
     lifting_object = RewTerm(
         func=mdp.object_is_lifted_from_initial,
         params={"minimal_height": 0.02, "asset_cfg": SceneEntityCfg("book_01")},
-        weight=15.0
+        weight=2.0
     )
 
     object_rotation = RewTerm(
         func=mdp.target_object_rotation,
         params={},
+        weight=1.0
+    )
+
+    object_reach = RewTerm(
+        func=mdp.grasp_reward_in_flip_action,
+        params={},
         weight=2.0
     )
 
-    book_grasp = RewTerm(
-        func=mdp.grasp_reward_in_flip_action,
-        params={},
-        weight=1.0
+    object_flip = RewTerm(
+        func=mdp.object_is_flipped,
+        params={"object_cfg": SceneEntityCfg("book_01")},
+        weight=10.0
     )
+
 
     # action penalty
     action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-3)
@@ -362,11 +370,17 @@ class CurriculumCfg:
         func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 10000}
     )
 
-    joint_vel = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "object_rotation", "weight": 4.0, "num_steps": 10000}
-    )
-
+    # object_rotation = CurrTerm(
+    #     func=mdp.modify_reward_weight, params={"term_name": "object_rotation", "weight": 4.0, "num_steps": 10000}
+    # )
     
+    # object_flip = CurrTerm(
+    #     func=mdp.modify_reward_weight, params={"term_name": "object_flip", "weight": 4.0, "num_steps": 10000}
+    # )
+    
+    # lifting_object = CurrTerm(
+    #     func=mdp.modify_reward_weight, params={"term_name": "lifting_object", "weight": 1e-1, "num_steps": 10000}
+    # )
 
 
 ##

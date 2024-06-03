@@ -150,7 +150,7 @@ class ObservationsCfg:
 book_reset_pose_range : dict[str, tuple[float, float]] = {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.1, 0.1),
                         "roll": (-0.0, 0.0), "pitch": (-0.0, 0.0), "yaw": (-180.0, 180.0)}
 
-loaded_object_poses = torch.from_numpy(np.load("/home/kjs-dt/RL/objcet_pose/object_poses.npy")).to('cuda')
+
 
 @configclass
 class EventCfg:
@@ -257,7 +257,7 @@ class EventCfg:
                            SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01"),
                            SceneEntityCfg("rubix_cube"),
                            SceneEntityCfg("salt_box")],
-            "loaded_object_poses": loaded_object_poses
+            "loaded_object_poses": torch.from_numpy(np.load("/home/kjs-dt/RL/objcet_pose/object_poses_grasp.npy")).to('cuda')
         },
     )
 
@@ -287,7 +287,8 @@ class RewardsCfg:
 
     reaching_object = RewTerm(func=mdp.object_ee_distance, params={"std": 0.1}, weight=1.0)
 
-    lifting_object = RewTerm(func=mdp.object_is_lifted, params={"minimal_height": 0.06}, weight=15.0)
+    # lifting_object = RewTerm(func=mdp.object_is_lifted, params={"minimal_height": 0.06}, weight=30.0) # 15
+    lifting_object = RewTerm(func=mdp.object_is_lifted_from_initial, params={"minimal_height": 0.06}, weight=15.0) # 15
 
     object_goal_tracking = RewTerm(
         func=mdp.object_goal_distance,
@@ -310,18 +311,18 @@ class RewardsCfg:
         params={"asset_cfg": SceneEntityCfg("robot")},
     )
 
-    touching_other_object = RewTerm(
-        func=mdp.touching_other_object,
-        weight=-5.0,
-        params={"asset_cfg_list": [SceneEntityCfg("apple_01"),
-                                SceneEntityCfg("book_01"),
-                                SceneEntityCfg("kiwi01"),
-                                SceneEntityCfg("lemon_01"),
-                                SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01"),
-                                SceneEntityCfg("rubix_cube"),
-                                SceneEntityCfg("salt_box")],
-                },
-    )
+    # touching_other_object = RewTerm(
+    #     func=mdp.touching_other_object,
+    #     weight=-1e-4,
+    #     params={"asset_cfg_list": [SceneEntityCfg("apple_01"),
+    #                             SceneEntityCfg("book_01"),
+    #                             SceneEntityCfg("kiwi01"),
+    #                             SceneEntityCfg("lemon_01"),
+    #                             SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01"),
+    #                             SceneEntityCfg("rubix_cube"),
+    #                             SceneEntityCfg("salt_box")],
+    #             },
+    # )
 
 
 @configclass
@@ -369,21 +370,30 @@ class TerminationsCfg:
 class CurriculumCfg:
     """Curriculum terms for the MDP."""
 
+    # TODO: FOR 4096 ENVS NOW
     action_rate = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "action_rate", "weight": -1e-1, "num_steps": 10000}
-    )
+        func=mdp.modify_reward_weight, params={"term_name": "action_rate", "weight": -1e-1, "num_steps": 15000}
+    ) # 10000
 
     joint_vel = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 10000}
-    )
+        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 15000}
+    ) # 10000
+
+    lifting_object = CurrTerm(
+        func=mdp.modify_reward_weight, params={"term_name": "lifting_object", "weight": 20.0, "num_steps": 10000} #60
+    ) # 10000
 
     object_goal_tracking = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "object_goal_tracking", "weight": 30.0, "num_steps": 10000}
-    )
+        func=mdp.modify_reward_weight, params={"term_name": "object_goal_tracking", "weight": 30.0, "num_steps": 10000} #30
+    ) # 10000
 
     object_goal_tracking_fine_grained = CurrTerm(
         func=mdp.modify_reward_weight, params={"term_name": "object_goal_tracking_fine_grained", "weight": 10.0, "num_steps": 10000}
-    )
+    ) # 10000
+
+    # touching_other_object = CurrTerm(
+    #     func=mdp.modify_reward_weight, params={"term_name": "touching_other_object", "weight": -2e-4, "num_steps": 10000}
+    # )
 
 
 ##
@@ -411,7 +421,7 @@ class UnstructuredGraspEnvCfg(RLTaskEnvCfg):
         """Post initialization."""
         # general settings
         self.decimation = 2
-        self.episode_length_s = 5.0
+        self.episode_length_s = 7.0
         # simulation settings
         self.sim.dt = 0.01  # 100Hz
 

@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from omni.isaac.orbit.assets import RigidObject
 from omni.isaac.orbit.managers import SceneEntityCfg, ManagerTermBase
 from omni.isaac.orbit.sensors import FrameTransformer
-from omni.isaac.orbit.utils.math import combine_frame_transforms, quat_error_magnitude, transform_points, apply_delta_pose, quat_from_euler_xyz, axis_angle_from_quat, quat_box_minus, quat_inv, quat_mul
+from omni.isaac.orbit.utils.math import combine_frame_transforms, quat_error_magnitude, transform_points, quat_apply, quat_from_euler_xyz, axis_angle_from_quat, quat_box_minus, quat_inv, quat_mul
 from omni.isaac.orbit.managers import RewardTermCfg as RewTerm
 from omni.isaac.orbit.markers.config import FRAME_MARKER_CFG # isort: skip
 from omni.isaac.orbit.markers import VisualizationMarkers
@@ -47,9 +47,9 @@ class target_object_rotation(ManagerTermBase):
 
         # 두 quaternion 사이의 차이를 rad로 계산
         quat_err = torch.abs(quat_error_magnitude(self._initial_object_quat[:, :4], self._asset.data.root_state_w[:, 3:7]))
-        
-
-        return torch.tanh(quat_err/3.14)
+        reward = torch.where(quat_err > 1.0, 1.0, torch.tanh(quat_err/1.57))
+        # print(torch.tanh(quat_err/1.57))
+        return torch.tanh(quat_err/1.57)
 
 
 # TODO: 정상작동 확인 필요
@@ -289,6 +289,17 @@ class grasp_reward_in_flip_action(ManagerTermBase):
         return torch.where((distance >= threshold) &
                            (torch.sum(torch.abs(asset.data.root_lin_vel_b[:, :3]), dim=1)>0.05),
                             1, 0)
+    
+def object_is_flipped(
+    env: RLTaskEnv, object_cfg: SceneEntityCfg = SceneEntityCfg("book_01")
+) -> torch.Tensor:
+    """Reward the agent for flipping the object."""
+    object: RigidObject = env.scene[object_cfg.name]
+    z_axis = torch.tensor([0.0, 0.0, 1.0], device=env.device).repeat(env.num_envs, 1)
+    z_component = quat_apply(object.data.root_quat_w, z_axis)[:, 2]
+    print(z_component)
+    # print(torch.where(z_component < 0.0, torch.tanh(-z_component*2), torch.tanh(z_component)))
+    return torch.where(z_component < 0.0, torch.tanh(-z_component*2), torch.tanh(-z_component))
 
 def object_is_lifted(
     env: RLTaskEnv, minimal_height: float, object_cfg: SceneEntityCfg = SceneEntityCfg("object")
