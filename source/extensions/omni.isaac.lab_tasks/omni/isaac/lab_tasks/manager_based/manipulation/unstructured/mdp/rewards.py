@@ -8,7 +8,7 @@ from __future__ import annotations
 import torch
 from typing import TYPE_CHECKING
 
-from omni.isaac.lab.assets import RigidObject
+from omni.isaac.lab.assets import Articulation, RigidObject
 from omni.isaac.lab.managers import SceneEntityCfg, ManagerTermBase
 from omni.isaac.lab.sensors import FrameTransformer
 from omni.isaac.lab.utils.math import combine_frame_transforms, quat_error_magnitude, transform_points, quat_apply, quat_from_euler_xyz, axis_angle_from_quat, quat_box_minus, quat_inv, quat_mul
@@ -290,6 +290,21 @@ class grasp_reward_in_flip_action(ManagerTermBase):
                            (torch.sum(torch.abs(asset.data.root_lin_vel_b[:, :3]), dim=1)>0.05),
                             1, 0)
     
+def home_after_flip(
+        env: ManagerBasedRLEnv,
+) -> torch.Tensor:
+    """Reward the agent for returning to the home position after flipping."""
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")
+    asset: Articulation = env.scene[asset_cfg.name]
+    object_cfg: SceneEntityCfg = SceneEntityCfg("book_01")
+    object: RigidObject = env.scene[object_cfg.name]
+    z_axis = torch.tensor([0.0, 0.0, 1.0], device=env.device).repeat(env.num_envs, 1)
+    z_component = quat_apply(object.data.root_quat_w, z_axis)[:, 2]
+    reward_for_home_pose = torch.sum(asset.data.joint_pos[:, asset_cfg.joint_ids] - asset.data.default_joint_pos[:, asset_cfg.joint_ids], dim=1)
+    
+    return torch.where(z_component < 0.0, reward_for_home_pose, 0)
+
+    
 def object_is_flipped(
     env: ManagerBasedRLEnv, object_cfg: SceneEntityCfg = SceneEntityCfg("book_01")
 ) -> torch.Tensor:
@@ -297,8 +312,7 @@ def object_is_flipped(
     object: RigidObject = env.scene[object_cfg.name]
     z_axis = torch.tensor([0.0, 0.0, 1.0], device=env.device).repeat(env.num_envs, 1)
     z_component = quat_apply(object.data.root_quat_w, z_axis)[:, 2]
-    print(z_component)
-    # print(torch.where(z_component < 0.0, torch.tanh(-z_component*2), torch.tanh(z_component)))
+
     return torch.where(z_component < 0.0, torch.tanh(-z_component*2), torch.tanh(-z_component))
 
 def object_is_lifted(
