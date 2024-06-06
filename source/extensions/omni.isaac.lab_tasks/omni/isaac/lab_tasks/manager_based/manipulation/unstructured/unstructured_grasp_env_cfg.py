@@ -257,7 +257,6 @@ class EventCfg:
                            SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01"),
                            SceneEntityCfg("rubix_cube"),
                            SceneEntityCfg("salt_box")],
-            "loaded_object_poses": torch.from_numpy(np.load("/home/kjs-dt/RL/objcet_pose/object_poses_grasp.npy")).to('cuda')
         },
     )
 
