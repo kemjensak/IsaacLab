@@ -57,10 +57,9 @@ def reset_root_state_from_file(
     env: ManagerBasedEnv,
     env_ids: torch.Tensor,
     object_cfg: list[SceneEntityCfg],
-    loaded_object_poses: torch.Tensor = torch.from_numpy(np.load("/home/kjs-dt/RL/objcet_pose/object_poses_grasp.npy")).to('cuda'),
     asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
 ):
-    # loaded_object_poses = torch.from_numpy(np.load("/home/kjs-dt/RL/objcet_pose/object_poses_grasp.npy")).to('cuda')
+    loaded_object_poses: torch.Tensor = torch.from_numpy(np.load("/home/kjs-dt/RL/objcet_pose/object_poses_grasp.npy")).to('cuda')
     # extract the used quantities (to enable type-hinting)
     asset: RigidObject | Articulation = env.scene[object_cfg[0].name]
     # get default root state
