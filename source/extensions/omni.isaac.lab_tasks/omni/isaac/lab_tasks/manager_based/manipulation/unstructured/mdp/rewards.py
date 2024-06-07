@@ -19,7 +19,6 @@ from omni.isaac.lab.markers import VisualizationMarkers
 if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedRLEnv
 
-# TODO: 완성 후 정상작동 확인 필요
 class target_object_rotation(ManagerTermBase):
     def __init__(self, cfg: RewTerm, env: ManagerBasedRLEnv):
         super().__init__(cfg, env)
@@ -51,8 +50,6 @@ class target_object_rotation(ManagerTermBase):
         # print(torch.tanh(quat_err/1.57))
         return torch.tanh(quat_err/1.57)
 
-
-# TODO: 정상작동 확인 필요
 class object_is_lifted_from_initial(ManagerTermBase):
 
     def __init__(self, cfg: RewTerm, env: ManagerBasedRLEnv):
@@ -78,7 +75,7 @@ class object_is_lifted_from_initial(ManagerTermBase):
         return torch.where(self._asset.data.root_pos_w[:, 2] > (self._initial_object_height + minimal_height), 1.0, 0.0)
 
 # TODO: 정상작동 확인 필요
-class grasp_reward_in_flip_action(ManagerTermBase):
+class flip_rewards(ManagerTermBase):
 
     def __init__(self, cfg: RewTerm, env: ManagerBasedRLEnv):
         super().__init__(cfg, env)
@@ -116,15 +113,25 @@ class grasp_reward_in_flip_action(ManagerTermBase):
         self._right_offset[:,3:7] = torch.tensor([-0.70711, 0.0, -0.70711, 0.0])  # x-down z-center
         # self._right_offset[:,3:7] = torch.tensor([0, 0, 0])
 
+        self._initial_object_poses = self._asset.data.root_pos_w[:, :3].clone()
+        self._initial_grasp_poses = self._asset.data.root_pos_w[:, :3].clone()
+
+        self._initial_distance = torch.zeros(env.num_envs, device=env.device)
+
     def __call__(
         self,
         env: ManagerBasedRLEnv,
     ):
         grasp_poses = self._calc_grasping_pos(env)
 
+        reset_mask = env.episode_length_buf == 1
+        self._initial_object_poses[reset_mask] = self._asset.data.root_pos_w[reset_mask].clone()
+        self._initial_grasp_poses[reset_mask] = grasp_poses[reset_mask, :3].clone()
+
         approach = self._approach_grasp_point(env, 0.1, grasp_poses[:, :3]) * 2
-        touching_before_grasp = self._touching_book_before_grasp(env, grasp_poses[:, :3]) * -0.001
+        approach_in_ratio = self._approach_grasp_point_in_ratio(env, grasp_poses[:, :3]) * 2
         align = self._align_ee_grasp_point(env, grasp_poses[:, 3:7]) * 1.0 # 0.5
+        # touching_before_grasp = self._touching_book_before_grasp(env, grasp_poses[:, :3]) * -0.001
         # approach_gripper = self._approach_gripper_handle(env, grasp_poses[:, :3], 0.04) * 5.0
         # align_gripper = self._align_grasp_around_handle(env, grasp_poses[:, :3]) * 0.125
         # grasp_point = self._grasp_target_point(env, 0.03, grasp_poses[:, :3]) * 0.5
@@ -132,7 +139,7 @@ class grasp_reward_in_flip_action(ManagerTermBase):
         self._marker.visualize(translations=grasp_poses[:, :3], orientations=grasp_poses[:, 3:7])
 
         # return approach + align + approach_gripper + align_gripper + grasp_point
-        return approach + touching_before_grasp + align
+        return approach_in_ratio + align
     
     def _calc_grasping_pos(self,
                            env: ManagerBasedRLEnv
@@ -192,6 +199,23 @@ class grasp_reward_in_flip_action(ManagerTermBase):
         reward = 1.0 / (1.0 + distance**2)
         reward = torch.pow(reward, 2)
         return torch.where(distance <= threshold, 2 * reward, reward)
+    
+    def _approach_grasp_point_in_ratio(
+            self,
+            env: ManagerBasedRLEnv,
+            grasp_pos: torch.Tensor,
+    ) -> torch.Tensor:
+        """Reward the agent for approaching the grasp point in ratio."""
+
+        ee_tcp_pos = env.scene["ee_frame"].data.target_pos_w[..., 0, :]
+        # Compute the distance of the end-effector to the handle
+        distance = torch.norm(grasp_pos - ee_tcp_pos, dim=-1, p=2)
+        # print(distance) 
+        reset_mask = env.episode_length_buf == 1
+        self._initial_distance[reset_mask] = distance[reset_mask].clone()
+        distance_ratio = 1 - distance / self._initial_distance
+        # print(distance_ratio)
+        return torch.clamp(distance_ratio, 0, 1)
     
     def _align_ee_grasp_point(
             self,
@@ -290,6 +314,10 @@ class grasp_reward_in_flip_action(ManagerTermBase):
                            (torch.sum(torch.abs(asset.data.root_lin_vel_b[:, :3]), dim=1)>0.05),
                             1, 0)
     
+    def dummy_reward(self, env: ManagerBasedRLEnv):
+        print(self.grasp_poses)
+        return torch.zeros(env.num_envs, device=env.device)
+    
 def home_after_flip(
         env: ManagerBasedRLEnv,
 ) -> torch.Tensor:
@@ -300,7 +328,8 @@ def home_after_flip(
     object: RigidObject = env.scene[object_cfg.name]
     z_axis = torch.tensor([0.0, 0.0, 1.0], device=env.device).repeat(env.num_envs, 1)
     z_component = quat_apply(object.data.root_quat_w, z_axis)[:, 2]
-    reward_for_home_pose = torch.sum(asset.data.joint_pos[:, asset_cfg.joint_ids] - asset.data.default_joint_pos[:, asset_cfg.joint_ids], dim=1)
+    joint_pos_error = torch.sum(torch.abs(asset.data.joint_pos[:, asset_cfg.joint_ids] - asset.data.default_joint_pos[:, asset_cfg.joint_ids]), dim=1)
+    reward_for_home_pose = 1.0 - torch.tanh(joint_pos_error / 2.0)
     
     return torch.where(z_component < 0.0, reward_for_home_pose, 0)
 
@@ -358,7 +387,6 @@ def object_ee_distance(
 
     return 1 - torch.tanh(object_ee_distance / std)
 
-
 def object_goal_distance(
     env: ManagerBasedRLEnv,
     std: float,
@@ -380,8 +408,6 @@ def object_goal_distance(
     # rewarded if the object is lifted above the threshold
     return (object.data.root_pos_w[:, 2] > minimal_height) * (1 - torch.tanh(distance / std))
 
-
-# TODO: 정상 작동 여부 확인 필요
 def touching_other_object(
     env: ManagerBasedRLEnv,
     asset_cfg_list: list[SceneEntityCfg] = [SceneEntityCfg("robot")],
