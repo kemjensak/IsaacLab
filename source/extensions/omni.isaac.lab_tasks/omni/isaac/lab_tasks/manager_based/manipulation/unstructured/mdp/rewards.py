@@ -113,25 +113,27 @@ class flip_rewards(ManagerTermBase):
         self._right_offset[:,3:7] = torch.tensor([-0.70711, 0.0, -0.70711, 0.0])  # x-down z-center
         # self._right_offset[:,3:7] = torch.tensor([0, 0, 0])
 
-        self._initial_object_poses = self._asset.data.root_pos_w[:, :3].clone()
-        self._initial_grasp_poses = self._asset.data.root_pos_w[:, :3].clone()
+        self._initial_object_poses = self._asset.data.root_state_w[:, :7].clone()
+        self._initial_grasp_poses = self._asset.data.root_state_w[:, :7].clone()
 
         self._initial_distance = torch.zeros(env.num_envs, device=env.device)
+        self._last_distance = torch.zeros(env.num_envs, device=env.device)
+        self._last_ee_tcp_pos = env.scene["ee_frame"].data.target_pos_w[..., 0, :].clone()
 
     def __call__(
         self,
         env: ManagerBasedRLEnv,
     ):
-        grasp_poses = self._calc_grasping_pos(env)
+        self._grasp_poses = grasp_poses = self._calc_grasping_pose(env).clone()
 
         reset_mask = env.episode_length_buf == 1
-        self._initial_object_poses[reset_mask] = self._asset.data.root_pos_w[reset_mask].clone()
-        self._initial_grasp_poses[reset_mask] = grasp_poses[reset_mask, :3].clone()
+        self._initial_object_poses[reset_mask] = self._asset.data.root_state_w[reset_mask, :7].clone()
+        self._initial_grasp_poses[reset_mask] = grasp_poses[reset_mask, :7].clone()
 
-        approach = self._approach_grasp_point(env, 0.1, grasp_poses[:, :3]) * 2
-        approach_in_ratio = self._approach_grasp_point_in_ratio(env, grasp_poses[:, :3]) * 2
-        align = self._align_ee_grasp_point(env, grasp_poses[:, 3:7]) * 1.0 # 0.5
-        # touching_before_grasp = self._touching_book_before_grasp(env, grasp_poses[:, :3]) * -0.001
+        approach = self._approach_grasp_point(env, 0.1) * 1.0
+        approach_in_ratio = self._approach_grasp_point_in_ratio(env) * 1
+        # align = self._align_ee_grasp_point(env, grasp_poses[:, 3:7]) * 1.0 # 0.5
+        # touching_before_grasp = self._touching_book_before_grasp(env, grasp_poses[:, :3]) * -0.002
         # approach_gripper = self._approach_gripper_handle(env, grasp_poses[:, :3], 0.04) * 5.0
         # align_gripper = self._align_grasp_around_handle(env, grasp_poses[:, :3]) * 0.125
         # grasp_point = self._grasp_target_point(env, 0.03, grasp_poses[:, :3]) * 0.5
@@ -139,9 +141,10 @@ class flip_rewards(ManagerTermBase):
         self._marker.visualize(translations=grasp_poses[:, :3], orientations=grasp_poses[:, 3:7])
 
         # return approach + align + approach_gripper + align_gripper + grasp_point
-        return approach_in_ratio + align
+        # print(approach_in_ratio)
+        return approach
     
-    def _calc_grasping_pos(self,
+    def _calc_grasping_pose(self,
                            env: ManagerBasedRLEnv
     ) -> torch.Tensor:
         # 네 모서리 point의 offset을 book frame에서 simulation world frame 으로 변환하는 quat 적용
@@ -186,13 +189,12 @@ class flip_rewards(ManagerTermBase):
             self,
             env: ManagerBasedRLEnv,
             threshold: float,
-            grasp_pos: torch.Tensor,
     ) -> torch.Tensor:
         """Reward the agent for approaching the grasp point."""
 
         ee_tcp_pos = env.scene["ee_frame"].data.target_pos_w[..., 0, :]
         # Compute the distance of the end-effector to the handle
-        distance = torch.norm(grasp_pos - ee_tcp_pos, dim=-1, p=2)
+        distance = torch.norm(self._grasp_poses[:, :3] - ee_tcp_pos, dim=-1, p=2)
         # print(distance) 
 
         # Reward the robot for reaching the handle
@@ -203,19 +205,36 @@ class flip_rewards(ManagerTermBase):
     def _approach_grasp_point_in_ratio(
             self,
             env: ManagerBasedRLEnv,
-            grasp_pos: torch.Tensor,
     ) -> torch.Tensor:
         """Reward the agent for approaching the grasp point in ratio."""
-
+        
         ee_tcp_pos = env.scene["ee_frame"].data.target_pos_w[..., 0, :]
         # Compute the distance of the end-effector to the handle
-        distance = torch.norm(grasp_pos - ee_tcp_pos, dim=-1, p=2)
-        # print(distance) 
         reset_mask = env.episode_length_buf == 1
-        self._initial_distance[reset_mask] = distance[reset_mask].clone()
+        distance = torch.norm(self._grasp_poses[:, :3] - ee_tcp_pos, dim=-1, p=2)
+        distance_dim = torch.norm(self._grasp_poses[:, :3] - ee_tcp_pos, dim=-1, p=2, keepdim=True)
         distance_ratio = 1 - distance / self._initial_distance
-        # print(distance_ratio)
-        return torch.clamp(distance_ratio, 0, 1)
+        self._initial_distance[reset_mask] = distance[reset_mask]
+
+        # book_quat = self._asset.data.root_quat_w
+        # initial_book_quat = self._initial_object_poses[:, 3:7]
+
+        # book_rot_axis = axis_angle_from_quat(quat_mul(book_quat, quat_inv(initial_book_quat)))
+
+        # vec_p = (self._grasp_poses[:, :3] - ee_tcp_pos)/distance_dim
+        # vec_u = (ee_tcp_pos - self._last_ee_tcp_pos)/torch.norm((ee_tcp_pos - self._last_ee_tcp_pos),dim=-1, p=2, keepdim=True)
+
+        # self._last_ee_tcp_pos = ee_tcp_pos.clone()
+
+        # kappa = torch.sum(vec_p * vec_u, dim=-1, keepdim=True) * 2
+        # sign = torch.sign(torch.sum(vec_p * vec_u, dim=-1, keepdim=True))
+        # epsilon = torch.where(self._grasp_poses[:, 0] - ee_tcp_pos[:, 0] < 0.005, 1.0 + 0.1*(50 - distance*100), 1.0)
+
+        # zeta = torch.where(book_rot_axis[:,0]<-(5/180*3.14), 1/(sign.squeeze()*kappa.squeeze()*distance_ratio), 1)
+        # R = epsilon * torch.tanh(zeta*sign.squeeze()*kappa.squeeze()*distance_ratio)
+        R = torch.tanh(2*distance_ratio)
+        print(R)
+        return R
     
     def _align_ee_grasp_point(
             self,
@@ -331,7 +350,7 @@ def home_after_flip(
     joint_pos_error = torch.sum(torch.abs(asset.data.joint_pos[:, asset_cfg.joint_ids] - asset.data.default_joint_pos[:, asset_cfg.joint_ids]), dim=1)
     reward_for_home_pose = 1.0 - torch.tanh(joint_pos_error / 2.0)
     
-    return torch.where(z_component < 0.0, reward_for_home_pose, 0)
+    return torch.where(z_component < -0.05, reward_for_home_pose, 0)
 
     
 def object_is_flipped(
