@@ -121,7 +121,7 @@ class ObservationsCfg:
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
         eef_pos = ObsTerm(func=mdp.eef_pos_in_robot_root_frame)
-        eef_quat = ObsTerm(func=mdp.eef_quat_in_robot_root_frame)
+        # eef_quat = ObsTerm(func=mdp.eef_quat_in_robot_root_frame)
         book_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("book_01")})
         flip_pose = ObsTerm(func=mdp.book_flip_point_in_robot_root_frame)
         # target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
@@ -266,30 +266,41 @@ class RewardsCfg:
     #     weight=1.0
     # )
 
-    lifting_object = RewTerm(
-        func=mdp.object_is_lifted_from_initial,
-        params={"minimal_height": 0.02, "asset_cfg": SceneEntityCfg("book_01")},
-        weight=2.0
-    )
+    # object_rotation = RewTerm(
+    #     func=mdp.target_object_rotation,
+    #     params={},
+    #     weight=1.0 # 1.0
+    # )
 
-    object_rotation = RewTerm(
-        func=mdp.target_object_rotation,
-        params={},
-        weight=1.0
-    )
+    # lifting_object = RewTerm(
+    #     func=mdp.object_is_lifted_from_initial,
+    #     params={"minimal_height": 0.02, "asset_cfg": SceneEntityCfg("book_01")},
+    #     weight=10.0
+    # )
 
     object_reach = RewTerm(
-        func=mdp.grasp_reward_in_flip_action,
+        func=mdp.flip_rewards,
         params={},
-        weight=2.0
+        weight=1.0 #1.0, 2.0
     )
 
-    object_flip = RewTerm(
-        func=mdp.object_is_flipped,
-        params={"object_cfg": SceneEntityCfg("book_01")},
-        weight=10.0
-    )
+    # dummy_reward = RewTerm(
+    #     func=mdp.flip_rewards.dummy_reward,
+    #     params={},
+    #     weight=0.0
+    # )
 
+    # object_flip = RewTerm(
+    #     func=mdp.object_is_flipped,
+    #     params={"object_cfg": SceneEntityCfg("book_01")},
+    #     weight=10.0 # 10.0
+    # )
+
+    # home_after_flip = RewTerm(
+    #         func=mdp.home_after_flip,
+    #         params={},
+    #         weight=20.0,
+    # )
 
     # action penalty
     action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-3)
