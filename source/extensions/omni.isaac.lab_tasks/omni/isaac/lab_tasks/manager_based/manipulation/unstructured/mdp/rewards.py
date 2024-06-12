@@ -65,7 +65,7 @@ class object_is_lifted_from_initial(ManagerTermBase):
         self,
         env: ManagerBasedRLEnv,
         asset_cfg: SceneEntityCfg = SceneEntityCfg("object"),
-        minimal_height: float = 0.06,
+        minimal_height: float = 0.04,
     ):
         # Update initial object height where the environment's step is 1
         reset_mask = env.episode_length_buf == 1
@@ -73,6 +73,50 @@ class object_is_lifted_from_initial(ManagerTermBase):
 
         # return the reward
         return torch.where(self._asset.data.root_pos_w[:, 2] > (self._initial_object_height + minimal_height), 1.0, 0.0)
+
+class object_goal_distance_from_initial(ManagerTermBase):
+    def __init__(self, cfg: RewTerm, env: ManagerBasedRLEnv):
+        super().__init__(cfg, env)
+
+        asset_cfg: SceneEntityCfg = cfg.params.get("asset_cfg", SceneEntityCfg("object"))
+        self._asset: RigidObject = env.scene[asset_cfg.name]
+
+        # store initial target object position
+        self._initial_object_height = self._asset.data.root_pos_w[:, 2].clone()
+
+    def __call__(
+        self,
+        env: ManagerBasedRLEnv,
+    ):
+        # Update initial object height where the environment's step is 1
+        reset_mask = env.episode_length_buf == 1
+        self._initial_object_height[reset_mask] = self._asset.data.root_pos_w[reset_mask, 2].clone()
+
+        return (self._object_goal_distance(env=env, std=0.3, minimal_height=0.04, command_name="object_pose") * 16+
+                self._object_goal_distance(env=env, std=0.05, minimal_height=0.04, command_name="object_pose") * 5)
+                
+
+    def _object_goal_distance(
+        self,
+        env: ManagerBasedRLEnv,
+        std: float,
+        minimal_height: float,
+        command_name: str,
+        robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+        object_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+    ):
+        """Reward the agent for tracking the goal pose using tanh-kernel."""
+        # extract the used quantities (to enable type-hinting)
+        robot: RigidObject = env.scene[robot_cfg.name]
+        object: RigidObject = env.scene[object_cfg.name]
+        command = env.command_manager.get_command(command_name)
+        # compute the desired position in the world frame
+        des_pos_b = command[:, :3]
+        des_pos_w, _ = combine_frame_transforms(robot.data.root_state_w[:, :3], robot.data.root_state_w[:, 3:7], des_pos_b)
+        # distance of the end-effector to the object: (num_envs,)
+        distance = torch.norm(des_pos_w - object.data.root_pos_w[:, :3], dim=1)
+        # rewarded if the object is lifted above the threshold
+        return (object.data.root_pos_w[:, 2] > (self._initial_object_height + minimal_height)) * (1 - torch.tanh(distance / std))
 
 # TODO: 정상작동 확인 필요
 class flip_rewards(ManagerTermBase):
@@ -90,25 +134,25 @@ class flip_rewards(ManagerTermBase):
         # y-up z-center is for grasp-to-flip, x-up z-center is for below-to-flip
 
         self._top_offset = torch.zeros((env.num_envs, 7), device=env.device)
-        self._top_offset[:,:3] = torch.tensor([0.0, -0.16123+0.03, 0.0127 - 0.03])
+        self._top_offset[:,:3] = torch.tensor([0.0, -0.16123+0.03, 0.0127 - 0.04])
         # self._top_offset[:,3:7] = torch.tensor([0.0, 0.0, -0.70711, -0.70711]) # y-up z-center
         self._top_offset[:,3:7] = torch.tensor([0.5, -0.5, 0.5, 0.5]) # x-down z-center
         # self._top_offset[:,3:7] = torch.tensor([0, 0, 90/180*3.141592])
 
         self._bottom_offset = torch.zeros((env.num_envs, 7), device=env.device)
-        self._bottom_offset[:,:3] = torch.tensor([0.0, 0.16123-0.03, 0.0127 - 0.03])
+        self._bottom_offset[:,:3] = torch.tensor([0.0, 0.16123-0.03, 0.0127 - 0.04])
         # self._bottom_offset[:,3:7] = torch.tensor([0.70711, 0.70711, 0.0, 0.0]) # y-up z-center
         self._bottom_offset[:,3:7] = torch.tensor([0.5, 0.5, 0.5, -0.5]) # x-down z-center
         # self._bottom_offset[:,3:7] = torch.tensor([0, 0, -90/180*3.141592])
 
         self._left_offset = torch.zeros((env.num_envs, 7), device=env.device)
-        self._left_offset[:,:3] = torch.tensor([0.116881-0.03, 0.0, 0.0127 - 0.03])
+        self._left_offset[:,:3] = torch.tensor([0.116881-0.03, 0.0, 0.0127 - 0.04])
         # self._left_offset[:,3:7] = torch.tensor([0.5, 0.5, -0.5, -0.5]) # y-up z-center
         self._left_offset[:,3:7] = torch.tensor([0.0, -0.70711, 0.0, 0.70711])  # x-down z-center
         # self._left_offset[:,3:7] = torch.tensor([0, 0, 3.141592])
 
         self._right_offset = torch.zeros((env.num_envs, 7), device=env.device)
-        self._right_offset[:,:3] = torch.tensor([-0.116881+0.03, 0.0, 0.0127 - 0.03])
+        self._right_offset[:,:3] = torch.tensor([-0.116881+0.03, 0.0, 0.0127 - 0.04])
         # self._right_offset[:,3:7] = torch.tensor([0.5, 0.5, 0.5, 0.5]) # y-up z-center
         self._right_offset[:,3:7] = torch.tensor([-0.70711, 0.0, -0.70711, 0.0])  # x-down z-center
         # self._right_offset[:,3:7] = torch.tensor([0, 0, 0])
@@ -130,9 +174,6 @@ class flip_rewards(ManagerTermBase):
         self._initial_object_poses[reset_mask] = self._asset.data.root_state_w[reset_mask, :7].clone()
         self._initial_grasp_poses[reset_mask] = grasp_poses[reset_mask, :7].clone()
 
-        approach = self._approach_grasp_point(env, 0.1) * 1.0
-        approach_in_ratio = self._approach_grasp_point_in_ratio(env) * 1
-        # align = self._align_ee_grasp_point(env, grasp_poses[:, 3:7]) * 1.0 # 0.5
         # touching_before_grasp = self._touching_book_before_grasp(env, grasp_poses[:, :3]) * -0.002
         # approach_gripper = self._approach_gripper_handle(env, grasp_poses[:, :3], 0.04) * 5.0
         # align_gripper = self._align_grasp_around_handle(env, grasp_poses[:, :3]) * 0.125
@@ -140,9 +181,11 @@ class flip_rewards(ManagerTermBase):
 
         self._marker.visualize(translations=grasp_poses[:, :3], orientations=grasp_poses[:, 3:7])
 
-        # return approach + align + approach_gripper + align_gripper + grasp_point
-        # print(approach_in_ratio)
-        return approach
+        return (
+                self._approach_grasp_point(env, 0.1) * 0.5 +
+                self._align_ee_grasp_point(env, grasp_poses[:, 3:7]) * 0.5
+                # self._touching_book_before_grasp(env, grasp_poses[:, :3]) * -0.002
+                )
     
     def _calc_grasping_pose(self,
                            env: ManagerBasedRLEnv
@@ -195,11 +238,12 @@ class flip_rewards(ManagerTermBase):
         ee_tcp_pos = env.scene["ee_frame"].data.target_pos_w[..., 0, :]
         # Compute the distance of the end-effector to the handle
         distance = torch.norm(self._grasp_poses[:, :3] - ee_tcp_pos, dim=-1, p=2)
-        # print(distance) 
+        print(distance) 
 
         # Reward the robot for reaching the handle
         reward = 1.0 / (1.0 + distance**2)
         reward = torch.pow(reward, 2)
+        reward = torch.exp(-1.2 * distance)
         return torch.where(distance <= threshold, 2 * reward, reward)
     
     def _approach_grasp_point_in_ratio(
@@ -232,7 +276,8 @@ class flip_rewards(ManagerTermBase):
 
         # zeta = torch.where(book_rot_axis[:,0]<-(5/180*3.14), 1/(sign.squeeze()*kappa.squeeze()*distance_ratio), 1)
         # R = epsilon * torch.tanh(zeta*sign.squeeze()*kappa.squeeze()*distance_ratio)
-        R = torch.tanh(2*distance_ratio)
+        # R = torch.tanh(2*distance_ratio)
+        R = (distance_ratio)
         print(R)
         return R
     
