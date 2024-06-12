@@ -10,6 +10,7 @@ from omni.isaac.lab.sim.schemas.schemas_cfg import RigidBodyPropertiesCfg
 from omni.isaac.lab.sim.spawners.from_files.from_files_cfg import UsdFileCfg
 from omni.isaac.lab.utils import configclass
 from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+from omni.isaac.lab.sim.schemas.schemas_cfg import MassPropertiesCfg
 
 from omni.isaac.lab_tasks.manager_based.manipulation.lift import mdp
 from omni.isaac.lab_tasks.manager_based.manipulation.shelf.shelf_env_cfg import ShelfEnvCfg
@@ -38,7 +39,7 @@ class UR5eShelfEnvCfg(ShelfEnvCfg):
                         "wrist_1_joint",
                         "wrist_2_joint",
                         "wrist_3_joint"], 
-            scale=0.2, 
+            scale=0.15, 
             use_default_offset=True
         )
         self.actions.finger_joint_pos = mdp.BinaryJointPositionActionCfg(
@@ -51,10 +52,10 @@ class UR5eShelfEnvCfg(ShelfEnvCfg):
         # Set Cube as object
         self.scene.cup = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/Cup",
-            init_state=RigidObjectCfg.InitialStateCfg(pos=[0.9, 0.0, 0.66], rot=[1, 0, 0, 0]),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=[0.75, 0.0, 0.66], rot=[1, 0, 0, 0]),
             spawn=UsdFileCfg(
                 usd_path=f"/home/irol/KTH_dt/usd/Object/SM_Cup_empty.usd",
-                scale=(0.7, 0.7, 0.7),
+                scale=(1.0, 1.0, 1.0),
                 rigid_props=RigidBodyPropertiesCfg(
                     solver_position_iteration_count=16,
                     solver_velocity_iteration_count=1,
@@ -63,6 +64,7 @@ class UR5eShelfEnvCfg(ShelfEnvCfg):
                     max_depenetration_velocity=5.0,
                     disable_gravity=False,
                 ),
+                mass_props=MassPropertiesCfg(mass=0.1),
             ),
         )
 
@@ -100,15 +102,6 @@ class UR5eShelfEnvCfg(ShelfEnvCfg):
             ],
         )
 
-
-
-
-        self.rewards.lifting_object.params["threshold"] = 0.76
-        self.rewards.shelf_collision.params["threshold"] = 0.1
-        # self.rewards.shelf_dynamic_collision.params["threshold"] = 0.1
-        # self.rewards.shelf_dynamic_collision.params["x_bounds"] = torch.tensor([0.65, 1.15], dtype=torch.float32).cuda()
-        # self.rewards.shelf_dynamic_collision.params["y_bounds"] = torch.tensor([-0.6, 0.6], dtype=torch.float32).cuda()
-        # self.rewards.shelf_dynamic_collision.params["z_bounds"] = torch.tensor([0.66, 0.96], dtype=torch.float32).cuda()
 
 @configclass
 class UR5eShelfEnvCfg_PLAY(UR5eShelfEnvCfg):

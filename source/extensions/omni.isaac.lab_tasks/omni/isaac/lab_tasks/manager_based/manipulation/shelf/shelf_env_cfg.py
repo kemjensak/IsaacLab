@@ -61,7 +61,7 @@ class ObjectShelfSceneCfg(InteractiveSceneCfg):
     shelf = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/Shelf",
         spawn=UsdFileCfg(usd_path=f"/home/irol/KTH_dt/usd/Arena/Shelf3.usd", mass_props=MassPropertiesCfg(mass=50)),
-        init_state=RigidObjectCfg.InitialStateCfg(pos=(0.9, 0.0, 0.0), rot=(0.0, 0.0, 0.0, 1.0)),
+        init_state=RigidObjectCfg.InitialStateCfg(pos=(0.8, 0.0, 0.0), rot=(0.0, 0.0, 0.0, 1.0)),
         debug_vis=False,
     )
 
@@ -135,7 +135,7 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.1, 0.1), "y": (-0.25, 0.25), "z": (0.0, 0.0)},
+            "pose_range": {"x": (-0.15, 0.15), "y": (-0.15, 0.15), "z": (0.0, 0.0)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("cup", body_names="SM_Cup_empty"),
         },
@@ -147,8 +147,9 @@ class RewardsCfg:
     """Reward terms for the MDP."""
     
     # task terms
-    reaching_object = RewTerm(func=mdp.shelf_class, params={}, weight=2.0)
-    lifting_object = RewTerm(func=mdp.object_lift, params={}, weight=5.0)
+    reaching_object = RewTerm(func=mdp.shelf_Reaching, params={}, weight=2.0)
+    sweeping_object = RewTerm(func=mdp.shelf_Pushing, params={}, weight=30.0)
+    # lifting_object = RewTerm(func=mdp.object_lift, params={}, weight=5.0)
 
     # action penalty
     action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-4)
@@ -160,8 +161,7 @@ class RewardsCfg:
     )
 
     # collision penalty
-    shelf_collision = RewTerm(func=mdp.shelf_collision_pentaly, params={}, weight=-2.0)
-    # shelf_dynamic_collision = RewTerm(func=mdp.shelf_dynamic_collision_penalty, weight=-1.0)
+    shelf_collision = RewTerm(func=mdp.shelf_Collision, params={}, weight=-2.0)
 
 @configclass
 class TerminationsCfg:
