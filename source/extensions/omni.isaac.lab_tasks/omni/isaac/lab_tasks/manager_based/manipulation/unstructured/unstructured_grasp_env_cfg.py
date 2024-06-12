@@ -124,18 +124,20 @@ class ObservationsCfg:
 
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
-        # eef_pose = ObsTerm(func=mdp.eef_pose_in_robot_root_frame)
+        eef_pose = ObsTerm(func=mdp.eef_pose_in_robot_root_frame)
         object_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame)
         target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
+        book_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("book_01")})
+        flip_pose = ObsTerm(func=mdp.book_flip_point_in_robot_root_frame)
         actions = ObsTerm(func=mdp.last_action)
 
-        apple_01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("apple_01")})
-        book_01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("book_01")})
-        kiwi01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("kiwi01")})
-        lemon_01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("lemon_01")})
-        NaturalBostonRoundBottle_A01_PR_NVD_01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01")})
-        rubix_cube_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("rubix_cube")})
-        salt_box_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("salt_box")})
+        # apple_01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("apple_01")})
+        # book_01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("book_01")})
+        # kiwi01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("kiwi01")})
+        # lemon_01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("lemon_01")})
+        # NaturalBostonRoundBottle_A01_PR_NVD_01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01")})
+        # rubix_cube_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("rubix_cube")})
+        # salt_box_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("salt_box")})
         
 
 
@@ -287,19 +289,13 @@ class RewardsCfg:
     reaching_object = RewTerm(func=mdp.object_ee_distance, params={"std": 0.1}, weight=1.0)
 
     # lifting_object = RewTerm(func=mdp.object_is_lifted, params={"minimal_height": 0.06}, weight=30.0) # 15
-    lifting_object = RewTerm(func=mdp.object_is_lifted_from_initial, params={"minimal_height": 0.06}, weight=15.0) # 15
+    lifting_object = RewTerm(func=mdp.object_is_lifted_from_initial, params={"minimal_height": 0.04}, weight=15.0) # 15
 
-    object_goal_tracking = RewTerm(
-        func=mdp.object_goal_distance,
-        params={"std": 0.3, "minimal_height": 0.06, "command_name": "object_pose"},
-        weight=16.0,
-    )
-
-    object_goal_tracking_fine_grained = RewTerm(
-        func=mdp.object_goal_distance,
-        params={"std": 0.05, "minimal_height": 0.06, "command_name": "object_pose"},
-        weight=5.0,
-    )
+    # object_goal_tracking = RewTerm(
+    #     func=mdp.object_goal_distance_from_initial,
+    #     params={},
+    #     weight=1.0,
+    # )
 
     # action penalty
     action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-3)
@@ -310,18 +306,18 @@ class RewardsCfg:
         params={"asset_cfg": SceneEntityCfg("robot")},
     )
 
-    # touching_other_object = RewTerm(
-    #     func=mdp.touching_other_object,
-    #     weight=-1e-4,
-    #     params={"asset_cfg_list": [SceneEntityCfg("apple_01"),
-    #                             SceneEntityCfg("book_01"),
-    #                             SceneEntityCfg("kiwi01"),
-    #                             SceneEntityCfg("lemon_01"),
-    #                             SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01"),
-    #                             SceneEntityCfg("rubix_cube"),
-    #                             SceneEntityCfg("salt_box")],
-    #             },
-    # )
+    touching_other_object = RewTerm(
+        func=mdp.touching_other_object,
+        weight=-1e-4,
+        params={"asset_cfg_list": [SceneEntityCfg("apple_01"),
+                                SceneEntityCfg("book_01"),
+                                SceneEntityCfg("kiwi01"),
+                                SceneEntityCfg("lemon_01"),
+                                SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01"),
+                                SceneEntityCfg("rubix_cube"),
+                                SceneEntityCfg("salt_box")],
+                },
+    )
 
 
 @configclass
@@ -378,16 +374,12 @@ class CurriculumCfg:
         func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 15000}
     ) # 10000
 
-    lifting_object = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "lifting_object", "weight": 20.0, "num_steps": 10000} #60
-    ) # 10000
+    # lifting_object = CurrTerm(
+    #     func=mdp.modify_reward_weight, params={"term_name": "lifting_object", "weight": 30.0, "num_steps": 10000} #60
+    # ) # 10000
 
     object_goal_tracking = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "object_goal_tracking", "weight": 30.0, "num_steps": 10000} #30
-    ) # 10000
-
-    object_goal_tracking_fine_grained = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "object_goal_tracking_fine_grained", "weight": 10.0, "num_steps": 10000}
+        func=mdp.modify_reward_weight, params={"term_name": "object_goal_tracking", "weight": 2.0, "num_steps": 10000} #30
     ) # 10000
 
     # touching_other_object = CurrTerm(

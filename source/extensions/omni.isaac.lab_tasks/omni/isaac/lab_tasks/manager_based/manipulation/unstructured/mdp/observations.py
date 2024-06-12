@@ -45,7 +45,7 @@ def object_pose_in_robot_root_frame(
     object_pos_b, _ = subtract_frame_transforms(
         robot.data.root_state_w[:, :3], robot.data.root_state_w[:, 3:7], object_pos_w
     )
-    print(object_pos_b)
+    # print(object_pos_b)
     return torch.concat((object_pos_b, object_quat_w), dim=1)
 
 class book_flip_point_in_robot_root_frame(ManagerTermBase):
@@ -131,7 +131,7 @@ class book_flip_point_in_robot_root_frame(ManagerTermBase):
         grasp_poses = poses[torch.arange(env.num_envs), max_indices]
         return grasp_poses
     
-def eef_pos_in_robot_root_frame(
+def eef_pose_in_robot_root_frame(
     env: ManagerBasedRLEnv,
     robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
 ) -> torch.Tensor:
@@ -143,8 +143,8 @@ def eef_pos_in_robot_root_frame(
     ee_pos_r, _ = subtract_frame_transforms(
         robot.data.root_state_w[:, :3], robot.data.root_state_w[:, 3:7], ee_pos_w
     )
-    return ee_pos_r
-    # return torch.concat((ee_pos_r, ee_quat_w), dim=1)
+    # return ee_pos_r
+    return torch.concat((ee_pos_r, ee_quat_w), dim=1)
 
 def eef_quat_in_robot_root_frame(
     env: ManagerBasedRLEnv,

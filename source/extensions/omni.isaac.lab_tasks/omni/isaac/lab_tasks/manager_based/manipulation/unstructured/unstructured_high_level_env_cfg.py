@@ -19,64 +19,19 @@ from omni.isaac.lab.sensors import CameraCfg, ContactSensorCfg, RayCasterCfg, pa
 from omni.isaac.lab.sensors.frame_transformer.frame_transformer_cfg import FrameTransformerCfg
 from omni.isaac.lab.sim.spawners.from_files.from_files_cfg import GroundPlaneCfg, UsdFileCfg
 from omni.isaac.lab.utils import configclass
-from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR, ISAACLAB_NUCLEUS_DIR
 from omni.isaac.lab.sim.schemas.schemas_cfg import RigidBodyPropertiesCfg
 from omni.isaac.lab_tasks.manager_based.manipulation.unstructured import unstructured_env_tools as tools
 
+from .unstructured_flip_env_cfg import UnstructuredFlipEnvCfg
+from .config.franka.flip.joint_pos_env_cfg import FrankaFlipObjectEnvCfg
 from . import mdp
 
 ##
 # Scene definition
 ##
 
-
-@configclass
-class UnstructuredTableSceneCfg(InteractiveSceneCfg):
-    """Configuration for the unstructured scene with a robot and a objects.
-    """
-
-    # robots: will be populated by agent env cfg
-    robot: ArticulationCfg = MISSING
-    # end-effector sensor: will be populated by agent env cfg
-    ee_frame: FrameTransformerCfg = MISSING
-    # target object: will be populated by agent env cfg
-    object: RigidObjectCfg = MISSING
-
-    # apple_01 = tools.SetRigidObjectCfgFromUsdFile("Apple_01")
-    book_01 = tools.SetRigidObjectCfgFromUsdFile("Book_01_with_grasping_points")
-    # kiwi01 = tools.SetRigidObjectCfgFromUsdFile("Kiwi01")
-    # lemon_01 = tools.SetRigidObjectCfgFromUsdFile("Lemon_01")
-    # NaturalBostonRoundBottle_A01_PR_NVD_01 = tools.SetRigidObjectCfgFromUsdFile("NaturalBostonRoundBottle_A01_PR_NVD_01")
-    # rubix_cube = tools.SetRigidObjectCfgFromUsdFile("RubixCube")
-    salt_box = tools.SetRigidObjectCfgFromUsdFile("salt_box")
-
-    # Table
-    table = AssetBaseCfg(
-        prim_path="{ENV_REGEX_NS}/Table",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.5, 0, 0], rot=[0.707, 0, 0, 0.707]),
-        spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd",
-                         scale=(1.5, 1.5, 1.0),),
-    )
-    
-    # plane
-    plane = AssetBaseCfg(
-        prim_path="/World/GroundPlane",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[0, 0, -1.05]),
-        spawn=GroundPlaneCfg(),
-    )
-
-    # Sensor
-    Sensor = AssetBaseCfg(
-        prim_path="{ENV_REGEX_NS}/Sensor",
-        init_state=AssetBaseCfg.InitialStateCfg(),
-        spawn=UsdFileCfg(usd_path=f"/home/kjs-dt/isaac_save/2023.1.1/top_rgbd.usd"),
-    )
-
-    # lights
-    light = AssetBaseCfg(
-        prim_path="/World/light",
-        spawn=sim_utils.DomeLightCfg(color=(0.75, 0.75, 0.75), intensity=3000.0),
-    )
+LOW_LEVEL_ENV_CFG = FrankaFlipObjectEnvCfg()
 
 
 ##
@@ -87,24 +42,23 @@ class UnstructuredTableSceneCfg(InteractiveSceneCfg):
 @configclass
 class CommandsCfg:
     """Command terms for the MDP."""
-    object_pose = mdp.UniformPoseCommandCfg(
-        asset_name="robot",
-        body_name=MISSING,  # will be set by agent env cfg
-        resampling_time_range=(10.0, 10.0),
-        debug_vis=True,
-        ranges=mdp.UniformPoseCommandCfg.Ranges(
-            pos_x=(-0.25, 0.25), pos_y=(-0.6, -0.4), pos_z=(0.25, 0.5), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
-        ),
-    )
+    pass
 
 
 @configclass
 class ActionsCfg:
     """Action specifications for the MDP."""
 
-    # will be set by agent env cfg
-    body_joint_pos: mdp.JointPositionActionCfg = MISSING
-    finger_joint_pos: mdp.BinaryJointPositionActionCfg = MISSING
+    pre_trained_policy_action: mdp.PreTrainedPolicyActionCfg = mdp.PreTrainedPolicyActionCfg(
+        asset_name="robot",
+        grasp_policy_path=f"/home/kjs-dt/RL/orbit/logs/skrl/franka_unstructured_grasp_ppo/2024-06-11_14-51-41/checkpoints/agent_39600.pt",
+        flip_policy_path=f"/home/kjs-dt/RL/orbit/logs/skrl/franka_unstructured_flip_ppo/2024-06-11_17-34-57/checkpoints/agent_22800.pt",
+        low_level_decimation=4,
+        low_level_body_action=LOW_LEVEL_ENV_CFG.actions.body_joint_pos,
+        low_level_finger_action=LOW_LEVEL_ENV_CFG.actions.finger_joint_pos,
+        low_level_observations=LOW_LEVEL_ENV_CFG.observations.policy,
+    )
+
 
 
 @configclass
@@ -117,23 +71,12 @@ class ObservationsCfg:
 
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
-        eef_pose = ObsTerm(func=mdp.eef_pose_in_robot_root_frame)
-        object_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame)
-        target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
+        eef_pos = ObsTerm(func=mdp.eef_pose_in_robot_root_frame)
         book_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("book_01")})
         flip_pose = ObsTerm(func=mdp.book_flip_point_in_robot_root_frame)
+        # target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
         actions = ObsTerm(func=mdp.last_action)
-
-        # apple_01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("apple_01")})
-        # book_01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("book_01")})
-        # kiwi01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("kiwi01")})
-        # lemon_01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("lemon_01")})
-        # NaturalBostonRoundBottle_A01_PR_NVD_01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01")})
-        # rubix_cube_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("rubix_cube")})
-        # salt_box_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("salt_box")})
         
-
-
         def __post_init__(self):
             self.enable_corruption = True
             self.concatenate_terms = True
@@ -269,11 +212,11 @@ class RewardsCfg:
     #     weight=1.0 # 1.0
     # )
 
-    lifting_object = RewTerm(
-        func=mdp.object_is_lifted_from_initial,
-        params={"minimal_height": 0.02, "asset_cfg": SceneEntityCfg("book_01")},
-        weight=10.0
-    )
+    # lifting_object = RewTerm(
+    #     func=mdp.object_is_lifted_from_initial,
+    #     params={"minimal_height": 0.02, "asset_cfg": SceneEntityCfg("book_01")},
+    #     weight=10.0
+    # )
 
     object_reach = RewTerm(
         func=mdp.flip_rewards,
@@ -281,17 +224,23 @@ class RewardsCfg:
         weight=1.0 #1.0, 2.0
     )
 
-    object_flip = RewTerm(
-        func=mdp.object_is_flipped,
-        params={"object_cfg": SceneEntityCfg("book_01")},
-        weight=10.0 # 10.0
-    )
+    # dummy_reward = RewTerm(
+    #     func=mdp.flip_rewards.dummy_reward,
+    #     params={},
+    #     weight=0.0
+    # )
 
-    home_after_flip = RewTerm(
-            func=mdp.home_after_flip,
-            params={},
-            weight=20.0,
-    )
+    # object_flip = RewTerm(
+    #     func=mdp.object_is_flipped,
+    #     params={"object_cfg": SceneEntityCfg("book_01")},
+    #     weight=10.0 # 10.0
+    # )
+
+    # home_after_flip = RewTerm(
+    #         func=mdp.home_after_flip,
+    #         params={},
+    #         weight=20.0,
+    # )
 
     # action penalty
     action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-3)
@@ -325,9 +274,9 @@ class TerminationsCfg:
     #     func=mdp.max_consecutive_success, params={"num_success": 50, "command_name": "object_pose"}
     # )
 
-    object_dropping = DoneTerm(
-        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("object")}
-    )
+    # object_dropping = DoneTerm(
+    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("object")}
+    # )
 
     # apple_01_dropping = DoneTerm(
     #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("apple_01")}
@@ -391,11 +340,11 @@ class CurriculumCfg:
 
 
 @configclass
-class UnstructuredFlipEnvCfg(ManagerBasedRLEnvCfg):
+class HighLevelEnvCfg(ManagerBasedRLEnvCfg):
     """Configuration for the lifting environment."""
 
     # Scene settings
-    scene: UnstructuredTableSceneCfg = UnstructuredTableSceneCfg(num_envs=4096, env_spacing=2.5) # 4096
+    scene: SceneEntityCfg = LOW_LEVEL_ENV_CFG.scene
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()

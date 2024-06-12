@@ -1,10 +1,10 @@
 seed: 42
 
 # Models are instantiated using skrl's model instantiator utility
-# https://skrl.readthedocs.io/en/latest/api/utils/model_instantiators.html
+# https://skrl.readthedocs.io/en/develop/modules/skrl.utils.model_instantiators.html
 models:
   separate: True
-  policy:  # see skrl.utils.model_instantiators.torch.gaussian_model for parameter details
+  policy:  # see skrl.utils.model_instantiators.gaussian_model for parameter details
     clip_actions: False
     clip_log_std: True
     initial_log_std: 0
@@ -16,7 +16,7 @@ models:
     output_shape: "Shape.ACTIONS"
     output_activation: ""
     output_scale: 1.0
-  value:  # see skrl.utils.model_instantiators.torch.deterministic_model for parameter details
+  value:  # see skrl.utils.model_instantiators.deterministic_model for parameter details
     clip_actions: False
     input_shape: "Shape.STATES"
     hiddens: [256, 128, 64]
@@ -27,7 +27,7 @@ models:
 
 
 # PPO agent configuration (field names are from PPO_DEFAULT_CONFIG)
-# https://skrl.readthedocs.io/en/latest/api/agents/ppo.html
+# https://skrl.readthedocs.io/en/latest/modules/skrl.agents.ppo.html
 agent:
   rollouts: 16
   learning_epochs: 8
@@ -43,7 +43,7 @@ agent:
   value_preprocessor: "RunningStandardScaler"
   value_preprocessor_kwargs: null
   random_timesteps: 0
-  learning_starts: 0
+  learning_starts: 100
   grad_norm_clip: 1.0
   ratio_clip: 0.2
   value_clip: 0.2
@@ -54,14 +54,13 @@ agent:
   rewards_shaper_scale: 0.01
   # logging and checkpoint
   experiment:
-    directory: "ur5e_shelf"
+    directory: "franka_unstructured_ppo"
     experiment_name: ""
     write_interval: 120
     checkpoint_interval: 1200
 
 
 # Sequential trainer
-# https://skrl.readthedocs.io/en/latest/api/trainers/sequential.html
+# https://skrl.readthedocs.io/en/latest/modules/skrl.trainers.sequential.html
 trainer:
-  timesteps: 2400000
-  environment_info: "log"
+  timesteps: 240000

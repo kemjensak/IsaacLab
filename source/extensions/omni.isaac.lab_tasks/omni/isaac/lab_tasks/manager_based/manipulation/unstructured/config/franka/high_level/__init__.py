@@ -7,7 +7,7 @@ import gymnasium as gym
 import os
 
 from . import agents
-from . import ik_abs_env_cfg, ik_rel_env_cfg, joint_pos_env_cfg, ik_rel_env_cfg_sac
+from omni.isaac.lab_tasks.manager_based.manipulation.unstructured.unstructured_high_level_env_cfg import HighLevelEnvCfg
 
 
 ##
@@ -19,22 +19,22 @@ from . import ik_abs_env_cfg, ik_rel_env_cfg, joint_pos_env_cfg, ik_rel_env_cfg_
 ##
 
 gym.register(
-    id="Isaac-Grasp-Object-Franka-v0",
+    id="Isaac-High-Level-Franka-v0",
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
-        "env_cfg_entry_point": joint_pos_env_cfg.FrankaGraspObjectEnvCfg,
-        "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.GraspPPORunnerCfg,
+        "env_cfg_entry_point": HighLevelEnvCfg,
+        # "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.LiftCubePPORunnerCfg,
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
     },
     disable_env_checker=True,
 )
 
 gym.register(
-    id="Isaac-Grasp-Object-Franka-Play-v0",
+    id="Isaac-High-Level-Franka-Play-v0",
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
-        "env_cfg_entry_point": joint_pos_env_cfg.FrankaGraspObjectEnvCfg_PLAY,
-        "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.GraspPPORunnerCfg,
+        "env_cfg_entry_point": HighLevelEnvCfg,
+        # "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.LiftCubePPORunnerCfg,
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
     },
     disable_env_checker=True,
