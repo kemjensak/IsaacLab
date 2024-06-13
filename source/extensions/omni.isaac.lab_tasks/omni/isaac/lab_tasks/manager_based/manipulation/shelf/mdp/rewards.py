@@ -89,13 +89,16 @@ class shelf_Pushing(ManagerTermBase):
         self._target: RigidObject = env.scene[object_cfg.name]
         self._ee: FrameTransformer = env.scene[ee_frame_cfg.name]
 
-        self.__initial_object_pos = self._target.data.root_pos_w.clone()   
+        self._initial_object_pos = self._target.data.root_pos_w.clone()   
 
         self._initial_distance = torch.zeros(env.num_envs, device=env.device)
 
         self._ee_pos_last_w = self._ee.data.target_pos_w[..., 0, :].clone()
 
         self._target_last_w = self._target.data.root_pos_w.clone()
+
+        self._push_offset = torch.zeros((env.num_envs, 3), device=env.device)
+        self._push_offset[:, :3] = torch.tensor([0.0, 0.3, 0.05])
     
     def __call__(self, env: ManagerBasedRLEnv,):
 
@@ -106,24 +109,24 @@ class shelf_Pushing(ManagerTermBase):
     def push_object(self, env:ManagerBasedRLEnv) -> torch.Tensor:
         object_pos_w = self._target.data.root_pos_w.clone()
         reset_mask = env.episode_length_buf == 1
-        self.__initial_object_pos = torch.where(reset_mask.unsqueeze(1).expand(-1, object_pos_w.size(1)), object_pos_w.clone(), self.__initial_object_pos.clone())
-        des_w = self.__initial_object_pos.clone()
+        self._initial_object_pos[reset_mask] = self._target.data.root_pos_w[reset_mask, :].clone()
+        offset_pos = transform_points(self._push_offset,self._target.data.root_pos_w, self._target.data.root_state_w[:, 3:7] )[..., 0 , :]
+        des_w = self._initial_object_pos.clone()
         des_w[:, 1] = des_w[:, 1] - 0.2
-        # distance_f = torch.norm(self.__initial_object_pos - self._ee.data.target_pos_w[..., 0, :], dim=-1, p=2)
+        distance = torch.norm(offset_pos - self._ee.data.target_pos_w[..., 0, :], dim=-1, p=2)
 
 
-        # delta_y = -1*(object_pos_w[:, 1] - self.__initial_object_pos[:, 1])
+        delta_y = -1*(object_pos_w[:, 1] - self._initial_object_pos[:, 1])
         # delta_x = torch.where(torch.norm(object_pos_w[:, 0] - self._target_last_w[:, 0])>0.1, 1, 0)
         # delta_z = torch.where(torch.norm(object_pos_w[:, 2] - self._target_last_w[:, 2])>0.1, 1, 0)
-        # zeta_s = torch.where(torch.norm(object_pos_w[:, 1] - self.__initial_object_pos[:, 1]) > 0.25, 0, 1)
-        # zeta_m = torch.where(distance < 0.02, 1, 0)
+        # zeta_s = torch.where(torch.norm(object_pos_w[:, 1] - self._initial_object_pos[:, 1]) > 0.3, 0, 1)
+        zeta_m = torch.where(distance < 0.02, 1, 0)
 
         distance_des = torch.norm(des_w - object_pos_w,dim=-1, p=2)
 
-        # R = zeta_s * zeta_m * (5*torch.tanh(2*delta_y) - 0.05*torch.tanh(2*delta_x)-torch.tanh(2*delta_z)) + (1-zeta_s)*(1-distance_f/self._initial_distance)
-        R =  (1 - torch.tanh(distance_des/0.1))
-
-        # print("distance: {}".format(distance_des))
+        R = zeta_m *(5*torch.tanh(2*delta_y/0.2))
+        # R = zeta_s * zeta_m * (5*torch.tanh.(2*delta_y) - 0.05*torch.tanh(2*delta_x)-torch.tanh(2*delta_z)) + (1-zeta_s)*(1-distance_f/self._initial_distance)
+        # print("distance: {}".format(distance))
         # print("reward: {}".format(R))
         # self._target_last_w = object_pos_w.clone()
 
@@ -147,6 +150,7 @@ class shelf_Collision(ManagerTermBase):
         self._initial_shelf_pos = self._shelf.data.root_pos_w.clone()
 
         self._target_last_w = self._target.data.root_pos_w.clone()
+
     
     def __call__(self, env: ManagerBasedRLEnv,):
 
