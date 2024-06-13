@@ -10,8 +10,7 @@ from omni.isaac.lab.assets import RigidObject
 from omni.isaac.lab.managers import SceneEntityCfg, ManagerTermBase
 from omni.isaac.lab.managers import RewardTermCfg as RewTerm
 from omni.isaac.lab.sensors import FrameTransformer
-from omni.isaac.lab.utils.math import combine_frame_transforms, matrix_from_quat
-
+from omni.isaac.lab.utils.math import combine_frame_transforms, matrix_from_quat, euler_xyz_from_quat, quat_mul
 if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedRLEnv
 
@@ -55,6 +54,7 @@ class shelf_Reaching(ManagerTermBase):
         self._initial_distance[reset_mask] = distance[reset_mask].clone()
         self._ee_pos_last_w = self._ee.data.target_pos_w[..., 0, :].clone()
 
+        # print("distance: {}".format(distance))
         reward = torch.exp(-1.2 * distance)
         
         return reward
@@ -85,14 +85,11 @@ class shelf_Pushing(ManagerTermBase):
         super().__init__(cfg, env)
         object_cfg = SceneEntityCfg("cup")
         ee_frame_cfg = SceneEntityCfg("ee_frame")
-        shelf_cfg = SceneEntityCfg("shelf")
 
         self._target: RigidObject = env.scene[object_cfg.name]
         self._ee: FrameTransformer = env.scene[ee_frame_cfg.name]
 
-        self.__initial_object_pos = self._target.data.root_pos_w.clone()
-        self.__initial_object_pos[:, 2] = self.__initial_object_pos[:, 2] + 0.09
-        self.__initial_object_pos[:, 1] = self.__initial_object_pos[:, 1] + 0.08
+        self.__initial_object_pos = self._target.data.root_pos_w.clone()   
 
         self._initial_distance = torch.zeros(env.num_envs, device=env.device)
 
@@ -102,20 +99,16 @@ class shelf_Pushing(ManagerTermBase):
     
     def __call__(self, env: ManagerBasedRLEnv,):
 
-
         push = self.push_object(env)
 
         return push
     
     def push_object(self, env:ManagerBasedRLEnv) -> torch.Tensor:
         object_pos_w = self._target.data.root_pos_w.clone()
-        object_pos_w[:, 2] = object_pos_w[:, 2] + 0.09
-        object_pos_w[:, 1] = object_pos_w[:, 1] + 0.08
         reset_mask = env.episode_length_buf == 1
         self.__initial_object_pos = torch.where(reset_mask.unsqueeze(1).expand(-1, object_pos_w.size(1)), object_pos_w.clone(), self.__initial_object_pos.clone())
         des_w = self.__initial_object_pos.clone()
         des_w[:, 1] = des_w[:, 1] - 0.2
-        distance = torch.norm(object_pos_w - self._ee.data.target_pos_w[..., 0, :], dim=-1, p=2)
         # distance_f = torch.norm(self.__initial_object_pos - self._ee.data.target_pos_w[..., 0, :], dim=-1, p=2)
 
 
@@ -123,15 +116,17 @@ class shelf_Pushing(ManagerTermBase):
         # delta_x = torch.where(torch.norm(object_pos_w[:, 0] - self._target_last_w[:, 0])>0.1, 1, 0)
         # delta_z = torch.where(torch.norm(object_pos_w[:, 2] - self._target_last_w[:, 2])>0.1, 1, 0)
         # zeta_s = torch.where(torch.norm(object_pos_w[:, 1] - self.__initial_object_pos[:, 1]) > 0.25, 0, 1)
-        zeta_m = torch.where(distance < 0.02, 1, 0)
+        # zeta_m = torch.where(distance < 0.02, 1, 0)
 
-        distance_des = torch.norm(des_w - object_pos_w)
+        distance_des = torch.norm(des_w - object_pos_w,dim=-1, p=2)
 
         # R = zeta_s * zeta_m * (5*torch.tanh(2*delta_y) - 0.05*torch.tanh(2*delta_x)-torch.tanh(2*delta_z)) + (1-zeta_s)*(1-distance_f/self._initial_distance)
-        R = zeta_m * (1 - torch.tanh(distance_des/0.05))
+        R =  (1 - torch.tanh(distance_des/0.1))
+
+        # print("distance: {}".format(distance_des))
+        # print("reward: {}".format(R))
         # self._target_last_w = object_pos_w.clone()
-        print(R)
-        # zeta = torch.where(torch.norm(ready_point_pos_w - self._ee.data.target_pos_w)<0.005, 1/(sign.squeeze()*kappa.squeeze()*(1-distance/self._initial_distance)), 1)
+
         # self._ee_pos_last_w = self._ee.data.target_pos_w[..., 0, :].clone()
         
         return R
@@ -188,10 +183,32 @@ class shelf_Collision(ManagerTermBase):
         reward_ee = torch.clamp(reward_ee, 0, 1)
         reward_wrist = torch.clamp(reward_wrist, 0, 1)
 
-        R = zeta * (reward_ee + reward_wrist)
+        R = 5 * zeta * (reward_ee + reward_wrist)
 
         return R
 
+
+class Object_drop(ManagerTermBase):
+    def __init__(self, cfg: RewTerm, env: ManagerBasedRLEnv):
+        super().__init__(cfg, env)
+        object_cfg = SceneEntityCfg("cup")
+        ee_frame_cfg = SceneEntityCfg("ee_frame")
+
+        self._target: RigidObject = env.scene[object_cfg.name]
+        self._ee: FrameTransformer = env.scene[ee_frame_cfg.name]
+
+        self._target_last_w = self._target.data.root_pos_w.clone()
+        self._initial_object_quat = self._target.data.root_quat_w.clone()
+
+    def __call__(self, env:ManagerBasedRLEnv,):
+        drop = self.object_drop(env)
+
+        return drop
+
+    def object_drop(self, env: ManagerBasedRLEnv,)-> torch.Tensor:
+
+        reset_mask = env.episode_length_buf == 1
+        return condition
 
     
 def object_lift( env: ManagerBasedRLEnv, threshold: float, object_cfg: SceneEntityCfg = SceneEntityCfg("cup")) -> torch.Tensor:
@@ -210,7 +227,6 @@ def shelf_collision_pentaly( env: ManagerBasedRLEnv, threshold: float, shelf_cfg
 
 def object_collision_pentaly( 
         env: ManagerBasedRLEnv, 
-        threshold: float, 
         object_cfg: SceneEntityCfg = SceneEntityCfg("cup"), 
         ee_frame_cfg: SceneEntityCfg = SceneEntityCfg("ee_frame")) -> torch.Tensor:
     object: RigidObject = env.scene[object_cfg.name]
@@ -225,39 +241,10 @@ def object_collision_pentaly(
     
     zeta = torch.where(distance > 0.05, 0, 1)
     mu_v = torch.where(torch.norm(object_vel, dim=-1, p=2) < 0.1, 0, 1)
-    mu_w = torch.where(torch.norm(object_ang_vel, dim=-1, p=2)< 0.3, 0, 1 )
+    mu_w = torch.where(torch.norm(object_ang_vel, dim=-1, p=2)< 0.3, 0, 1)
 
-    R = 0.5*(mu_v*torch.tanh*(-1*torch.norm(object_vel, dim=-1, p=2))+mu_w*torch.tanh(-1*torch.norm(object_ang_vel, dim=-1, p=2)))
+    R = 0.5*(mu_v*torch.tanh(torch.norm(object_vel, dim=-1, p=2))+mu_w*torch.tanh(torch.norm(object_ang_vel, dim=-1, p=2)))
     return R
-    
-
-# def shelf_dynamic_collision_penalty(
-#         env: ManagerBasedRLEnv,
-#         threshold: float,
-#         ee_frame_cfg: SceneEntityCfg = SceneEntityCfg("ee_frame"),
-#         wrist_frame_cfg: SceneEntityCfg = SceneEntityCfg("wrist_frame"),
-#         shelf_frame_cfg : SceneEntityCfg = SceneEntityCfg("shelf"),
-#         object_cfg: SceneEntityCfg = SceneEntityCfg("cup"),
-# ) -> torch.Tensor:
-    
-#     ee_frame: FrameTransformer = env.scene[ee_frame_cfg.name]
-#     ee_w = ee_frame.data.target_pos_w[..., 0, :]
-
-#     wrist_frame: FrameTransformer = env.scene[wrist_frame_cfg.name]
-#     wrist_w = wrist_frame.data.target_pos_w[..., 0, :]
-
-#     shelf_frame = FrameTransformer = env.scene[shelf_frame_cfg.name]
-#     shelf_w = shelf_frame.data.root_pos_w
-
-#     object: RigidObject = env.scene[object_cfg.name]
-#     object_pos_w = object.data.root_pos_w
-#     object_pos_w[:, 2] = object_pos_w[:, 2] + 0.09
-#     object_pos_w[:, 1] = object_pos_w[:, 1] + 0.12
-
-#     distance = torch.norm(object_pos_w - ee_w[..., 0, :], dim=-1, p=2)
-
-#     zeta_m = torch.where(distance < 0.3, 1, 0)
-
     
 
 def shelf_dynamic_collision_penalty(

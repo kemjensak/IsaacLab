@@ -102,7 +102,6 @@ class UR5eShelfEnvCfg(ShelfEnvCfg):
             ],
         )
 
-
 @configclass
 class UR5eShelfEnvCfg_PLAY(UR5eShelfEnvCfg):
     def __post_init__(self):

@@ -131,15 +131,15 @@ class EventCfg:
 
     reset_all = EventTerm(func=mdp.reset_scene_to_default, mode="reset")
 
-    reset_object_position = EventTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "pose_range": {"x": (-0.15, 0.15), "y": (-0.15, 0.15), "z": (0.0, 0.0)},
-            "velocity_range": {},
-            "asset_cfg": SceneEntityCfg("cup", body_names="SM_Cup_empty"),
-        },
-    )
+    # reset_object_position = EventTerm(
+    #     func=mdp.reset_root_state_uniform,
+    #     mode="reset",
+    #     params={
+    #         "pose_range": {"x": (-0.15, 0.15), "y": (-0.15, 0.15), "z": (0.0, 0.0)},
+    #         "velocity_range": {},
+    #         "asset_cfg": SceneEntityCfg("cup", body_names="SM_Cup_empty"),
+    #     },
+    # )
 
 
 @configclass
@@ -147,8 +147,8 @@ class RewardsCfg:
     """Reward terms for the MDP."""
     
     # task terms
-    reaching_object = RewTerm(func=mdp.shelf_Reaching, params={}, weight=2.0)
-    sweeping_object = RewTerm(func=mdp.shelf_Pushing, params={}, weight=30.0)
+    # reaching_object = RewTerm(func=mdp.shelf_Reaching, params={}, weight=2.0)
+    sweeping_object = RewTerm(func=mdp.shelf_Pushing, params={}, weight=20.0)
     # lifting_object = RewTerm(func=mdp.object_lift, params={}, weight=5.0)
 
     # action penalty
@@ -162,6 +162,8 @@ class RewardsCfg:
 
     # collision penalty
     shelf_collision = RewTerm(func=mdp.shelf_Collision, params={}, weight=-2.0)
+    # object_collision = RewTerm(func=mdp.object_collision_pentaly, params={}, weight=-2.0)
+    object_drop = RewTerm(func=mdp.Object_drop, weight=-5.0)
 
 @configclass
 class TerminationsCfg:
