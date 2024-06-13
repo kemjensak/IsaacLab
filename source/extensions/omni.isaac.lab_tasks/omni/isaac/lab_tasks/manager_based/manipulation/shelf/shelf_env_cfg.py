@@ -162,8 +162,8 @@ class RewardsCfg:
 
     # collision penalty
     shelf_collision = RewTerm(func=mdp.shelf_Collision, params={}, weight=-2.0)
-    # object_collision = RewTerm(func=mdp.object_collision_pentaly, params={}, weight=-2.0)
-    object_drop = RewTerm(func=mdp.Object_drop, weight=-5.0)
+    object_collision = RewTerm(func=mdp.object_collision_pentaly, params={}, weight=-2.0)
+    object_drop = RewTerm(func=mdp.Object_drop, weight=-4.0)
 
 @configclass
 class TerminationsCfg:

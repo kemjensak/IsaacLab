@@ -10,7 +10,7 @@ from omni.isaac.lab.assets import RigidObject
 from omni.isaac.lab.managers import SceneEntityCfg, ManagerTermBase
 from omni.isaac.lab.managers import RewardTermCfg as RewTerm
 from omni.isaac.lab.sensors import FrameTransformer
-from omni.isaac.lab.utils.math import combine_frame_transforms, matrix_from_quat, euler_xyz_from_quat, quat_mul
+from omni.isaac.lab.utils.math import combine_frame_transforms, matrix_from_quat, euler_xyz_from_quat, quat_mul, transform_points
 if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedRLEnv
 
@@ -198,7 +198,9 @@ class Object_drop(ManagerTermBase):
         self._ee: FrameTransformer = env.scene[ee_frame_cfg.name]
 
         self._target_last_w = self._target.data.root_pos_w.clone()
-        self._initial_object_quat = self._target.data.root_quat_w.clone()
+
+        self._top_offset = torch.zeros((env.num_envs, 3), device=env.device)
+        self._top_offset[:, :3] = torch.tensor([0.0, 0.0, 0.07])
 
     def __call__(self, env:ManagerBasedRLEnv,):
         drop = self.object_drop(env)
@@ -207,7 +209,11 @@ class Object_drop(ManagerTermBase):
 
     def object_drop(self, env: ManagerBasedRLEnv,)-> torch.Tensor:
 
-        reset_mask = env.episode_length_buf == 1
+        offset_pos = transform_points(self._top_offset,self._target.data.root_pos_w, self._target.data.root_state_w[:, 3:7] )[..., 0 , :]
+        object_vel = self._target.data.root_lin_vel_w
+        condition = torch.where(offset_pos[:, 2] <  0.7, 1, 0)
+
+        
         return condition
 
     
@@ -240,8 +246,8 @@ def object_collision_pentaly(
     object_ang_vel = object.data.root_ang_vel_w
     
     zeta = torch.where(distance > 0.05, 0, 1)
-    mu_v = torch.where(torch.norm(object_vel, dim=-1, p=2) < 0.1, 0, 1)
-    mu_w = torch.where(torch.norm(object_ang_vel, dim=-1, p=2)< 0.3, 0, 1)
+    mu_v = torch.where(torch.norm(object_vel, dim=-1, p=2) < 0.02, 0, 1)
+    mu_w = torch.where(torch.norm(object_ang_vel, dim=-1, p=2)< 0.1, 0, 1)
 
     R = 0.5*(mu_v*torch.tanh(torch.norm(object_vel, dim=-1, p=2))+mu_w*torch.tanh(torch.norm(object_ang_vel, dim=-1, p=2)))
     return R
