@@ -124,16 +124,6 @@ class ObservationsCfg:
         flip_pose = ObsTerm(func=mdp.book_flip_point_in_robot_root_frame)
         actions = ObsTerm(func=mdp.last_action)
 
-        # apple_01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("apple_01")})
-        # book_01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("book_01")})
-        # kiwi01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("kiwi01")})
-        # lemon_01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("lemon_01")})
-        # NaturalBostonRoundBottle_A01_PR_NVD_01_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01")})
-        # rubix_cube_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("rubix_cube")})
-        # salt_box_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("salt_box")})
-        
-
-
         def __post_init__(self):
             self.enable_corruption = True
             self.concatenate_terms = True
@@ -141,9 +131,6 @@ class ObservationsCfg:
     # observation groups
     policy: PolicyCfg = PolicyCfg()
 
-
-book_reset_pose_range : dict[str, tuple[float, float]] = {"x": (-0.12, -0.08), "y": (0.07, 0.13), "z": (0.03, 0.03),
-                        "roll": (-0.0, 0.0), "pitch": (-0.0, 0.0), "yaw": (89.0, 91.0)}
 @configclass
 class EventCfg:
     """Configuration for events."""
@@ -164,7 +151,8 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": book_reset_pose_range,
+            "pose_range": {"x": (-0.12, -0.08), "y": (0.07, 0.13), "z": (0.03, 0.03),
+                            "roll": (-0.0, 0.0), "pitch": (-0.0, 0.0), "yaw": (89.0, 91.0)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("book_01"),
         },

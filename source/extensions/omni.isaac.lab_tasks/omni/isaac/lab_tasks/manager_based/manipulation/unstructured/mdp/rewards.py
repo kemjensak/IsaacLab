@@ -238,7 +238,7 @@ class flip_rewards(ManagerTermBase):
         ee_tcp_pos = env.scene["ee_frame"].data.target_pos_w[..., 0, :]
         # Compute the distance of the end-effector to the handle
         distance = torch.norm(self._grasp_poses[:, :3] - ee_tcp_pos, dim=-1, p=2)
-        print(distance) 
+        # print(distance) 
 
         # Reward the robot for reaching the handle
         reward = 1.0 / (1.0 + distance**2)
@@ -278,7 +278,7 @@ class flip_rewards(ManagerTermBase):
         # R = epsilon * torch.tanh(zeta*sign.squeeze()*kappa.squeeze()*distance_ratio)
         # R = torch.tanh(2*distance_ratio)
         R = (distance_ratio)
-        print(R)
+        # print(R)
         return R
     
     def _align_ee_grasp_point(
@@ -378,10 +378,6 @@ class flip_rewards(ManagerTermBase):
                            (torch.sum(torch.abs(asset.data.root_lin_vel_b[:, :3]), dim=1)>0.05),
                             1, 0)
     
-    def dummy_reward(self, env: ManagerBasedRLEnv):
-        print(self.grasp_poses)
-        return torch.zeros(env.num_envs, device=env.device)
-    
 def home_after_flip(
         env: ManagerBasedRLEnv,
 ) -> torch.Tensor:
@@ -392,7 +388,8 @@ def home_after_flip(
     object: RigidObject = env.scene[object_cfg.name]
     z_axis = torch.tensor([0.0, 0.0, 1.0], device=env.device).repeat(env.num_envs, 1)
     z_component = quat_apply(object.data.root_quat_w, z_axis)[:, 2]
-    joint_pos_error = torch.sum(torch.abs(asset.data.joint_pos[:, asset_cfg.joint_ids] - asset.data.default_joint_pos[:, asset_cfg.joint_ids]), dim=1)
+    grasp_ready_position = torch.tensor([0.0, -0.569, 0.0, -2.810, 0.0, 3.037, 0.741, 0.04, 0.04], device=env.device).repeat(env.num_envs, 1)
+    joint_pos_error = torch.sum(torch.abs(asset.data.joint_pos[:, asset_cfg.joint_ids] - grasp_ready_position), dim=1)
     reward_for_home_pose = 1.0 - torch.tanh(joint_pos_error / 2.0)
     
     return torch.where(z_component < -0.05, reward_for_home_pose, 0)

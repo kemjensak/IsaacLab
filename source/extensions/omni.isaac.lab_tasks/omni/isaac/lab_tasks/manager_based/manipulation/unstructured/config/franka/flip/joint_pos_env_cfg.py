@@ -31,18 +31,18 @@ class FrankaFlipObjectEnvCfg(UnstructuredFlipEnvCfg):
 
         # Set Franka as robot
         self.scene.robot = FRANKA_PANDA_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot",
-                                                    init_state=ArticulationCfg.InitialStateCfg(
-                                                        joint_pos={
-                                                            "panda_joint1": -1.5708,
-                                                            "panda_joint2": 0.0,
-                                                            "panda_joint3": 0.785398,
-                                                            "panda_joint4": -3.05433,
-                                                            "panda_joint5": 2.04204, # 0.0
-                                                            "panda_joint6": 1.67552,
-                                                            "panda_joint7": 0.837758,
-                                                            "panda_finger_joint.*": 0.04,
-                                                        },
-                                                    ),
+                                                    # init_state=ArticulationCfg.InitialStateCfg(
+                                                    #     joint_pos={
+                                                    #         "panda_joint1": -1.5708,
+                                                    #         "panda_joint2": 0.0,
+                                                    #         "panda_joint3": 0.785398,
+                                                    #         "panda_joint4": -3.05433,
+                                                    #         "panda_joint5": 2.04204, # 0.0
+                                                    #         "panda_joint6": 1.67552,
+                                                    #         "panda_joint7": 0.837758,
+                                                    #         "panda_finger_joint.*": 0.04,
+                                                    #     },
+                                                    # ),
                                                     actuators={
                                                         "panda_shoulder": ImplicitActuatorCfg(
                                                             joint_names_expr=["panda_joint[1-4]"],
