@@ -59,13 +59,15 @@ class PreTrainedPolicyAction(ActionTerm):
                                              device=self.device)
 
         # remap some of the low level observations to internal observations
-        cfg.low_level_observations.actions.func = lambda dummy_env: self.low_level_actions
-        cfg.low_level_observations.actions.params = dict()
+        cfg.low_level_grasp_observations.actions.func = cfg.low_level_flip_observations.actions.func = lambda dummy_env: self.low_level_actions
+        cfg.low_level_grasp_observations.actions.params = cfg.low_level_flip_observations.actions.params = dict()
 
         # add the low level observations to the observation manager
-        self._low_level_obs_manager = ObservationManager({"ll_policy": cfg.low_level_observations}, env)
+        self._low_level_grasp_obs_manager = ObservationManager({"grasp_policy":  cfg.low_level_grasp_observations}, env)
+        self._low_level_flip_obs_manager = ObservationManager({"flip_policy":  cfg.low_level_flip_observations}, env)
 
         self._counter = 0
+        self._sim_step = 0
 
     """
     Properties.
@@ -73,7 +75,7 @@ class PreTrainedPolicyAction(ActionTerm):
 
     @property
     def action_dim(self) -> int:
-        return 2
+        return 1
 
     @property
     def raw_actions(self) -> torch.Tensor:
@@ -92,14 +94,22 @@ class PreTrainedPolicyAction(ActionTerm):
 
     def apply_actions(self):
         if self._counter % self.cfg.low_level_decimation == 0:
-            low_level_obs = self._low_level_obs_manager.compute_group("ll_policy")
-            self.low_level_actions[:] = self.flip_policy(low_level_obs)
-            self._low_level_body_action_term.process_actions(self.low_level_actions)
-            self._low_level_finger_action_term.process_actions(self.low_level_actions)  
+            low_level_flip_obs = self._low_level_flip_obs_manager.compute_group("flip_policy")
+            low_level_grasp_obs = self._low_level_grasp_obs_manager.compute_group("grasp_policy")
+            if self._sim_step<500:
+                self.low_level_actions[:] = self.flip_policy(low_level_flip_obs)
+            else:
+                self.low_level_actions[:] = self.grasp_policy(low_level_grasp_obs)
+            
+            self._low_level_body_action_term.process_actions(self.low_level_actions[:, :self._low_level_body_action_term.action_dim])
+            self._low_level_finger_action_term.process_actions(self.low_level_actions[:, self._low_level_body_action_term.action_dim:])  
             self._counter = 0
         self._low_level_body_action_term.apply_actions()
         self._low_level_finger_action_term.apply_actions()
+        if self._sim_step == 1000:
+            self._sim_step = 0
         self._counter += 1
+        self._sim_step += 1
 
     """
     Debug visualization.
@@ -182,7 +192,8 @@ class PreTrainedPolicyActionCfg(ActionTermCfg):
     low_level_body_action: ActionTermCfg = MISSING
     low_level_finger_action: ActionTermCfg = MISSING
     """Low level action configuration."""
-    low_level_observations: ObservationGroupCfg = MISSING
+    low_level_grasp_observations: ObservationGroupCfg = MISSING
+    low_level_flip_observations: ObservationGroupCfg = MISSING
     """Low level observation configuration."""
     debug_vis: bool = False
     """Whether to visualize debug information. Defaults to False."""

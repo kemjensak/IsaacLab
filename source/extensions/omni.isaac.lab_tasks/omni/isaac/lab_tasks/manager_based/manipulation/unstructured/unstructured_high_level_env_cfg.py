@@ -25,13 +25,16 @@ from omni.isaac.lab_tasks.manager_based.manipulation.unstructured import unstruc
 
 from .unstructured_flip_env_cfg import UnstructuredFlipEnvCfg
 from .config.franka.flip.joint_pos_env_cfg import FrankaFlipObjectEnvCfg
+from .config.franka.grasp.joint_pos_env_cfg import FrankaGraspObjectEnvCfg
+from omni.isaac.lab_tasks.manager_based.manipulation.lift.config.franka.joint_pos_env_cfg import FrankaCubeLiftEnvCfg
 from . import mdp
 
 ##
 # Scene definition
 ##
 
-LOW_LEVEL_ENV_CFG = FrankaFlipObjectEnvCfg()
+LOW_LEVEL_FLIP_ENV_CFG = FrankaFlipObjectEnvCfg()
+LOW_LEVEL_GRASP_ENV_CFG = FrankaGraspObjectEnvCfg()
 
 
 ##
@@ -42,7 +45,16 @@ LOW_LEVEL_ENV_CFG = FrankaFlipObjectEnvCfg()
 @configclass
 class CommandsCfg:
     """Command terms for the MDP."""
-    pass
+    object_pose = mdp.UniformPoseCommandCfg(
+    asset_name="robot",
+    body_name="panda_hand",  # will be set by agent env cfg
+    resampling_time_range=(10.0, 10.0),
+    debug_vis=True,
+    ranges=mdp.UniformPoseCommandCfg.Ranges(
+        pos_x=(-0.25, 0.25), pos_y=(-0.6, -0.4), pos_z=(0.25, 0.5), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
+    ),
+)
+
 
 
 @configclass
@@ -51,12 +63,13 @@ class ActionsCfg:
 
     pre_trained_policy_action: mdp.PreTrainedPolicyActionCfg = mdp.PreTrainedPolicyActionCfg(
         asset_name="robot",
-        grasp_policy_path=f"/home/kjs-dt/RL/orbit/logs/skrl/franka_unstructured_grasp_ppo/2024-06-11_14-51-41/checkpoints/agent_39600.pt",
-        flip_policy_path=f"/home/kjs-dt/RL/orbit/logs/skrl/franka_unstructured_flip_ppo/2024-06-11_17-34-57/checkpoints/agent_22800.pt",
-        low_level_decimation=4,
-        low_level_body_action=LOW_LEVEL_ENV_CFG.actions.body_joint_pos,
-        low_level_finger_action=LOW_LEVEL_ENV_CFG.actions.finger_joint_pos,
-        low_level_observations=LOW_LEVEL_ENV_CFG.observations.policy,
+        grasp_policy_path=f"/home/kjs-dt/RL/orbit/logs/rsl_rl/franka_grasp/2024-06-13_19-26-57/exported/policy.pt",
+        flip_policy_path=f"/home/kjs-dt/RL/orbit/logs/rsl_rl/franka_flip/2024-06-14_04-19-32/exported/policy.pt",
+        low_level_decimation=2,
+        low_level_body_action=LOW_LEVEL_FLIP_ENV_CFG.actions.body_joint_pos,
+        low_level_finger_action=LOW_LEVEL_FLIP_ENV_CFG.actions.finger_joint_pos,
+        low_level_flip_observations=LOW_LEVEL_FLIP_ENV_CFG.observations.policy,
+        low_level_grasp_observations=LOW_LEVEL_GRASP_ENV_CFG.observations.policy,
     )
 
 
@@ -73,8 +86,9 @@ class ObservationsCfg:
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
         eef_pos = ObsTerm(func=mdp.eef_pose_in_robot_root_frame)
         book_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("book_01")})
+        object_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame)
         flip_pose = ObsTerm(func=mdp.book_flip_point_in_robot_root_frame)
-        # target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
+        target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
         actions = ObsTerm(func=mdp.last_action)
         
         def __post_init__(self):
@@ -84,9 +98,6 @@ class ObservationsCfg:
     # observation groups
     policy: PolicyCfg = PolicyCfg()
 
-
-book_reset_pose_range : dict[str, tuple[float, float]] = {"x": (-0.12, -0.08), "y": (0.07, 0.13), "z": (0.03, 0.03),
-                        "roll": (-0.0, 0.0), "pitch": (-0.0, 0.0), "yaw": (89.0, 91.0)}
 @configclass
 class EventCfg:
     """Configuration for events."""
@@ -107,7 +118,8 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": book_reset_pose_range,
+            "pose_range": {"x": (-0.12, -0.08), "y": (0.07, 0.13), "z": (0.03, 0.03),
+                            "roll": (-0.0, 0.0), "pitch": (-0.0, 0.0), "yaw": (89.0, 91.0)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("book_01"),
         },
@@ -200,69 +212,12 @@ class EventCfg:
 class RewardsCfg:
     """Reward terms for the MDP."""
 
-    # reaching_object = RewTerm(
-    #     func=mdp.object_ee_distance,
-    #     params={"std": 0.1, "object_cfg": SceneEntityCfg("book_01")},
-    #     weight=1.0
-    # )
-
-    # object_rotation = RewTerm(
-    #     func=mdp.target_object_rotation,
-    #     params={},
-    #     weight=1.0 # 1.0
-    # )
-
-    # lifting_object = RewTerm(
-    #     func=mdp.object_is_lifted_from_initial,
-    #     params={"minimal_height": 0.02, "asset_cfg": SceneEntityCfg("book_01")},
-    #     weight=10.0
-    # )
-
     object_reach = RewTerm(
         func=mdp.flip_rewards,
         params={},
         weight=1.0 #1.0, 2.0
     )
 
-    # dummy_reward = RewTerm(
-    #     func=mdp.flip_rewards.dummy_reward,
-    #     params={},
-    #     weight=0.0
-    # )
-
-    # object_flip = RewTerm(
-    #     func=mdp.object_is_flipped,
-    #     params={"object_cfg": SceneEntityCfg("book_01")},
-    #     weight=10.0 # 10.0
-    # )
-
-    # home_after_flip = RewTerm(
-    #         func=mdp.home_after_flip,
-    #         params={},
-    #         weight=20.0,
-    # )
-
-    # action penalty
-    action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-3)
-
-    joint_vel = RewTerm(
-        func=mdp.joint_vel_l2,
-        weight=-1e-4,
-        params={"asset_cfg": SceneEntityCfg("robot")},
-    )
-
-    # touching_other_object = RewTerm(
-    #     func=mdp.touching_other_object,
-    #     weight=-1e-3,
-    #     params={"asset_cfg_list": [SceneEntityCfg("apple_01"),
-    #                             SceneEntityCfg("book_01"),
-    #                             SceneEntityCfg("kiwi01"),
-    #                             SceneEntityCfg("lemon_01"),
-    #                             SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01"),
-    #                             SceneEntityCfg("rubix_cube"),
-    #                             SceneEntityCfg("salt_box")],
-    #             },
-    # )
 
 @configclass
 class TerminationsCfg:
@@ -270,68 +225,10 @@ class TerminationsCfg:
 
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
 
-    # max_consecutive_success = DoneTerm(
-    #     func=mdp.max_consecutive_success, params={"num_success": 50, "command_name": "object_pose"}
-    # )
-
-    # object_dropping = DoneTerm(
-    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("object")}
-    # )
-
-    # apple_01_dropping = DoneTerm(
-    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("apple_01")}
-    # )
-
-    book_01_dropping = DoneTerm(
-        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("book_01")}
-    )
-
-    # kiwi01_dropping = DoneTerm(
-    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("kiwi01")}
-    # )
-
-    # lemon_01_dropping = DoneTerm(
-    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("lemon_01")}
-    # )
-
-    # NaturalBostonRoundBottle_A01_PR_NVD_01_dropping = DoneTerm(
-    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01")}
-    # )
-
-    # rubix_cube_dropping = DoneTerm(
-    #     func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("rubix_cube")}
-    # )
-
-    salt_box_dropping = DoneTerm(
-        func=mdp.root_height_below_minimum, params={"minimum_height": -0.05, "asset_cfg": SceneEntityCfg("salt_box")}
-    )
-
-        
-
-
 @configclass
 class CurriculumCfg:
     """Curriculum terms for the MDP."""
 
-    action_rate = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "action_rate", "weight": -1e-1, "num_steps": 10000}
-    )
-
-    joint_vel = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 10000}
-    )
-
-    # object_rotation = CurrTerm(
-    #     func=mdp.modify_reward_weight, params={"term_name": "object_rotation", "weight": 4.0, "num_steps": 10000}
-    # )
-    
-    # object_flip = CurrTerm(
-    #     func=mdp.modify_reward_weight, params={"term_name": "object_flip", "weight": 4.0, "num_steps": 10000}
-    # )
-    
-    # lifting_object = CurrTerm(
-    #     func=mdp.modify_reward_weight, params={"term_name": "lifting_object", "weight": 1e-1, "num_steps": 10000}
-    # )
 
 
 ##
@@ -344,7 +241,7 @@ class HighLevelEnvCfg(ManagerBasedRLEnvCfg):
     """Configuration for the lifting environment."""
 
     # Scene settings
-    scene: SceneEntityCfg = LOW_LEVEL_ENV_CFG.scene
+    scene: SceneEntityCfg = LOW_LEVEL_FLIP_ENV_CFG.scene
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
@@ -359,7 +256,7 @@ class HighLevelEnvCfg(ManagerBasedRLEnvCfg):
         """Post initialization."""
         # general settings
         self.decimation = 2
-        self.episode_length_s = 4.0
+        self.episode_length_s = 10.0
         # simulation settings
         self.sim.dt = 0.01  # 100Hz
 
