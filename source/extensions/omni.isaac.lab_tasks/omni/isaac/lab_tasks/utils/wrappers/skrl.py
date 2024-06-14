@@ -195,6 +195,7 @@ class SkrlSequentialLogTrainer(Trainer):
             # compute actions
             with torch.no_grad():
                 actions = self.agents.act(states, timestep=timestep, timesteps=self.timesteps)[0]
+
             # step the environments
             next_states, rewards, terminated, truncated, infos = self.env.step(actions)
             # note: here we do not call render scene since it is done in the env.step() method
