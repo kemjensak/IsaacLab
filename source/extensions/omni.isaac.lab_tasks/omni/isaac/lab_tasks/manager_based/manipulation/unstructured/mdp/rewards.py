@@ -182,8 +182,10 @@ class flip_rewards(ManagerTermBase):
         self._marker.visualize(translations=grasp_poses[:, :3], orientations=grasp_poses[:, 3:7])
 
         return (
-                self._approach_grasp_point(env, 0.1) * 0.5 +
-                self._align_ee_grasp_point(env, grasp_poses[:, 3:7]) * 0.5
+                torch.where(self._is_flipped(env) == True,
+                            1.0,
+                            self._approach_grasp_point(env, 0.1) * 0.5 +
+                            self._align_ee_grasp_point(env, grasp_poses[:, 3:7]) * 0.5)
                 # self._touching_book_before_grasp(env, grasp_poses[:, :3]) * -0.002
                 )
     
@@ -244,42 +246,7 @@ class flip_rewards(ManagerTermBase):
         reward = 1.0 / (1.0 + distance**2)
         reward = torch.pow(reward, 2)
         reward = torch.exp(-1.2 * distance)
-        return torch.where(distance <= threshold, 2 * reward, reward)
-    
-    def _approach_grasp_point_in_ratio(
-            self,
-            env: ManagerBasedRLEnv,
-    ) -> torch.Tensor:
-        """Reward the agent for approaching the grasp point in ratio."""
-        
-        ee_tcp_pos = env.scene["ee_frame"].data.target_pos_w[..., 0, :]
-        # Compute the distance of the end-effector to the handle
-        reset_mask = env.episode_length_buf == 1
-        distance = torch.norm(self._grasp_poses[:, :3] - ee_tcp_pos, dim=-1, p=2)
-        distance_dim = torch.norm(self._grasp_poses[:, :3] - ee_tcp_pos, dim=-1, p=2, keepdim=True)
-        distance_ratio = 1 - distance / self._initial_distance
-        self._initial_distance[reset_mask] = distance[reset_mask]
-
-        # book_quat = self._asset.data.root_quat_w
-        # initial_book_quat = self._initial_object_poses[:, 3:7]
-
-        # book_rot_axis = axis_angle_from_quat(quat_mul(book_quat, quat_inv(initial_book_quat)))
-
-        # vec_p = (self._grasp_poses[:, :3] - ee_tcp_pos)/distance_dim
-        # vec_u = (ee_tcp_pos - self._last_ee_tcp_pos)/torch.norm((ee_tcp_pos - self._last_ee_tcp_pos),dim=-1, p=2, keepdim=True)
-
-        # self._last_ee_tcp_pos = ee_tcp_pos.clone()
-
-        # kappa = torch.sum(vec_p * vec_u, dim=-1, keepdim=True) * 2
-        # sign = torch.sign(torch.sum(vec_p * vec_u, dim=-1, keepdim=True))
-        # epsilon = torch.where(self._grasp_poses[:, 0] - ee_tcp_pos[:, 0] < 0.005, 1.0 + 0.1*(50 - distance*100), 1.0)
-
-        # zeta = torch.where(book_rot_axis[:,0]<-(5/180*3.14), 1/(sign.squeeze()*kappa.squeeze()*distance_ratio), 1)
-        # R = epsilon * torch.tanh(zeta*sign.squeeze()*kappa.squeeze()*distance_ratio)
-        # R = torch.tanh(2*distance_ratio)
-        R = (distance_ratio)
-        # print(R)
-        return R
+        return reward
     
     def _align_ee_grasp_point(
             self,
@@ -294,6 +261,16 @@ class flip_rewards(ManagerTermBase):
 
         # Reward the robot for aligning the end-effector with the handle
         return 1.0 - torch.tanh(quat_err)
+
+    def _is_flipped(
+            self,
+            env: ManagerBasedRLEnv, object_cfg: SceneEntityCfg = SceneEntityCfg("book_01")
+    ) -> torch.Tensor:
+        """Reward the agent for flipping the object."""
+        object: RigidObject = env.scene[object_cfg.name]
+        z_axis = torch.tensor([0.0, 0.0, 1.0], device=env.device).repeat(env.num_envs, 1)
+        z_component = quat_apply(object.data.root_quat_w, z_axis)[:, 2]
+        return torch.where(z_component < 0.0, True, False)
     
     def _approach_gripper_handle(self,
                                 env: ManagerBasedRLEnv,
@@ -403,7 +380,7 @@ def object_is_flipped(
     z_axis = torch.tensor([0.0, 0.0, 1.0], device=env.device).repeat(env.num_envs, 1)
     z_component = quat_apply(object.data.root_quat_w, z_axis)[:, 2]
 
-    return torch.where(z_component < 0.0, torch.tanh(-z_component*2), torch.tanh(-z_component))
+    return torch.where(z_component < 0.0, torch.tanh(-z_component), torch.tanh(-z_component*2))
 
 def object_is_lifted(
     env: ManagerBasedRLEnv, minimal_height: float, object_cfg: SceneEntityCfg = SceneEntityCfg("object")

@@ -30,6 +30,7 @@ parser.add_argument("--num_envs", type=int, default=None, help="Number of enviro
 parser.add_argument("--task", type=str, default=None, help="Name of the task.")
 parser.add_argument("--seed", type=int, default=None, help="Seed used for the environment")
 parser.add_argument("--max_iterations", type=int, default=None, help="RL Policy training iterations.")
+parser.add_argument("--checkpoint", type=str, default=None, help="Path to model checkpoint.")
 # append AppLauncher cli args
 AppLauncher.add_app_launcher_args(parser)
 # parse the arguments
@@ -166,6 +167,10 @@ def main():
         action_space=env.action_space,
         device=env.device,
     )
+
+    if args_cli.checkpoint:
+        resume_path = os.path.abspath(args_cli.checkpoint)
+        agent.load(resume_path)
 
     # configure and instantiate a custom RL trainer for logging episode events
     # https://skrl.readthedocs.io/en/latest/api/trainers.html

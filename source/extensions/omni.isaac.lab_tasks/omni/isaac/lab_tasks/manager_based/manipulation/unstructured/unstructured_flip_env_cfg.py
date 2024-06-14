@@ -53,7 +53,7 @@ class UnstructuredTableSceneCfg(InteractiveSceneCfg):
     # Table
     table = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Table",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.5, 0, 0], rot=[0.707, 0, 0, 0.707]),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.75, 0, 0], rot=[0.707, 0, 0, 0.707]),
         spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd",
                          scale=(1.5, 1.5, 1.0),),
     )
@@ -140,7 +140,7 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.0, 0.0),
+            "pose_range": {"x": (-0.1, 0.2), "y": (-0.15, 0.15), "z": (0.0, 0.0),
                            "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("object"),
@@ -151,7 +151,7 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.12, -0.08), "y": (0.07, 0.13), "z": (0.03, 0.03),
+            "pose_range": {"x": (-0.02, 0.02), "y": (0.07, 0.13), "z": (0.03, 0.03),
                             "roll": (-0.0, 0.0), "pitch": (-0.0, 0.0), "yaw": (89.0, 91.0)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("book_01"),
@@ -217,7 +217,7 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.23, -0.20), "y": (-0.0, 0.0), "z": (0.0, 0.0),
+            "pose_range": {"x": (-0.13, -0.10), "y": (-0.0, 0.0), "z": (0.0, 0.0),
                            "roll": (-90.0, -90.0), "pitch": (-0.0, 0.0), "yaw": (-0.0, 0.0)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("salt_box"),
