@@ -41,7 +41,7 @@ class shelf_Reaching(ManagerTermBase):
         reach = self.object_ee_distance(env)
         align = self.align_ee_target(env)
 
-        return align
+        return reach 
     
     def object_ee_distance(self, env:ManagerBasedRLEnv) -> torch.Tensor:
         ready_point_pos_w = self._target.data.root_pos_w.clone()
@@ -73,9 +73,9 @@ class shelf_Reaching(ManagerTermBase):
         world_rot_mat = matrix_from_quat(world_quat)
 
         world_z = world_rot_mat[..., 2]
-        ee_tcp_x = ee_tcp_rot_mat [..., 0]
+        ee_tcp_y = ee_tcp_rot_mat [..., 1]
 
-        align_z = torch.bmm(ee_tcp_x.unsqueeze(1), -world_z.unsqueeze(-1)).squeeze(-1).squeeze(-1)
+        align_z = torch.bmm(ee_tcp_y.unsqueeze(1), -world_z.unsqueeze(-1)).squeeze(-1).squeeze(-1)
 
         zeta_m = torch.where(distance < 0.01, 0.5, 1)
         return zeta_m * 0.5 * (torch.sign(align_z) * align_z**2)
@@ -89,8 +89,7 @@ class shelf_Pushing(ManagerTermBase):
         self._target: RigidObject = env.scene[object_cfg.name]
         self._ee: FrameTransformer = env.scene[ee_frame_cfg.name]
 
-        self._initial_object_pos = self._target.data.root_pos_w.clone() 
-        self._initial_ee_pos = self._ee.data.target_pos_w.clone() 
+        self._initial_object_pos = self._target.data.root_pos_w.clone()   
 
         self._initial_distance = torch.zeros(env.num_envs, device=env.device)
 
@@ -99,7 +98,7 @@ class shelf_Pushing(ManagerTermBase):
         self._target_last_w = self._target.data.root_pos_w.clone()
 
         self._push_offset = torch.zeros((env.num_envs, 3), device=env.device)
-        self._push_offset[:, :3] = torch.tensor([0.1, 0.15, 0.03])
+        self._push_offset[:, :3] = torch.tensor([0.0, 0.3, 0.05])
     
     def __call__(self, env: ManagerBasedRLEnv,):
 
@@ -108,56 +107,26 @@ class shelf_Pushing(ManagerTermBase):
         return push
     
     def push_object(self, env:ManagerBasedRLEnv) -> torch.Tensor:
-
-        # current object state
         object_pos_w = self._target.data.root_pos_w.clone()
-        object_lin_vel = self._target.data.root_lin_vel_w.clone()
-        # current ee state
-        ee_pos_w = self._ee.data.target_pos_w.clone()
-
-        # initial object & ee state
         reset_mask = env.episode_length_buf == 1
         self._initial_object_pos[reset_mask] = self._target.data.root_pos_w[reset_mask, :].clone()
-        self._initial_ee_pos[reset_mask] = self._ee.data.target_pos_w[reset_mask, :].clone()
-
-        # ee target position
         offset_pos = transform_points(self._push_offset,self._target.data.root_pos_w, self._target.data.root_state_w[:, 3:7] )[..., 0 , :]
-        
-        # distance between ee and object
+        des_w = self._initial_object_pos.clone()
+        des_w[:, 1] = des_w[:, 1] - 0.2
         distance = torch.norm(offset_pos - self._ee.data.target_pos_w[..., 0, :], dim=-1, p=2)
-        # print("dis: {}".format(distance))
-        # print("obj: {}".format(offset_pos))
-        # print("tcp: {}".format(self._ee.data.target_pos_w[..., 0, :]))
 
 
-        # Displacement of ee from initial state
-        delta_y_ee = (ee_pos_w[..., 0, 1] - self._initial_ee_pos[..., 0, 1])
-        delta_x_ee = (ee_pos_w[..., 0, 0] - self._initial_ee_pos[..., 0, 0])
-        delta_z_ee = (ee_pos_w[..., 0, 2] - self._initial_ee_pos[..., 0, 2])
-
-
-        # Displacement of cup from initial state
         delta_y = -1*(object_pos_w[:, 1] - self._initial_object_pos[:, 1])
         # delta_x = torch.where(torch.norm(object_pos_w[:, 0] - self._target_last_w[:, 0])>0.1, 1, 0)
         # delta_z = torch.where(torch.norm(object_pos_w[:, 2] - self._target_last_w[:, 2])>0.1, 1, 0)
+        # zeta_s = torch.where(torch.norm(object_pos_w[:, 1] - self._initial_object_pos[:, 1]) > 0.3, 0, 1)
+        zeta_m = torch.where(distance < 0.02, 1, 0)
 
-        # indicator factor
-        zeta_s = torch.where(torch.abs(object_pos_w[:, 1] - self._initial_object_pos[:, 1]) > 0.2, 0, 1)
-        zeta_m = torch.where(distance < 0.03, 1, 0)
+        distance_des = torch.norm(des_w - object_pos_w,dim=-1, p=2)
 
-
-        # R = zeta_s * ((torch.pow(delta_y_ee, 2) + 0.01) -  0.05*(torch.pow(delta_x_ee, 2) + torch.pow(delta_z_ee, 2)) + 3*torch.tanh(2*delta_y/0.2) - 0.005*(torch.pow(object_lin_vel[:, 0], 2)+torch.pow(object_lin_vel[:, 2], 2)))
-        # print(R)
-        R = zeta_s * zeta_m * ((3*torch.tanh(2*delta_y/0.2)))
-
-        
+        R = zeta_m *(5*torch.tanh(2*delta_y/0.2))
         # R = zeta_s * zeta_m * (5*torch.tanh.(2*delta_y) - 0.05*torch.tanh(2*delta_x)-torch.tanh(2*delta_z)) + (1-zeta_s)*(1-distance_f/self._initial_distance)
         # print("distance: {}".format(distance))
-        # print("delta_y: {}".format(delta_y))
-        # print("ee: {}".format( self._ee.data.target_pos_w[..., 0, :]))
-        # print("object: {}".format(offset_pos))
-        # print("zeta_m: {}".format(zeta_m))
-        # print("zeta_s: {}".format(zeta_s))
         # print("reward: {}".format(R))
         # self._target_last_w = object_pos_w.clone()
 
@@ -211,14 +180,14 @@ class shelf_Collision(ManagerTermBase):
 
         dst_wrist_shelf = self._wrist.data.target_pos_w[..., 0, 2] - (self._shelf.data.root_pos_w[:, 2] + 0.66)
 
-        reward_ee = 1 - dst_ee_shelf / 0.04
-        reward_wrist = 1 - dst_wrist_shelf / 0.04
+        reward_ee = 1 - dst_ee_shelf / 0.06
+        reward_wrist = 1 - dst_wrist_shelf / 0.06
+
 
         reward_ee = torch.clamp(reward_ee, 0, 1)
         reward_wrist = torch.clamp(reward_wrist, 0, 1)
 
         R = 5 * zeta * (reward_ee + reward_wrist)
-
 
         return R
 
@@ -284,7 +253,7 @@ def object_collision_pentaly(
     mu_v = torch.where(torch.norm(object_vel, dim=-1, p=2) < 0.02, 0, 1)
     mu_w = torch.where(torch.norm(object_ang_vel, dim=-1, p=2)< 0.1, 0, 1)
 
-    R = 0.5*(mu_v*torch.tanh(torch.norm(object_vel, dim=-1, p=2)/0.01))
+    R = 0.5*(mu_v*torch.tanh(torch.norm(object_vel, dim=-1, p=2))+mu_w*torch.tanh(torch.norm(object_ang_vel, dim=-1, p=2)))
     return R
     
 

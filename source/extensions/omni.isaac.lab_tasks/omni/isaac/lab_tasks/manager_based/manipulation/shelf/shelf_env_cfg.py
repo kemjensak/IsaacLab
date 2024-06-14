@@ -152,18 +152,18 @@ class RewardsCfg:
     # lifting_object = RewTerm(func=mdp.object_lift, params={}, weight=5.0)
 
     # action penalty
-    action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-2)
+    action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-4)
 
     joint_vel = RewTerm(
         func=mdp.joint_vel_l2,
-        weight=-1e-2,
+        weight=-1e-4,
         params={"asset_cfg": SceneEntityCfg("robot")},
     )
 
     # collision penalty
-    shelf_collision = RewTerm(func=mdp.shelf_Collision, params={}, weight=-4.0)
+    shelf_collision = RewTerm(func=mdp.shelf_Collision, params={}, weight=-2.0)
     # object_collision = RewTerm(func=mdp.object_collision_pentaly, params={}, weight=-1.0)
-    object_drop = RewTerm(func=mdp.Object_drop, weight=-4.0)
+    object_drop = RewTerm(func=mdp.Object_drop, weight=-1.0)
 
 @configclass
 class TerminationsCfg:
@@ -177,11 +177,11 @@ class CurriculumCfg:
     """Curriculum terms for the MDP."""
 
     action_rate = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "action_rate", "weight": -2e-1, "num_steps": 10000}
+        func=mdp.modify_reward_weight, params={"term_name": "action_rate", "weight": -1e-1, "num_steps": 10000}
     )
 
     joint_vel = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -2e-1, "num_steps": 10000}
+        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 10000}
     )
 
 
