@@ -12,7 +12,7 @@ from omni.isaac.lab.managers import EventTermCfg as EventTerm
 from omni.isaac.lab.managers import ObservationGroupCfg as ObsGroup
 from omni.isaac.lab.managers import ObservationTermCfg as ObsTerm
 from omni.isaac.lab.managers import RewardTermCfg as RewTerm
-from omni.isaac.lab.managers import SceneEntityCfg
+from omni.isaac.lab.managers import SceneEntityCfg, EventTermCfg
 from omni.isaac.lab.managers import TerminationTermCfg as DoneTerm
 from omni.isaac.lab.scene import InteractiveSceneCfg
 from omni.isaac.lab.sensors import CameraCfg, ContactSensorCfg, RayCasterCfg, patterns 
@@ -41,30 +41,14 @@ LOW_LEVEL_GRASP_ENV_CFG = FrankaGraspObjectEnvCfg()
 # MDP settings
 ##
 
-
-@configclass
-class CommandsCfg:
-    """Command terms for the MDP."""
-    object_pose = mdp.UniformPoseCommandCfg(
-    asset_name="robot",
-    body_name="panda_hand",  # will be set by agent env cfg
-    resampling_time_range=(10.0, 10.0),
-    debug_vis=True,
-    ranges=mdp.UniformPoseCommandCfg.Ranges(
-        pos_x=(-0.25, 0.25), pos_y=(-0.6, -0.4), pos_z=(0.25, 0.5), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
-    ),
-)
-
-
-
 @configclass
 class ActionsCfg:
     """Action specifications for the MDP."""
 
     pre_trained_policy_action: mdp.PreTrainedPolicyActionCfg = mdp.PreTrainedPolicyActionCfg(
         asset_name="robot",
-        grasp_policy_path=f"/home/kjs-dt/RL/orbit/logs/rsl_rl/franka_grasp/2024-06-13_19-26-57/exported/policy.pt",
-        flip_policy_path=f"/home/kjs-dt/RL/orbit/logs/rsl_rl/franka_flip/2024-06-14_04-19-32/exported/policy.pt",
+        grasp_policy_path=f"/home/kjs-dt/RL/orbit/logs/rsl_rl/franka_grasp/2024-06-16_19-47-03/exported/policy.pt",
+        flip_policy_path=f"/home/kjs-dt/RL/orbit/logs/rsl_rl/franka_flip/2024-06-15_23-18-36/exported/policy.pt",
         low_level_decimation=2,
         low_level_body_action=LOW_LEVEL_FLIP_ENV_CFG.actions.body_joint_pos,
         low_level_finger_action=LOW_LEVEL_FLIP_ENV_CFG.actions.finger_joint_pos,
@@ -97,115 +81,6 @@ class ObservationsCfg:
 
     # observation groups
     policy: PolicyCfg = PolicyCfg()
-
-@configclass
-class EventCfg:
-    """Configuration for events."""
-
-    reset_all = EventTerm(func=mdp.reset_scene_to_default, mode="reset")
-    reset_object_position = EventTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.0, 0.0),
-                           "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
-            "velocity_range": {},
-            "asset_cfg": SceneEntityCfg("object"),
-        },
-    )
-
-    reset_book_01_position = EventTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "pose_range": {"x": (-0.12, -0.08), "y": (0.07, 0.13), "z": (0.03, 0.03),
-                            "roll": (-0.0, 0.0), "pitch": (-0.0, 0.0), "yaw": (89.0, 91.0)},
-            "velocity_range": {},
-            "asset_cfg": SceneEntityCfg("book_01"),
-        },
-    )
-
-    # reset_apple_01_position = EventTerm(
-    #     func=mdp.reset_root_state_uniform,
-    #     mode="reset",
-    #     params={
-    #         "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.0, 0.0),
-    #                        "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
-    #         "velocity_range": {},
-    #         "asset_cfg": SceneEntityCfg("apple_01"),
-    #     },
-    # )
-
-    # reset_kiwi01_position = EventTerm(
-    #     func=mdp.reset_root_state_uniform,
-    #     mode="reset",
-    #     params={
-    #         "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.0, 0.0),
-    #                        "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
-    #         "velocity_range": {},
-    #         "asset_cfg": SceneEntityCfg("kiwi01"),
-    #     },
-    # )
-
-    # reset_lemon_01_position = EventTerm(
-    #     func=mdp.reset_root_state_uniform,
-    #     mode="reset",
-    #     params={
-    #         "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.0, 0.0),
-    #                        "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
-    #         "velocity_range": {},
-    #         "asset_cfg": SceneEntityCfg("lemon_01"),
-    #     },
-    # )
-
-    # reset_NaturalBostonRoundBottle_A01_PR_NVD_01_position = EventTerm(
-    #     func=mdp.reset_root_state_uniform,
-    #     mode="reset",
-    #     params={
-    #         "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.0, 0.0),
-    #                        "roll": (-90.0, -90.0), "pitch": (-10.0, 10.0), "yaw": (-180.0, 180.0)},
-    #         "velocity_range": {},
-    #         "asset_cfg": SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01"),
-    #     },
-    # )
-
-    # reset_RubixCube_position = EventTerm(
-    #     func=mdp.reset_root_state_uniform,
-    #     mode="reset",
-    #     params={
-    #         "pose_range": {"x": (-0.2, 0.1), "y": (-0.15, 0.15), "z": (0.0, 0.0),
-    #                        "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
-    #         "velocity_range": {},
-    #         "asset_cfg": SceneEntityCfg("rubix_cube"),
-    #     },
-    # )
-
-    reset_Saltbox_position = EventTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "pose_range": {"x": (-0.23, -0.20), "y": (-0.0, 0.0), "z": (0.0, 0.0),
-                           "roll": (-90.0, -90.0), "pitch": (-0.0, 0.0), "yaw": (-0.0, 0.0)},
-            "velocity_range": {},
-            "asset_cfg": SceneEntityCfg("salt_box"),
-        },
-    )
-
-    # load_object_pose = EventTerm(
-    #     func=mdp.reset_root_state_from_file,
-    #     mode="reset",
-    #     params={
-    #         "object_cfg": [SceneEntityCfg("object"),
-    #                        SceneEntityCfg("apple_01"),
-    #                        SceneEntityCfg("book_01"),
-    #                        SceneEntityCfg("kiwi01"),
-    #                        SceneEntityCfg("lemon_01"),
-    #                        SceneEntityCfg("NaturalBostonRoundBottle_A01_PR_NVD_01"),
-    #                        SceneEntityCfg("rubix_cube"),
-    #                        SceneEntityCfg("salt_box")],
-    #         "loaded_object_poses": torch.from_numpy(np.load("/home/kjs-dt/RL/objcet_pose/object_poses_grasp.npy")).to('cuda')
-    #     },
-    # )
 
 
 @configclass
@@ -245,11 +120,11 @@ class HighLevelEnvCfg(ManagerBasedRLEnvCfg):
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
-    commands: CommandsCfg = CommandsCfg()
+    commands = LOW_LEVEL_FLIP_ENV_CFG.commands
     # MDP settings
     rewards: RewardsCfg = RewardsCfg()
     terminations: TerminationsCfg = TerminationsCfg()
-    events: EventCfg = EventCfg()
+    events = LOW_LEVEL_FLIP_ENV_CFG.events
     curriculum: CurriculumCfg = CurriculumCfg()
 
     def __post_init__(self):
