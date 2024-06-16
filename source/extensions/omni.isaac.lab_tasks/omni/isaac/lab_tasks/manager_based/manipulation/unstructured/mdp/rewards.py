@@ -183,7 +183,7 @@ class flip_rewards(ManagerTermBase):
 
         return (
                 torch.where(self._is_flipped(env) == True,
-                            1.0,
+                            1.5,
                             self._approach_grasp_point(env, 0.1) * 0.5 +
                             self._align_ee_grasp_point(env, grasp_poses[:, 3:7]) * 0.5)
                 # self._touching_book_before_grasp(env, grasp_poses[:, :3]) * -0.002
@@ -246,7 +246,7 @@ class flip_rewards(ManagerTermBase):
         reward = 1.0 / (1.0 + distance**2)
         reward = torch.pow(reward, 2)
         reward = torch.exp(-1.2 * distance)
-        return reward
+        return torch.where(distance <= threshold, 2 * reward, reward)
     
     def _align_ee_grasp_point(
             self,
@@ -380,7 +380,7 @@ def object_is_flipped(
     z_axis = torch.tensor([0.0, 0.0, 1.0], device=env.device).repeat(env.num_envs, 1)
     z_component = quat_apply(object.data.root_quat_w, z_axis)[:, 2]
 
-    return torch.where(z_component < 0.0, torch.tanh(-z_component), torch.tanh(-z_component*2))
+    return torch.where(z_component < 0.0, torch.tanh(-z_component*2), torch.tanh(-z_component))
 
 def object_is_lifted(
     env: ManagerBasedRLEnv, minimal_height: float, object_cfg: SceneEntityCfg = SceneEntityCfg("object")
