@@ -57,7 +57,7 @@ class UnstructuredTableSceneCfg(InteractiveSceneCfg):
     # Table
     table = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Table",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.5, 0, 0], rot=[0.707, 0, 0, 0.707]),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.75, 0, 0], rot=[0.707, 0, 0, 0.707]),
         spawn=UsdFileCfg(usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Mounts/SeattleLabTable/table_instanceable.usd",
                          scale=(1.5, 1.5, 1.0),),
     )
@@ -97,7 +97,7 @@ class CommandsCfg:
         resampling_time_range=(5.0, 5.0),
         debug_vis=True,
         ranges=mdp.UniformPoseCommandCfg.Ranges(
-            pos_x=(-0.25, 0.25), pos_y=(-0.6, -0.4), pos_z=(0.25, 0.5), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
+            pos_x=(-0.0, 0.5), pos_y=(-0.6, -0.4), pos_z=(0.25, 0.5), roll=(0.0, 0.0), pitch=(0.0, 0.0), yaw=(0.0, 0.0)
         ),
     )
 
@@ -145,7 +145,7 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (0.0, 0.2), "y": (-0.15, 0.15), "z": (0.02, 0.02),
+            "pose_range": {"x": (-0.1, 0.2), "y": (-0.15, 0.15), "z": (0.0, 0.0),
                            "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("object", body_names="Object"),
