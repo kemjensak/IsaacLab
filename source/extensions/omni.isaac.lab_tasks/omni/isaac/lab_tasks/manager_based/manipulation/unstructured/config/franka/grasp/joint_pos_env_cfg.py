@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import omni.isaac.lab.sim as sim_utils
+from omni.isaac.lab.actuators import ImplicitActuatorCfg
 from omni.isaac.lab.assets import RigidObjectCfg
 from omni.isaac.lab.sensors import FrameTransformerCfg, CameraCfg, ContactSensorCfg, RayCasterCfg, patterns 
 from omni.isaac.lab.sensors.frame_transformer.frame_transformer_cfg import OffsetCfg
@@ -28,8 +29,44 @@ class FrankaGraspObjectEnvCfg(UnstructuredGraspEnvCfg):
         super().__post_init__()
 
         # Set Franka as robot
-        self.scene.robot = FRANKA_PANDA_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
-
+        self.scene.robot = FRANKA_PANDA_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot",
+                                                    # init_state=ArticulationCfg.InitialStateCfg(
+                                                    #     joint_pos={
+                                                    #         "panda_joint1": -1.5708,
+                                                    #         "panda_joint2": 0.0,
+                                                    #         "panda_joint3": 0.785398,
+                                                    #         "panda_joint4": -3.05433,
+                                                    #         "panda_joint5": 2.04204, # 0.0
+                                                    #         "panda_joint6": 1.67552,
+                                                    #         "panda_joint7": 0.837758,
+                                                    #         "panda_finger_joint.*": 0.04,
+                                                    #     },
+                                                    # ),
+                                                    actuators={
+                                                        "panda_shoulder": ImplicitActuatorCfg(
+                                                            joint_names_expr=["panda_joint[1-4]"],
+                                                            effort_limit=87.0,
+                                                            velocity_limit=2.175/10,
+                                                            stiffness=80.0/10,
+                                                            damping=4.0/10,
+                                                        ),
+                                                        "panda_forearm": ImplicitActuatorCfg(
+                                                            joint_names_expr=["panda_joint[5-7]"],
+                                                            effort_limit=12.0,
+                                                            velocity_limit=2.61/10,
+                                                            stiffness=80.0/10,
+                                                            damping=4.0/10,
+                                                        ),
+                                                        "panda_hand": ImplicitActuatorCfg(
+                                                            joint_names_expr=["panda_finger_joint.*"],
+                                                            effort_limit=200.0,
+                                                            velocity_limit=0.2,
+                                                            stiffness=2e3,
+                                                            damping=1e2,
+                                                        ),
+                                                    }
+                                                    )
+        
         # Set actions for the specific robot type (franka)
         self.actions.body_joint_pos = mdp.JointPositionActionCfg(
             asset_name="robot", joint_names=["panda_joint.*"], scale=0.5, use_default_offset=True
