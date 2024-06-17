@@ -104,7 +104,7 @@ class shelf_Pushing(ManagerTermBase):
         self._target_last_w = self._target.data.root_pos_w.clone()
 
         self._push_offset = torch.zeros((env.num_envs, 3), device=env.device)
-        self._push_offset[:, :3] = torch.tensor([0.1, 0.15, 0.04])
+        self._push_offset[:, :3] = torch.tensor([0.06, 0.15, 0.04])
     
     def __call__(self, env: ManagerBasedRLEnv,):
 
@@ -116,7 +116,6 @@ class shelf_Pushing(ManagerTermBase):
 
         # current object state
         object_pos_w = self._target.data.root_pos_w.clone()
-        object_lin_vel = self._target.data.root_lin_vel_w.clone()
         # current ee state
         ee_pos_w = self._ee.data.target_pos_w.clone()
 
@@ -130,16 +129,21 @@ class shelf_Pushing(ManagerTermBase):
         
         # distance between ee and object
         distance = torch.norm(offset_pos - self._ee.data.target_pos_w[..., 0, :], dim=-1, p=2)
+        distance_f = torch.norm(self._initial_object_pos - self._ee.data.target_pos_w[..., 0, :],  dim=-1, p=2)
         # print("dis: {}".format(distance))
         # print("obj: {}".format(offset_pos))
         # print("tcp: {}".format(self._ee.data.target_pos_w[..., 0, :]))
+        
 
+        # Displacement of end-effector from initial state
+        D_y_ee = (ee_pos_w[..., 0, 1] - self._initial_ee_pos[..., 0, 1])
+        D_x_ee = (ee_pos_w[..., 0, 0] - self._initial_ee_pos[..., 0, 0])
+        D_z_ee = (ee_pos_w[..., 0, 2] - self._initial_ee_pos[..., 0, 2])
 
-        # Displacement of ee from initial state
-        delta_y_ee = (ee_pos_w[..., 0, 1] - self._initial_ee_pos[..., 0, 1])
-        delta_x_ee = (ee_pos_w[..., 0, 0] - self._initial_ee_pos[..., 0, 0])
-        delta_z_ee = (ee_pos_w[..., 0, 2] - self._initial_ee_pos[..., 0, 2])
+        # Velocity of end-effector 
+        v_y_ee = -1 * (ee_pos_w[..., 0, 1] - self._ee_pos_last_w[..., 0, 1])/env.step_dt
 
+        velocity_reward = torch.where(v_y_ee < 0.45, v_y_ee * 3, -3 * v_y_ee)
 
         # Displacement of cup from initial state
         delta_y = -1*(object_pos_w[:, 1] - self._initial_object_pos[:, 1])
@@ -147,15 +151,12 @@ class shelf_Pushing(ManagerTermBase):
         # delta_z = torch.where(torch.norm(object_pos_w[:, 2] - self._target_last_w[:, 2])>0.1, 1, 0)
 
         # indicator factor
-        zeta_s = torch.where(torch.abs(object_pos_w[:, 1] - self._initial_object_pos[:, 1]) > 0.2, 0, 1)
-        zeta_m = torch.where(distance < 0.03, 1, 0)
+        zeta_s = torch.where(torch.abs(object_pos_w[:, 1] - self._initial_object_pos[:, 1]) > 0.19, 0, 1)
+        zeta_m = torch.where(torch.bitwise_or(distance < 0.03, torch.abs(object_pos_w[:, 1] - self._initial_object_pos[:, 1]) > 0.19) , 1, 0)
+
+        R = zeta_m * ((3*torch.tanh(2*delta_y/0.2)) - 0.2 * (torch.tanh(2 * D_x_ee/0.1)) + velocity_reward) + 4*(1-zeta_s)*torch.exp(-1.2 * distance_f)
 
 
-        # R = zeta_s * ((torch.pow(delta_y_ee, 2) + 0.01) -  0.05*(torch.pow(delta_x_ee, 2) + torch.pow(delta_z_ee, 2)) + 3*torch.tanh(2*delta_y/0.2) - 0.005*(torch.pow(object_lin_vel[:, 0], 2)+torch.pow(object_lin_vel[:, 2], 2)))
-        # print(R)
-        R = zeta_s * zeta_m * ((3*torch.tanh(2*delta_y/0.2)) - 0.1 * (torch.tanh(2 * delta_x_ee/0.1)))
-
-        
         # R = zeta_s * zeta_m * (5*torch.tanh.(2*delta_y) - 0.05*torch.tanh(2*delta_x)-torch.tanh(2*delta_z)) + (1-zeta_s)*(1-distance_f/self._initial_distance)
         # print("distance: {}".format(distance))
         # print("delta_y: {}".format(delta_y))
@@ -164,9 +165,10 @@ class shelf_Pushing(ManagerTermBase):
         # print("zeta_m: {}".format(zeta_m))
         # print("zeta_s: {}".format(zeta_s))
         # print("reward: {}".format(R))
+        # print("dt: {}".format(delta_y_ee/env.step_dt))
         # self._target_last_w = object_pos_w.clone()
 
-        # self._ee_pos_last_w = self._ee.data.target_pos_w[..., 0, :].clone()
+        self._ee_pos_last_w = self._ee.data.target_pos_w.clone()
         
         return R
 
@@ -251,10 +253,11 @@ class Object_drop(ManagerTermBase):
 
         offset_pos = transform_points(self._top_offset,self._target.data.root_pos_w, self._target.data.root_state_w[:, 3:7] )[..., 0 , :]
         object_vel = self._target.data.root_lin_vel_w
-        condition = torch.where(offset_pos[:, 2] <  0.7, 1, 0)
 
-        
-        return condition
+        delta_z = 0.73 - offset_pos[:, 2]
+
+        penalty_object = torch.tanh(5 * torch.abs(delta_z) / 0.1)
+        return penalty_object
 
     
 def object_lift( env: ManagerBasedRLEnv, threshold: float, object_cfg: SceneEntityCfg = SceneEntityCfg("cup")) -> torch.Tensor:
