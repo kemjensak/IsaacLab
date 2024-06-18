@@ -70,11 +70,11 @@ class UnstructuredTableSceneCfg(InteractiveSceneCfg):
     )
 
     # Sensor
-    Sensor = AssetBaseCfg(
-        prim_path="{ENV_REGEX_NS}/Sensor",
-        init_state=AssetBaseCfg.InitialStateCfg(),
-        spawn=UsdFileCfg(usd_path=f"/home/kjs-dt/isaac_save/2023.1.1/top_rgbd.usd"),
-    )
+    # Sensor = AssetBaseCfg(
+    #     prim_path="{ENV_REGEX_NS}/Sensor",
+    #     init_state=AssetBaseCfg.InitialStateCfg(),
+    #     spawn=UsdFileCfg(usd_path=f"/home/kjs-dt/isaac_save/2023.1.1/top_rgbd.usd"),
+    # )
 
     # lights
     light = AssetBaseCfg(
@@ -145,8 +145,8 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.1, 0.2), "y": (-0.15, 0.15), "z": (0.0, 0.0),
-                           "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
+            "pose_range": {"x": (-0.25, 0.4), "y": (-0.25, 0.25), "z": (0.0, 0.0),
+                           "roll": (-180.0, 180.0), "pitch": (-180.0, 180.0), "yaw": (-180.0, 180.0)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("object", body_names="Object"),
         },
@@ -280,6 +280,8 @@ class RewardsCfg:
     #     weight=1.0,
     # )
 
+    ee_vel = RewTerm(func=mdp.ee_velocity, weight=-1e-3)
+
     object_goal_tracking = RewTerm(
         func=mdp.object_goal_distance,
         params={"std": 0.3, "minimal_height": 0.04, "command_name": "object_pose"},
@@ -362,11 +364,15 @@ class CurriculumCfg:
 
     # TODO: FOR 4096 ENVS NOW
     action_rate = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "action_rate", "weight": -1e-1, "num_steps": 15000}
+        func=mdp.modify_reward_weight, params={"term_name": "action_rate", "weight": -1e-1, "num_steps": 10000}
     ) # 10000
 
     joint_vel = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 15000}
+        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 10000}
+    ) # 10000
+
+    ee_vel = CurrTerm(
+        func=mdp.modify_reward_weight, params={"term_name": "ee_vel", "weight": -1, "num_steps": 10000}
     ) # 10000
 
     # lifting_object = CurrTerm(

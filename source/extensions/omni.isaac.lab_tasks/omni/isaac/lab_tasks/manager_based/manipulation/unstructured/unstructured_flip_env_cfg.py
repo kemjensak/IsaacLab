@@ -66,11 +66,11 @@ class UnstructuredTableSceneCfg(InteractiveSceneCfg):
     )
 
     # Sensor
-    Sensor = AssetBaseCfg(
-        prim_path="{ENV_REGEX_NS}/Sensor",
-        init_state=AssetBaseCfg.InitialStateCfg(),
-        spawn=UsdFileCfg(usd_path=f"/home/kjs-dt/isaac_save/2023.1.1/top_rgbd.usd"),
-    )
+    # Sensor = AssetBaseCfg(
+    #     prim_path="{ENV_REGEX_NS}/Sensor",
+    #     init_state=AssetBaseCfg.InitialStateCfg(),
+    #     spawn=UsdFileCfg(usd_path=f"/home/kjs-dt/isaac_save/2023.1.1/top_rgbd.usd"),
+    # )
 
     # lights
     light = AssetBaseCfg(
@@ -281,6 +281,8 @@ class RewardsCfg:
             weight=20.0,
     )
 
+    # ee_vel = RewTerm(func=mdp.ee_velocity, weight=-1e-3)
+
     # action penalty
     action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-3)
 
@@ -359,6 +361,10 @@ class CurriculumCfg:
     joint_vel = CurrTerm(
         func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 10000}
     )
+
+    # ee_vel = CurrTerm(
+    #     func=mdp.modify_reward_weight, params={"term_name": "ee_vel", "weight": -1, "num_steps": 10000}
+    # ) # 10000
 
     # object_rotation = CurrTerm(
     #     func=mdp.modify_reward_weight, params={"term_name": "object_rotation", "weight": 4.0, "num_steps": 10000}

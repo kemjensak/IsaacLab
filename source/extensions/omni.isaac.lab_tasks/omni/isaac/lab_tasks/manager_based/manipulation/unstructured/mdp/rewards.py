@@ -360,17 +360,34 @@ def home_after_flip(
 ) -> torch.Tensor:
     """Reward the agent for returning to the home position after flipping."""
     asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")
-    asset: Articulation = env.scene[asset_cfg.name]
+    robot: Articulation = env.scene[asset_cfg.name]
     object_cfg: SceneEntityCfg = SceneEntityCfg("book_01")
     object: RigidObject = env.scene[object_cfg.name]
     z_axis = torch.tensor([0.0, 0.0, 1.0], device=env.device).repeat(env.num_envs, 1)
     z_component = quat_apply(object.data.root_quat_w, z_axis)[:, 2]
     grasp_ready_position = torch.tensor([0.0, -0.569, 0.0, -2.810, 0.0, 3.037, 0.741, 0.04, 0.04], device=env.device).repeat(env.num_envs, 1)
-    joint_pos_error = torch.sum(torch.abs(asset.data.joint_pos[:, asset_cfg.joint_ids] - grasp_ready_position), dim=1)
+    joint_pos_error = torch.sum(torch.abs(robot.data.joint_pos[:, asset_cfg.joint_ids] - grasp_ready_position), dim=1)
+    # print(z_component)
+    # print(joint_pos_error)
     reward_for_home_pose = 1.0 - torch.tanh(joint_pos_error / 2.0)
     
     return torch.where(z_component < -0.05, reward_for_home_pose, 0)
 
+def ee_velocity(
+    env: ManagerBasedRLEnv,
+    threshold: float = 0.1,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    """Reward the agent for slower ee velocity."""
+    # extract the used quantities (to enable type-hinting)
+    robot: Articulation = env.scene[asset_cfg.name]
+    # Target object position: (num_envs, 3)
+    ee_vel_w = robot.data.body_lin_vel_w[:, 8, :] # 8 is the index of the end-effector(panda_hand link) in the articulation
+    ee_velocity = torch.norm(ee_vel_w, dim=1)
+    # print(ee_velocity)
+    # print(robot.data.soft_joint_vel_limits)
+    return torch.where(ee_velocity > threshold, torch.tanh(ee_velocity), 0)
+    # return torch.where(ee_velocity > threshold, 0.7, 0)
     
 def object_is_flipped(
     env: ManagerBasedRLEnv, object_cfg: SceneEntityCfg = SceneEntityCfg("book_01")
