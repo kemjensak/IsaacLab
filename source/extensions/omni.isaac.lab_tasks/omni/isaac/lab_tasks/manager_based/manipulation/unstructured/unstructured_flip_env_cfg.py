@@ -140,7 +140,7 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"x": (-0.00, 0.15), "y": (-0.00, 0.1), "z": (0.0, 0.0),
+            "pose_range": {"x": (-0.1, 0.2), "y": (-0.15, 0.15), "z": (0.0, 0.0),
                            "roll": (-90.0, 90.0), "pitch": (-90.0, 90.0), "yaw": (-180.0, 180.0)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("object"),
