@@ -63,14 +63,12 @@ class shelf_Reaching(ManagerTermBase):
         return reward
 
     def align_ee_target(self, env: ManagerBasedRLEnv,) -> torch.Tensor:
-        ready_point_pos_w = self._target.data.root_pos_w.clone()
-        ready_point_pos_w[:, 2] = ready_point_pos_w[:, 2] + 0.09
-        ready_point_pos_w[:, 1] = ready_point_pos_w[:, 1] + 0.08
+        offset_pos = transform_points(self._reach_offset,self._target.data.root_pos_w, self._target.data.root_state_w[:, 3:7] )[..., 0 , :]
+        
 
         reset_mask = env.episode_length_buf == 1
         self._initial_ee_quat[reset_mask] = self._ee.data.target_quat_w[reset_mask, :].clone()
 
-        distance = torch.norm(ready_point_pos_w - self._ee.data.target_pos_w[..., 0, :], dim=-1, p=2)
 
         ee_tcp_quat = self._ee.data.target_quat_w[..., 0, :]
         
@@ -83,8 +81,7 @@ class shelf_Reaching(ManagerTermBase):
 
         align_x = torch.bmm(ee_tcp_x.unsqueeze(1), init_ee_x.unsqueeze(-1)).squeeze(-1).squeeze(-1)
 
-        zeta_m = torch.where(distance < 0.01, 0.5, 1)
-        return zeta_m * 0.5 * (torch.sign(align_x) * align_x**2)
+        return (torch.sign(align_x) * align_x**2)
     
 class shelf_Pushing(ManagerTermBase):
     def __init__(self, cfg: RewTerm, env: ManagerBasedRLEnv):
@@ -131,7 +128,7 @@ class shelf_Pushing(ManagerTermBase):
         
         # distance between ee and object
         distance = torch.norm(offset_pos - self._ee.data.target_pos_w[..., 0, :], dim=-1, p=2)
-        distance_f = torch.norm(self._initial_object_pos - self._ee.data.target_pos_w[..., 0, :],  dim=-1, p=2)   
+        distance_f = torch.norm(self._initial_ee_pos[..., 0, :] - self._ee.data.target_pos_w[..., 0, :],  dim=-1, p=2)   
 
         # Displacement of end-effector from initial state
         D_y_ee = (ee_pos_w[..., 0, 1] - self._initial_ee_pos[..., 0, 1])
@@ -141,37 +138,33 @@ class shelf_Pushing(ManagerTermBase):
         # Velocity of end-effector 
         v_y_ee = -1 * (ee_pos_w[..., 0, 1] - self._ee_pos_last_w[..., 0, 1])/env.step_dt
 
-        velocity_reward = torch.where(v_y_ee < 0.45, v_y_ee * 3, -3 * v_y_ee)
 
         # Displacement of cup from initial state
         delta_y = -1*(object_pos_w[:, 1] - self._initial_object_pos[:, 1])
-        delta_x = (object_pos_w[:, 0] - self._initial_object_pos[:, 0])
+        # delta_x = (object_pos_w[:, 0] - self._initial_object_pos[:, 0])
         # delta_z = torch.where(torch.norm(object_pos_w[:, 2] - self._target_last_w[:, 2])>0.1, 1, 0)
 
         # indicator factor
         zeta_s = torch.where(torch.abs(object_pos_w[:, 1] - self._initial_object_pos[:, 1]) > 0.19, 0, 1)
         zeta_m = torch.where(torch.bitwise_or(distance < 0.03, torch.abs(object_pos_w[:, 1] - self._initial_object_pos[:, 1]) > 0.19) , 1, 0)
 
-        velocity_reward = zeta_s * torch.where(v_y_ee < 0.45, v_y_ee * 3, -3 * v_y_ee)
-
+        velocity_reward = zeta_s * torch.where(v_y_ee < 0.3, v_y_ee * 5, -3 * v_y_ee)
         pushing_reward = zeta_m * ((3*torch.tanh(2*delta_y/0.2)) - 0.1 * (torch.tanh(2 * D_x_ee/0.1)) + velocity_reward)
-
         pushing_reward = torch.clamp(pushing_reward, -4, 4)
 
-
-        R = pushing_reward + (1-zeta_s)*3*torch.exp(-1.2 * distance_f)
-
+        # R = pushing_reward + (1-zeta_s)*3*torch.exp(-1.2 * distance_f)
+        R = pushing_reward
         # print("distance: {}".format(distance_f))
         # print("delta_y: {}".format(delta_y))
         # print("delta_x: {}".format(delta_x))
-        # print(4*torch.exp(-1.2 * distance_f))
+        # print((1-zeta_s))
         # print("ee: {}".format( self._ee.data.target_pos_w[..., 0, :]))
         # print("object: {}".format(offset_pos))
         # print("zeta_m: {}".format(zeta_m))
         # print("zeta_s: {}".format(zeta_s))
         # print("reward: {}".format(pushing_reward))
         # print("vel rew: {}".format(velocity_reward))
-        # print("dt: {}".format(delta_y_ee/env.step_dt))
+        # print("dt: {}".format(v_y_ee))
         # self._target_last_w = object_pos_w.clone()
 
         self._ee_pos_last_w = self._ee.data.target_pos_w.clone()

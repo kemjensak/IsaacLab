@@ -66,11 +66,13 @@ class Object_drop_Termination(ManagerTermBase):
         return drop
 
     def object_drop(self, env: ManagerBasedRLEnv,)-> torch.Tensor:
-
+        
         offset_pos = transform_points(self._top_offset,self._target.data.root_pos_w, self._target.data.root_state_w[:, 3:7] )[..., 0 , :]
+
+   
         
-        # distance between ee and object
-        distance = torch.norm(offset_pos - self._ee.data.target_pos_w[..., 0, :], dim=-1, p=2)
         
         
-        return torch.bitwise_and(offset_pos[:, 2] <  0.7 , distance > 0.22)  
+
+
+        return offset_pos[:, 2] < 0.71
