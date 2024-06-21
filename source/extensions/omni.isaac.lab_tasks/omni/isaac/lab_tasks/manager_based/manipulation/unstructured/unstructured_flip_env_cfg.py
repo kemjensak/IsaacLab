@@ -408,8 +408,8 @@ class UnstructuredFlipEnvCfg(ManagerBasedRLEnvCfg):
         # simulation settings
         self.sim.dt = 0.01  # 100Hz
 
-        self.sim.physx.bounce_threshold_velocity = 0.2
-        self.sim.physx.bounce_threshold_velocity = 0.01
+        self.sim.physx.bounce_threshold_velocity = 2.0
+        # self.sim.physx.bounce_threshold_velocity = 0.01
         self.sim.physx.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4 * 16
         self.sim.physx.gpu_total_aggregate_pairs_capacity = 16 * 1024 * 16
         self.sim.physx.gpu_max_rigid_patch_count = 5 * 2**20
