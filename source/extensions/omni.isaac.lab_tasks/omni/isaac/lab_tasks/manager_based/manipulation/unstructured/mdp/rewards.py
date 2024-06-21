@@ -74,6 +74,59 @@ class object_is_lifted_from_initial(ManagerTermBase):
         # return the reward
         return torch.where(self._asset.data.root_pos_w[:, 2] > (self._initial_object_height + minimal_height), 1.0, 0.0)
 
+class object_is_lifted_in_flip(ManagerTermBase):
+    
+        def __init__(self, cfg: RewTerm, env: ManagerBasedRLEnv):
+            super().__init__(cfg, env)
+    
+            asset_cfg: SceneEntityCfg = cfg.params.get("asset_cfg", SceneEntityCfg("book_01"))
+            self._asset: RigidObject = env.scene[asset_cfg.name]
+    
+            # store initial target object position
+            self._initial_object_height = self._asset.data.root_pos_w[:, 2].clone()
+    
+        def __call__(
+            self,
+            env: ManagerBasedRLEnv,
+            asset_cfg: SceneEntityCfg = SceneEntityCfg("book_01"),
+            minimal_height: float = 0.02,
+        ):
+            # Update initial object height where the environment's step is 1
+            reset_mask = env.episode_length_buf <= 2
+            self._initial_object_height[reset_mask] = self._asset.data.root_pos_w[reset_mask, 2].clone()
+
+            z_axis = torch.tensor([0.0, 0.0, 1.0], device=env.device).repeat(env.num_envs, 1)
+            z_component = quat_apply(self._asset.data.root_quat_w, z_axis)[:, 2]
+
+            reward = torch.where(self._asset.data.root_pos_w[:, 2] > (self._initial_object_height + minimal_height), 1.0, 0.0)
+            reward = torch.where(z_component < 0.0, 1.0, reward)
+            # print(reward)
+            # return the reward
+            return reward
+
+class hitting_object(ManagerTermBase):
+    def __init__(self, cfg: RewTerm, env: ManagerBasedRLEnv):
+        super().__init__(cfg, env)
+
+        asset_cfg: SceneEntityCfg = cfg.params.get("asset_cfg", SceneEntityCfg("book_01"))
+        self._asset: RigidObject = env.scene[asset_cfg.name]
+
+        # store initial target object's x position
+        self._initial_object_x = self._asset.data.root_pos_w[:, 0].clone()
+
+    def __call__(
+        self,
+        env: ManagerBasedRLEnv,
+        asset_cfg: SceneEntityCfg = SceneEntityCfg("book_01"),
+        threshold: float = 0.1,
+    ):
+        # Update initial object height where the environment's step is 1
+        reset_mask = env.episode_length_buf <= 2
+        self._initial_object_x[reset_mask] = self._asset.data.root_pos_w[reset_mask, 0].clone()
+
+        # return the reward
+        return torch.where(torch.abs(self._asset.data.root_pos_w[:, 0] - self._initial_object_x) < threshold, 1.0, 0.0)
+
 class object_goal_distance_from_initial(ManagerTermBase):
     def __init__(self, cfg: RewTerm, env: ManagerBasedRLEnv):
         super().__init__(cfg, env)
@@ -89,7 +142,7 @@ class object_goal_distance_from_initial(ManagerTermBase):
         env: ManagerBasedRLEnv,
     ):
         # Update initial object height where the environment's step is 1
-        reset_mask = env.episode_length_buf == 1
+        reset_mask = env.episode_length_buf <= 2
         self._initial_object_height[reset_mask] = self._asset.data.root_pos_w[reset_mask, 2].clone()
 
         return (self._object_goal_distance(env=env, std=0.3, minimal_height=0.04, command_name="object_pose") * 16+
@@ -272,79 +325,13 @@ class flip_rewards(ManagerTermBase):
         z_component = quat_apply(object.data.root_quat_w, z_axis)[:, 2]
         return torch.where(z_component < 0.0, True, False)
     
-    def _approach_gripper_handle(self,
-                                env: ManagerBasedRLEnv,
-                                grasp_pos: torch.Tensor,
-                                offset: float = 0.04
-    ) -> torch.Tensor:
-        """Reward the robot's gripper reaching the drawer handle with the right pose.
-
-        This function returns the distance of fingertips to the handle when the fingers are in a grasping orientation
-        (i.e., the left finger is above the handle and the right finger is below the handle). Otherwise, it returns zero.
-        """
-        # Fingertips position: (num_envs, n_fingertips, 3)
-        ee_fingertips_w = env.scene["ee_frame"].data.target_pos_w[..., 1:, :]
-        lfinger_pos = ee_fingertips_w[..., 0, :]
-        rfinger_pos = ee_fingertips_w[..., 1, :]
-
-        # Compute the distance of each finger from the handle
-        lfinger_dist = torch.abs(lfinger_pos[:, 2] - grasp_pos[:, 2])
-        rfinger_dist = torch.abs(rfinger_pos[:, 2] - grasp_pos[:, 2])
-
-        # Check if hand is in a graspable pose
-        is_graspable = (rfinger_pos[:, 2] < grasp_pos[:, 2]) & (lfinger_pos[:, 2] > grasp_pos[:, 2])
-
-        return is_graspable * ((offset - lfinger_dist) + (offset - rfinger_dist))
-    
-    def _align_grasp_around_handle(self,
-                                  env: ManagerBasedRLEnv,
-                                  grasp_pos: torch.Tensor
-    ) -> torch.Tensor:
-        """Bonus for correct hand orientation around the handle.
-
-        The correct hand orientation is when the left finger is above the handle and the right finger is below the handle.
-        """
-        # Fingertips position: (num_envs, n_fingertips, 3)
-        ee_fingertips_w = env.scene["ee_frame"].data.target_pos_w[..., 1:, :]
-        lfinger_pos = ee_fingertips_w[..., 0, :]
-        rfinger_pos = ee_fingertips_w[..., 1, :]
-
-        # Check if hand is in a graspable pose
-        is_graspable = (rfinger_pos[:, 2] < grasp_pos[:, 2]) & (lfinger_pos[:, 2] > grasp_pos[:, 2])
-
-        # bonus if left finger is above the drawer handle and right below
-        return is_graspable
-        
-    def _grasp_target_point(self,
-                        env: ManagerBasedRLEnv,
-                        threshold: float,
-                        grasp_pos: torch.Tensor,
-                        open_joint_pos: float = 0.04,
-                        asset_cfg: SceneEntityCfg = SceneEntityCfg("robot", joint_names=["panda_finger_.*"])
-    ) -> torch.Tensor:
-        """Reward for closing the fingers when being close to the handle.
-
-        The :attr:`threshold` is the distance from the handle at which the fingers should be closed.
-        The :attr:`open_joint_pos` is the joint position when the fingers are open.
-
-        Note:
-            It is assumed that zero joint position corresponds to the fingers being closed.
-        """
-        ee_tcp_pos = env.scene["ee_frame"].data.target_pos_w[..., 0, :]
-        gripper_joint_pos = env.scene[asset_cfg.name].data.joint_pos[:, asset_cfg.joint_ids]
-
-        distance = torch.norm(grasp_pos - ee_tcp_pos, dim=-1, p=2)
-        is_close = distance <= threshold
-
-        return is_close * torch.sum(open_joint_pos - gripper_joint_pos, dim=-1)
-    
     def _touching_book_before_grasp(
             self,
             env: ManagerBasedRLEnv,
             grasp_pos: torch.Tensor,
             threshold: float = 0.1
     ) -> torch.Tensor:
-        """Reward the agent for touching the book before grasping."""
+        """Penalize the agent for touching the book before grasping."""
         # End-effector position: (num_envs, 3)
         ee_tcp_pos = env.scene["ee_frame"].data.target_pos_w[..., 0, :]
         # Compute the distance of the end-effector to the handle
@@ -352,8 +339,18 @@ class flip_rewards(ManagerTermBase):
         # Reward the robot for reaching the handle
         asset: RigidObject = env.scene["book_01"]
         return torch.where((distance >= threshold) &
-                           (torch.sum(torch.abs(asset.data.root_lin_vel_b[:, :3]), dim=1)>0.05),
+                           (torch.sum(torch.norm(asset.data.root_lin_vel_b[:, :3]), dim=1)>0.05),
                             1, 0)
+    
+    def _lifting_grasp_point(
+            self,
+            env: ManagerBasedRLEnv,
+            threshold: float = 0.04
+    ) -> torch.Tensor:
+        lifted_height = self._grasp_poses[:, 2] - self._initial_grasp_poses[:, 2]
+        """Reward the agent for lifting the grasp point."""
+        return torch.where((lifted_height > threshold) |
+                           (self._is_flipped(env)) , 1, -torch.tanh(lifted_height*2))
     
 def home_after_flip(
         env: ManagerBasedRLEnv,
@@ -367,15 +364,15 @@ def home_after_flip(
     z_component = quat_apply(object.data.root_quat_w, z_axis)[:, 2]
     grasp_ready_position = torch.tensor([0.0, -0.569, 0.0, -2.810, 0.0, 3.037, 0.741, 0.04, 0.04], device=env.device).repeat(env.num_envs, 1)
     joint_pos_error = torch.sum(torch.abs(robot.data.joint_pos[:, asset_cfg.joint_ids] - grasp_ready_position), dim=1)
-    # print(z_component)
-    # print(joint_pos_error)
+    # joint_pos_error = torch.sum(torch.abs(robot.data.joint_pos[:, asset_cfg.joint_ids] - robot.data.default_joint_pos[:, asset_cfg.joint_ids]), dim=1)
+
     reward_for_home_pose = 1.0 - torch.tanh(joint_pos_error / 2.0)
     
     return torch.where(z_component < -0.05, reward_for_home_pose, 0)
 
 def ee_velocity(
     env: ManagerBasedRLEnv,
-    threshold: float = 0.1,
+    threshold: float = 0.5,
     asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
 ) -> torch.Tensor:
     """Reward the agent for slower ee velocity."""
@@ -386,7 +383,7 @@ def ee_velocity(
     ee_velocity = torch.norm(ee_vel_w, dim=1)
     # print(ee_velocity)
     # print(robot.data.soft_joint_vel_limits)
-    return torch.where(ee_velocity > threshold, torch.tanh(ee_velocity), 0)
+    return torch.where(ee_velocity > threshold, torch.tanh(ee_velocity*2), 0)
     # return torch.where(ee_velocity > threshold, 0.7, 0)
     
 def object_is_flipped(
