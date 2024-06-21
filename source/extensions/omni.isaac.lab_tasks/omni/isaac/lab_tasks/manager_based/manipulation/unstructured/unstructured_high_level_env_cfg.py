@@ -67,13 +67,13 @@ class ObservationsCfg:
         """Observations for policy group."""
 
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
-        joint_vel = ObsTerm(func=mdp.joint_vel_rel)
-        eef_pos = ObsTerm(func=mdp.eef_pose_in_robot_root_frame)
-        book_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("book_01")})
-        object_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame)
-        flip_pose = ObsTerm(func=mdp.book_flip_point_in_robot_root_frame)
-        target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
-        actions = ObsTerm(func=mdp.last_action)
+        # joint_vel = ObsTerm(func=mdp.joint_vel_rel)
+        # eef_pos = ObsTerm(func=mdp.eef_pose_in_robot_root_frame)
+        # book_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame, params={"object_cfg": SceneEntityCfg("book_01")})
+        # object_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame)
+        # flip_pose = ObsTerm(func=mdp.book_flip_point_in_robot_root_frame)
+        # target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "object_pose"})
+        # actions = ObsTerm(func=mdp.last_action)
         
         def __post_init__(self):
             self.enable_corruption = True
