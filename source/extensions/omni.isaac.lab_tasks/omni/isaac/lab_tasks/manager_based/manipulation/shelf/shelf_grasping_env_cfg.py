@@ -30,7 +30,7 @@ from . import mdp
 
 
 @configclass
-class ObjectShelfSceneCfg(InteractiveSceneCfg):
+class ObjectShelfGraspingSceneCfg(InteractiveSceneCfg):
     """Configuration for the lift scene with a robot and a object.
     This is the abstract base implementation, the exact scene is defined in the derived classes
     which need to set the target object, robot and end-effector frames
@@ -47,14 +47,14 @@ class ObjectShelfSceneCfg(InteractiveSceneCfg):
     # Table
     table = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Table",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.0, 0.8, 0.0], rot=[0.707, 0, 0, 0.707]),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.0, 0.8, 0], rot=[0.707, 0, 0, 0.707]),
         spawn=UsdFileCfg(usd_path=f"/home/irol/IsaacLab/usd/Arena/Table.usd"),
     )
 
     # plane
     plane = AssetBaseCfg(
         prim_path="/World/GroundPlane",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[0, 0, 0.0]),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.0, 0.0, 0.0]),
         spawn=GroundPlaneCfg(),
     )
 
@@ -148,24 +148,22 @@ class RewardsCfg:
     
     # task terms
     reaching_object = RewTerm(func=mdp.shelf_Reaching, params={}, weight=2.0)
-    align_ee = RewTerm(func=mdp.shelf_Align, params={}, weight=2.0)
-    sweeping_object = RewTerm(func=mdp.shelf_Pushing, params={}, weight=20.0)
-    homing_after_sweep = RewTerm(func=mdp.Home_pose, params={}, weight=50)
+    # sweeping_object = RewTerm(func=mdp.shelf_Pushing, params={}, weight=20.0)
     # lifting_object = RewTerm(func=mdp.object_lift, params={}, weight=5.0)
 
     # action penalty
-    action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-4)
+    action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-3)
 
     joint_vel = RewTerm(
         func=mdp.joint_vel_l2,
-        weight=-1e-4,
+        weight=-1e-3,
         params={"asset_cfg": SceneEntityCfg("robot")},
     )
 
     # collision penalty
     shelf_collision = RewTerm(func=mdp.shelf_Collision, params={}, weight=-8.0)
     # object_collision = RewTerm(func=mdp.object_collision_pentaly, params={}, weight=-1.0)
-    object_drop = RewTerm(func=mdp.Object_drop, weight=-8.0)
+    object_drop = RewTerm(func=mdp.Object_drop, weight=-4.0)
 
 @configclass
 class TerminationsCfg:
@@ -173,20 +171,19 @@ class TerminationsCfg:
 
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
     object_drop = DoneTerm(func=mdp.Object_drop_Termination, time_out=True)
-    object_vel = DoneTerm(func = mdp.Object_vel_Termination, time_out=True)
 
 
 @configclass
 class CurriculumCfg:
     """Curriculum terms for the MDP."""
 
-    # action_rate = CurrTerm(
-    #     func=mdp.modify_reward_weight, params={"term_name": "action_rate", "weight": -1e-1, "num_steps": 10000}
-    # )
+    action_rate = CurrTerm(
+        func=mdp.modify_reward_weight, params={"term_name": "action_rate", "weight": -1e-1, "num_steps": 10000}
+    )
 
-    # joint_vel = CurrTerm(
-    #     func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 10000}
-    # )
+    joint_vel = CurrTerm(
+        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1.5e-1, "num_steps": 10000}
+    )
 
 
 ##
@@ -195,11 +192,11 @@ class CurriculumCfg:
 
 
 @configclass
-class ShelfSweepingEnvCfg(ManagerBasedRLEnvCfg):
+class ShelfEnvCfg(ManagerBasedRLEnvCfg):
     """Configuration for the lifting environment."""
 
     # Scene settings
-    scene: ObjectShelfSceneCfg = ObjectShelfSceneCfg(num_envs=4096, env_spacing=2.5)
+    scene: ObjectShelfGraspingSceneCfg = ObjectShelfGraspingSceneCfg(num_envs=4096, env_spacing=2.5)
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
@@ -214,7 +211,7 @@ class ShelfSweepingEnvCfg(ManagerBasedRLEnvCfg):
         """Post initialization."""
         # general settings
         self.decimation = 2
-        self.episode_length_s = 6.0
+        self.episode_length_s = 5.0
         # simulation settings
         self.sim.dt = 0.01  # 100Hz
 
