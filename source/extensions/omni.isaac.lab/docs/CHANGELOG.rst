@@ -1,14 +1,51 @@
 Changelog
 ---------
 
+0.18.2 (2024-06-25)
+~~~~~~~~~~~~~~~~~~~
+
+Changed
+^^^^^^^
+
+* Moved the configuration for tile-rendered camera into its own file named ``tiled_camera_cfg.py``.
+  This makes it easier to follow where the configuration is located and how it is related to the class.
+
+
+0.18.1 (2024-06-25)
+~~~~~~~~~~~~~~~~~~~
+
+Changed
+^^^^^^^
+
+* Ensured that a parity between class and its configuration class is explicitly visible in the
+  :mod:`omni.isaac.lab.envs` module. This makes it easier to follow where definitions are located and how
+  they are related. This should not be a breaking change as the classes are still accessible through the same module.
+
+
+0.18.0 (2024-06-13)
+~~~~~~~~~~~~~~~~~~~
+
+Fixed
+^^^^^
+
+* Fixed the rendering logic to render at the specified interval. Earlier, the substep parameter had no effect and rendering
+  would happen once every env.step() when active.
+
+Changed
+^^^^^^^
+
+* Renamed :attr:`omni.isaac.lab.sim.SimulationCfg.substeps` to :attr:`omni.isaac.lab.sim.SimulationCfg.render_interval`.
+  The render logic is now integrated in the decimation loop of the environment.
+
+
 0.17.13 (2024-06-13)
 ~~~~~~~~~~~~~~~~~~~~
 
 Fixed
 ^^^^^
 
-* Fixed the orientation reset logic in :func:`omni.isaac.lab.envs.mdp.events.reset_root_state_uniform` to make it relative to the default orientation.
-  Earlier, the position was sampled relative to the default and the orientation not.
+* Fixed the orientation reset logic in :func:`omni.isaac.lab.envs.mdp.events.reset_root_state_uniform` to make it relative to
+  the default orientation. Earlier, the position was sampled relative to the default and the orientation not.
 
 
 0.17.12 (2024-06-13)
