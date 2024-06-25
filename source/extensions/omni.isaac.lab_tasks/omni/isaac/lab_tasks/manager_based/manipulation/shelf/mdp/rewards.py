@@ -370,7 +370,7 @@ class Home_pose(ManagerTermBase):
         # object_lin_vel_norm = torch.norm(object_lin_vel_w, dim=-1, p=2)
         # object_vel = torch.where(object_lin_vel_norm < 0.1, 1, 0)
 
-        drop_con = torch.where(delta_z > 0.01, 1, 0)
+        drop_con = torch.where(delta_z < 0.01, 1, 0)
 
         joint_pos_error = torch.sum(torch.abs(self._robot.data.joint_pos[:, :8] - self.home_position), dim=1)
 
