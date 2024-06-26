@@ -49,7 +49,7 @@ def object_reached_goal(
 class Object_drop_Termination(ManagerTermBase):
     def __init__(self, cfg: DoneTerm , env: ManagerBasedRLEnv):
         super().__init__(cfg, env)
-        object_cfg = SceneEntityCfg("cup")
+        object_cfg = SceneEntityCfg("cup2")
         ee_frame_cfg = SceneEntityCfg("ee_frame")
 
         self._target: RigidObject = env.scene[object_cfg.name]

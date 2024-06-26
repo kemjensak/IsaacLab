@@ -20,7 +20,7 @@ from omni.isaac.lab.sensors.frame_transformer.frame_transformer_cfg import Frame
 from omni.isaac.lab.sim.spawners.from_files.from_files_cfg import GroundPlaneCfg, UsdFileCfg
 from omni.isaac.lab.utils import configclass
 from omni.isaac.lab.sim.schemas.schemas_cfg import MassPropertiesCfg
-from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR, NUCLEUS_ASSET_ROOT_DIR
 
 from . import mdp
 
@@ -41,14 +41,16 @@ class ObjectShelfGraspingSceneCfg(InteractiveSceneCfg):
     # end-effector sensor: will be populated by agent env cfg
     ee_frame: FrameTransformerCfg = MISSING
     wrist_frame: FrameTransformerCfg = MISSING
+    wrist_upper_frame: FrameTransformerCfg = MISSING
     # target object: will be populated by agent env cfg
-    cup: RigidObjectCfg = MISSING
+    # cup: RigidObjectCfg = MISSING
+    cup2: RigidObjectCfg = MISSING
 
     # Table
     table = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Table",
         init_state=AssetBaseCfg.InitialStateCfg(pos=[0.0, 0.8, 0], rot=[0.707, 0, 0, 0.707]),
-        spawn=UsdFileCfg(usd_path=f"/home/irol/IsaacLab/usd/Arena/Table.usd"),
+        spawn=UsdFileCfg(usd_path=f"omniverse://localhost/Library/usd/Arena/Table.usd"),
     )
 
     # plane
@@ -60,7 +62,7 @@ class ObjectShelfGraspingSceneCfg(InteractiveSceneCfg):
 
     shelf = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/Shelf",
-        spawn=UsdFileCfg(usd_path=f"/home/irol/IsaacLab/usd/Arena/Shelf3.usd", mass_props=MassPropertiesCfg(mass=50)),
+        spawn=UsdFileCfg(usd_path=f"omniverse://localhost/Library/usd/Arena/Shelf3.usd", mass_props=MassPropertiesCfg(mass=50)),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(0.8, 0.0, 0.0), rot=(0.0, 0.0, 0.0, 1.0)),
         debug_vis=False,
     )
@@ -147,9 +149,21 @@ class RewardsCfg:
     """Reward terms for the MDP."""
     
     # task terms
-    reaching_object = RewTerm(func=mdp.shelf_Reaching, params={}, weight=2.0)
+    # reaching_object = RewTerm(func=mdp.shelf_Reaching, params={}, weight=2.0)
+    reaching_grasp_object = RewTerm(func=mdp.shelf_Grasp_Reaching, params={}, weight=2.0)
     # sweeping_object = RewTerm(func=mdp.shelf_Pushing, params={}, weight=20.0)
-    # lifting_object = RewTerm(func=mdp.object_lift, params={}, weight=5.0)
+    grasp_handle = RewTerm(
+        func=mdp.grasp_handle,
+        weight=10,
+        params={
+            "threshold": 0.02,
+            "open_joint_pos": MISSING,
+            "asset_cfg": SceneEntityCfg("robot", joint_names=MISSING),
+        },
+    )
+    # lifting_object = RewTerm(func=mdp.object_lift, params={"threshold": 0.71}, weight=20.0)
+
+    # home_pose = RewTerm(func=mdp.Home_pose, params={}, weight=20)
 
     # action penalty
     action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-3)
@@ -192,7 +206,7 @@ class CurriculumCfg:
 
 
 @configclass
-class ShelfEnvCfg(ManagerBasedRLEnvCfg):
+class ShelfGraspingEnvCfg(ManagerBasedRLEnvCfg):
     """Configuration for the lifting environment."""
 
     # Scene settings
@@ -211,7 +225,7 @@ class ShelfEnvCfg(ManagerBasedRLEnvCfg):
         """Post initialization."""
         # general settings
         self.decimation = 2
-        self.episode_length_s = 5.0
+        self.episode_length_s = 6.0
         # simulation settings
         self.sim.dt = 0.01  # 100Hz
 

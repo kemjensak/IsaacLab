@@ -20,7 +20,7 @@ from omni.isaac.lab.sensors.frame_transformer.frame_transformer_cfg import Frame
 from omni.isaac.lab.sim.spawners.from_files.from_files_cfg import GroundPlaneCfg, UsdFileCfg
 from omni.isaac.lab.utils import configclass
 from omni.isaac.lab.sim.schemas.schemas_cfg import MassPropertiesCfg
-from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
+from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR, NUCLEUS_ASSET_ROOT_DIR
 
 from . import mdp
 
@@ -42,13 +42,14 @@ class ObjectShelfSceneCfg(InteractiveSceneCfg):
     ee_frame: FrameTransformerCfg = MISSING
     wrist_frame: FrameTransformerCfg = MISSING
     # target object: will be populated by agent env cfg
-    cup: RigidObjectCfg = MISSING
+    # cup: RigidObjectCfg = MISSING
+    cup2: RigidObjectCfg = MISSING
 
     # Table
     table = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Table",
         init_state=AssetBaseCfg.InitialStateCfg(pos=[0.0, 0.8, 0], rot=[0.707, 0, 0, 0.707]),
-        spawn=UsdFileCfg(usd_path=f"/home/irol/KTH_dt/usd/Arena/Table.usd"),
+        spawn=UsdFileCfg(usd_path=f"omniverse://localhost/Library/usd/Arena/Table.usd"),
     )
 
     # plane
@@ -60,7 +61,7 @@ class ObjectShelfSceneCfg(InteractiveSceneCfg):
 
     shelf = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/Shelf",
-        spawn=UsdFileCfg(usd_path=f"/home/irol/KTH_dt/usd/Arena/Shelf3.usd", mass_props=MassPropertiesCfg(mass=50)),
+        spawn=UsdFileCfg(usd_path=f"/home/haneul/IsaacLab/usd/Arena/Shelf3.usd", mass_props=MassPropertiesCfg(mass=50)),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(0.8, 0.0, 0.0), rot=(0.0, 0.0, 0.0, 1.0)),
         debug_vis=False,
     )
@@ -148,8 +149,8 @@ class RewardsCfg:
     
     # task terms
     # reaching_object = RewTerm(func=mdp.shelf_Reaching, params={}, weight=2.0)
-    sweeping_object = RewTerm(func=mdp.shelf_Pushing, params={}, weight=20.0)
-    # lifting_object = RewTerm(func=mdp.object_lift, params={}, weight=5.0)
+    # sweeping_object = RewTerm(func=mdp.shelf_Pushing, params={}, weight=20.0)
+    lifting_object = RewTerm(func=mdp.object_lift, params={}, weight=5.0)
 
     # action penalty
     action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-4)
@@ -181,7 +182,7 @@ class CurriculumCfg:
     )
 
     joint_vel = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 10000}
+        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1.5e-1, "num_steps": 10000}
     )
 
 

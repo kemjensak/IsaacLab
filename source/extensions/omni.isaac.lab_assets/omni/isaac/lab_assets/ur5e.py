@@ -22,7 +22,7 @@ from omni.isaac.lab.assets.articulation import ArticulationCfg
 
 UR5e_CFG = ArticulationCfg(
     spawn=sim_utils.UsdFileCfg(
-        usd_path="/home/irol/IsaacLab/usd/Robots/UR5e/UR5e_v2.usd",
+        usd_path=f"omniverse://localhost/Library/usd/Robots/UR5e/UR5e_v2.usd",
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
             disable_gravity=False,
             max_depenetration_velocity=5.0,
@@ -33,14 +33,14 @@ UR5e_CFG = ArticulationCfg(
         pos=(0.0, 0.0, 0.3),
         rot=(0.7071,0 ,0 ,0.7071),
         joint_pos={
-            "shoulder_pan_joint": -1.57,
-            "shoulder_lift_joint": -1.3,
-            "elbow_joint": 1.47,
-            "wrist_1_joint": -0.1214,
-            "wrist_2_joint": 1.57,
-            "wrist_3_joint": 1.57,
-            "left_outer_knuckle_joint": 0.0,
-            "right_outer_knuckle_joint": 0.0,
+            "shoulder_pan_joint": -1.6, # -1.7540559 / -1.6
+            "shoulder_lift_joint": -1.9, # -1.27409 / -1.9
+            "elbow_joint": 1.9, # 1.3439 / 1.9
+            "wrist_1_joint": 0.0, # 0.0 
+            "wrist_2_joint": 1.57, # 1.5708 / 1.57
+            "wrist_3_joint": 1.57, # 1.5708 / 1.57
+            "left_outer_knuckle_joint": 0.0, # 0.0
+            "right_outer_knuckle_joint": 0.0, # 0.0
         },
     ),
     actuators={
@@ -54,7 +54,7 @@ UR5e_CFG = ArticulationCfg(
             velocity_limit=40.0,
             effort_limit=40.0,
             stiffness=400.0,
-            damping=40.0,
+            damping=50.0,
         ),
 
         "gripper": ImplicitActuatorCfg(

@@ -48,7 +48,7 @@ class ObjectShelfSceneCfg(InteractiveSceneCfg):
     table = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Table",
         init_state=AssetBaseCfg.InitialStateCfg(pos=[0.0, 0.8, 0.0], rot=[0.707, 0, 0, 0.707]),
-        spawn=UsdFileCfg(usd_path=f"/home/irol/IsaacLab/usd/Arena/Table.usd"),
+        spawn=UsdFileCfg(usd_path=f"omniverse://localhost/Library/usd/Arena/Table.usd"),
     )
 
     # plane
@@ -60,7 +60,7 @@ class ObjectShelfSceneCfg(InteractiveSceneCfg):
 
     shelf = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/Shelf",
-        spawn=UsdFileCfg(usd_path=f"/home/irol/IsaacLab/usd/Arena/Shelf3.usd", mass_props=MassPropertiesCfg(mass=50)),
+        spawn=UsdFileCfg(usd_path=f"omniverse://localhost/Library/usd/Arena/Shelf3.usd", mass_props=MassPropertiesCfg(mass=50)),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(0.8, 0.0, 0.0), rot=(0.0, 0.0, 0.0, 1.0)),
         debug_vis=False,
     )
