@@ -20,7 +20,7 @@ def SetRigidObjectCfgFromUsdFile(usd_file_name: str):
             prim_path="{ENV_REGEX_NS}/"+(usd_file_name),
             init_state=RigidObjectCfg.InitialStateCfg(pos=[0.6, 0, 0.055], rot=[1, 0, 0, 0]),
             spawn=UsdFileCfg(
-                usd_path=f"/home/kjs-dt/isaac_save/2023.1.1/obejcts/"+(usd_file_name)+".usd",
+                usd_path=f"omniverse://localhost/Library/usd/unstructured/obejcts/"+(usd_file_name)+".usd",
                 scale=(0.01, 0.01, 0.01),
                 rigid_props=RigidBodyPropertiesCfg(
                 solver_position_iteration_count=16,

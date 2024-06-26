@@ -73,7 +73,7 @@ class UnstructuredTableSceneCfg(InteractiveSceneCfg):
     # Sensor = AssetBaseCfg(
     #     prim_path="{ENV_REGEX_NS}/Sensor",
     #     init_state=AssetBaseCfg.InitialStateCfg(),
-    #     spawn=UsdFileCfg(usd_path=f"/home/kjs-dt/isaac_save/2023.1.1/top_rgbd.usd"),
+    #     spawn=UsdFileCfg(usd_path=f"omniverse://localhost/Library/usd/unstructured/obejcts/top_rgbd.usd"),
     # )
 
     # lights
