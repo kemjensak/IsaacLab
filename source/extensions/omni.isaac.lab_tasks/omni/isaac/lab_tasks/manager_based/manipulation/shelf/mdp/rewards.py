@@ -425,6 +425,7 @@ class Object_drop(ManagerTermBase):
         object_lin_vel_w = self._target.data.root_lin_vel_w.clone()
         object_lin_vel_norm = torch.norm(object_lin_vel_w, dim=-1, p=2)
         penalty = torch.where(object_lin_vel_norm > 1, 1, 0)
+        return penalty
 
 
 class Home_pose(ManagerTermBase):
