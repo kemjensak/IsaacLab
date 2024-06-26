@@ -201,7 +201,7 @@ class shelf_Pushing(ManagerTermBase):
         # zeta_m = torch.where(distance < 0.03 , 1, 0)
 
         velocity_reward = zeta_s * torch.where(v_y_ee < 0.4, v_y_ee * 5, -5 * v_y_ee)
-        pushing_reward = zeta_m * ((3*torch.tanh(2*delta_y/0.2)) - 0.1 * (torch.tanh(2 * D_x_ee/0.1)) + velocity_reward)
+        pushing_reward = zeta_m * ((3*torch.tanh(2*delta_y/0.2)) - 0.1 * (torch.tanh(2 * D_x_ee/0.1)) + velocity_reward) + 2 * (1 - zeta_s)
         pushing_reward = torch.clamp(pushing_reward, -4, 4)
 
         # R = pushing_reward + (1-zeta_s)*3*torch.exp(-1.2 * distance_f)
@@ -322,12 +322,15 @@ class Home_pose(ManagerTermBase):
     def __init__(self, cfg: RewTerm, env: ManagerBasedRLEnv):
         super().__init__(cfg, env)
         self.object_cfg = SceneEntityCfg("cup")
-        self.asset_cfg = SceneEntityCfg("robot")        
+        self.asset_cfg = SceneEntityCfg("robot")
+        ee_frame_cfg = SceneEntityCfg("ee_frame")     
 
         self._target: RigidObject = env.scene[self.object_cfg.name]
         self._robot: Articulation = env.scene[self.asset_cfg.name]
+        self._ee: FrameTransformer = env.scene[ee_frame_cfg.name]
 
         self._initial_object_pos = self._target.data.root_pos_w.clone()
+        self._initial_ee_pos = self._ee.data.target_pos_w.clone() 
 
         self._initial_distance = torch.zeros(env.num_envs, device=env.device)
 
@@ -352,9 +355,12 @@ class Home_pose(ManagerTermBase):
         # initial object & ee state
         reset_mask = env.episode_length_buf == 1
         self._initial_object_pos[reset_mask] = self._target.data.root_pos_w[reset_mask, :].clone()
+        self._initial_ee_pos[reset_mask] = self._ee.data.target_pos_w[reset_mask, :].clone()
 
         # ee target position
         offset_pos = transform_points(self._top_offset,self._target.data.root_pos_w, self._target.data.root_state_w[:, 3:7] )[..., 0 , :]
+
+        distance = torch.norm(self._initial_ee_pos[..., 0, :] - self._ee.data.target_pos_w[..., 0, :], dim=-1, p=2)
        
 
         # Displacement of cup from initial state
@@ -365,16 +371,12 @@ class Home_pose(ManagerTermBase):
 
         delta_z = 0.73 - offset_pos[:, 2]
 
-        # add-haneul
-        # object_lin_vel_w = self._target.data.root_lin_vel_w.clone()
-        # object_lin_vel_norm = torch.norm(object_lin_vel_w, dim=-1, p=2)
-        # object_vel = torch.where(object_lin_vel_norm < 0.1, 1, 0)
 
         drop_con = torch.where(delta_z < 0.01, 1, 0)
 
-        joint_pos_error = torch.sum(torch.abs(self._robot.data.joint_pos[:, :8] - self.home_position), dim=1)
+        # joint_pos_error = torch.sum(torch.abs(self._robot.data.joint_pos[:, :8] - self.home_position), dim=1)
 
-        reward_for_home_pose = zeta_s * drop_con * (1 - torch.tanh(joint_pos_error / 2.0))
+        reward_for_home_pose = zeta_s * drop_con * torch.exp(-1.2 * distance)
 
         return reward_for_home_pose
     
