@@ -148,7 +148,9 @@ class RewardsCfg:
     
     # task terms
     reaching_object = RewTerm(func=mdp.shelf_Reaching, params={}, weight=2.0)
+    align_ee = RewTerm(func=mdp.shelf_Align, params={}, weight=2.0)
     sweeping_object = RewTerm(func=mdp.shelf_Pushing, params={}, weight=20.0)
+    homing_after_sweep = RewTerm(func=mdp.Home_pose, params={}, weight=50)
     # lifting_object = RewTerm(func=mdp.object_lift, params={}, weight=5.0)
 
     # action penalty
@@ -163,7 +165,7 @@ class RewardsCfg:
     # collision penalty
     shelf_collision = RewTerm(func=mdp.shelf_Collision, params={}, weight=-8.0)
     # object_collision = RewTerm(func=mdp.object_collision_pentaly, params={}, weight=-1.0)
-    object_drop = RewTerm(func=mdp.Object_drop, weight=-4.0)
+    object_drop = RewTerm(func=mdp.Object_drop, weight=-8.0)
 
 @configclass
 class TerminationsCfg:
@@ -171,6 +173,7 @@ class TerminationsCfg:
 
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
     object_drop = DoneTerm(func=mdp.Object_drop_Termination, time_out=True)
+    object_vel = DoneTerm(func = mdp.Object_vel_Termination, time_out=True)
 
 
 @configclass
@@ -211,7 +214,7 @@ class ShelfSweepingEnvCfg(ManagerBasedRLEnvCfg):
         """Post initialization."""
         # general settings
         self.decimation = 2
-        self.episode_length_s = 8.0
+        self.episode_length_s = 6.0
         # simulation settings
         self.sim.dt = 0.01  # 100Hz
 

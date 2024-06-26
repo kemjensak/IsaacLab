@@ -39,7 +39,7 @@ class UR5eShelfEnvCfg(ShelfSweepingEnvCfg):
                         "wrist_1_joint",
                         "wrist_2_joint",
                         "wrist_3_joint"], 
-            scale=0.2, 
+            scale=0.5, 
             use_default_offset=True
         )
         self.actions.finger_joint_pos = mdp.BinaryJointPositionActionCfg(
@@ -64,7 +64,7 @@ class UR5eShelfEnvCfg(ShelfSweepingEnvCfg):
                     max_depenetration_velocity=5.0,
                     disable_gravity=False,
                 ),
-                mass_props=MassPropertiesCfg(mass=0.1),
+                mass_props=MassPropertiesCfg(mass=1.0),
             ),
         )
 
