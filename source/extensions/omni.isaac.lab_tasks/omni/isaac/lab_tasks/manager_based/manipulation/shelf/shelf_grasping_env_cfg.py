@@ -118,6 +118,7 @@ class ObservationsCfg:
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
         object_position = ObsTerm(func=mdp.object_position_in_robot_root_frame)
         actions = ObsTerm(func=mdp.last_action)
+        eef_pos = ObsTerm(func=mdp.eef_pos_in_robot_root_frame)
 
         def __post_init__(self):
             self.enable_corruption = True
@@ -163,7 +164,7 @@ class RewardsCfg:
     )
     # lifting_object = RewTerm(func=mdp.object_lift, params={"threshold": 0.71}, weight=20.0)
 
-    # home_pose = RewTerm(func=mdp.Home_pose, params={}, weight=20)
+    home_pose = RewTerm(func=mdp.Home_pose, params={}, weight=20)
 
     # action penalty
     action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-3)

@@ -152,7 +152,7 @@ class shelf_Grasp_Reaching(ManagerTermBase):
 
         self._target_last_w = self._target.data.root_pos_w.clone()
         self._reach_offset = torch.zeros((env.num_envs, 3), device=env.device)
-        self._reach_offset[:, :3] = torch.tensor([0.0, 0., -0.03]) #0.0 0. 0.03
+        self._reach_offset[:, :3] = torch.tensor([0.0, 0., 0.03]) #  cup : 0.0 0. 0.03  /  cube : 0.0 0.0 -0.03  /  cylinder : 0.0 0.0 -0.02
     
     def __call__(self, env: ManagerBasedRLEnv,):
 
@@ -197,7 +197,7 @@ class shelf_Grasp_Reaching(ManagerTermBase):
 
         distance = torch.norm(offset_pos - self._ee.data.target_pos_w[..., 0, :], dim=-1, p=2)
 
-        zeta_m = torch.where(distance < 0.03 , 0, 1)
+        zeta_m = torch.where(distance < 0.01 , 0, 1)
 
         robot_pos_quat = self._robot.data.root_state_w[:, 3:7]
 
@@ -404,7 +404,7 @@ class Object_drop(ManagerTermBase):
         self._target_last_w = self._target.data.root_pos_w.clone()
 
         self._top_offset = torch.zeros((env.num_envs, 3), device=env.device)
-        self._top_offset[:, :3] = torch.tensor([0.0, 0.0, 0.02]) #0.0 0.0 0.07
+        self._top_offset[:, :3] = torch.tensor([0.0, 0.0, 0.07]) #0.0 0.0 0.07  
 
     def __call__(self, env:ManagerBasedRLEnv,):
         drop = self.object_drop(env)
@@ -416,7 +416,7 @@ class Object_drop(ManagerTermBase):
         offset_pos = transform_points(self._top_offset,self._target.data.root_pos_w, self._target.data.root_state_w[:, 3:7] )[..., 0 , :]
         object_vel = self._target.data.root_lin_vel_w
 
-        delta_z = 0.74 - offset_pos[:, 2] #0.73
+        delta_z = 0.73 - offset_pos[:, 2] #0.73
 
         penalty_object = torch.tanh(5 * torch.abs(delta_z) / 0.01)
         return penalty_object
@@ -444,7 +444,7 @@ class Home_pose(ManagerTermBase):
         self._target_last_w = self._target.data.root_pos_w.clone()
 
         self._top_offset = torch.zeros((env.num_envs, 3), device=env.device)
-        self._top_offset[:, :3] = torch.tensor([0.0, 0.0, 0.02]) #0.0 0.0 0.07
+        self._top_offset[:, :3] = torch.tensor([0.0, 0.0, 0.07]) #0.0 0.0 0.07
 
         self.home_position = torch.tensor([-1.6, -1.9, 1.9, 0.05, 1.57, 2.1, 0.0, 0.0], device=env.device).repeat(env.num_envs, 1)
     
@@ -455,6 +455,17 @@ class Home_pose(ManagerTermBase):
         return homing
     
     def home_pose(self, env:ManagerBasedRLEnv) -> torch.Tensor:
+
+        ee_tcp_pos = env.scene["ee_frame"].data.target_pos_w[..., 0, :]
+        object_pos = env.scene["cup2"].data.root_pos_w.clone()
+        object_quat = env.scene["cup2"].data.root_quat_w.clone()
+
+        offset = torch.zeros((env.num_envs, 3), device=env.device)
+        offset[:,:3] = torch.tensor([0.0, 0.0, -0.03])
+
+        object_offset = transform_points(offset, object_pos, object_quat)[..., 0, :]
+        distance = torch.norm(object_offset - ee_tcp_pos, dim=-1, p=2)
+        dis_obj=torch.where(distance < 0.015, 1, 0)
 
         # current object state
         object_pos_w = self._target.data.root_pos_w.clone()
@@ -473,15 +484,14 @@ class Home_pose(ManagerTermBase):
         # indicator factor
         zeta_s = torch.where(torch.abs(delta_z) > 0.02, 1, 0)
 
-        delta_z_D = 0.74 - offset_pos[:, 2] #0.73
-
+        delta_z_D = 0.73 - offset_pos[:, 2] #0.73
         
         drop_con = torch.where(delta_z_D < 0.01, 1, 0)
 
         joint_pos_error = torch.sum(torch.abs(self._robot.data.joint_pos[:, :8] - self.home_position), dim=1)
 
-        # reward_for_home_pose = zeta_s * drop_con * (1 - torch.tanh(joint_pos_error / 2.0))
-        reward_for_home_pose = drop_con * (1 - torch.tanh(joint_pos_error / 2.0))
+        reward_for_home_pose = dis_obj * zeta_s * drop_con * (1 - torch.tanh(joint_pos_error / 2.0))
+        # reward_for_home_pose = drop_con * (1 - torch.tanh(joint_pos_error / 2.0))
 
         return reward_for_home_pose
 
@@ -504,7 +514,7 @@ def grasp_handle(
 
     # print("gripper: {}".format(gripper_joint_pos))
     offset = torch.zeros((env.num_envs, 3), device=env.device)
-    offset[:,:3] = torch.tensor([0.0, 0.0, -0.03]) #0.0 0.0 0.03
+    offset[:,:3] = torch.tensor([0.0, 0.0, 0.03]) #0.0 0.0 0.03
 
     object_offset = transform_points(offset, object_pos, object_quat)[..., 0, :]
     distance = torch.norm(object_offset - ee_tcp_pos, dim=-1, p=2)
@@ -518,7 +528,7 @@ def object_lift( env: ManagerBasedRLEnv, threshold: float, object_cfg: SceneEnti
     ee_frame: FrameTransformer = env.scene[ee_frame_cfg.name]
 
     offset = torch.zeros((env.num_envs, 3), device=env.device)
-    offset[:,:3] = torch.tensor([0.0, 0.0, -0.03]) #0.0 0.0 0.03
+    offset[:,:3] = torch.tensor([0.0, 0.0, 0.03]) #0.0 0.0 0.03
 
     object_offset = transform_points(offset, obj.data.root_pos_w, obj.data.root_state_w[:, 3:7])[..., 0, :]
     distance = torch.norm(object_offset - ee_frame.data.target_pos_w[..., 0, :], dim=-1, p=2)

@@ -71,7 +71,7 @@ class Object_drop_Termination(ManagerTermBase):
 
         # print(offset_pos[:, 2])
 
-        return offset_pos[:, 2] < 0.712
+        return offset_pos[:, 2] < 0.712 #0.762
     
 
 class Object_vel_Termination(ManagerTermBase):

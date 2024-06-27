@@ -50,41 +50,41 @@ class UR5eShelfGraspingEnvCfg(ShelfGraspingEnvCfg):
         )
 
         # Set Cube as object
-        # self.scene.cup2 = RigidObjectCfg(
-        #     prim_path="{ENV_REGEX_NS}/Cup2",
-        #     init_state=RigidObjectCfg.InitialStateCfg(pos=[0.85, 0.0, 0.66], rot=[1, 0, 0, 0]),
-        #     spawn=UsdFileCfg(
-        #         usd_path=NUCLEUS_ASSET_ROOT_DIR+f"library/usd/Object/SM_PlasticCup.usd",
-        #         scale=(1.0, 1.0, 1.0),
-        #         rigid_props=RigidBodyPropertiesCfg(
-        #             solver_position_iteration_count=16,
-        #             solver_velocity_iteration_count=1,
-        #             max_angular_velocity=1000.0,
-        #             max_linear_velocity=1000.0,
-        #             max_depenetration_velocity=5.0,
-        #             disable_gravity=False,
-        #         ),
-        #         mass_props=MassPropertiesCfg(mass=0.5),
-        #     ),
-        # )
-
         self.scene.cup2 = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/Cup2",
-            init_state=RigidObjectCfg.InitialStateCfg(pos=[0.8, 0.0, 0.72], rot=[1, 0, 0, 0]),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=[0.88, 0.0, 0.66], rot=[1, 0, 0, 0]),
             spawn=UsdFileCfg(
-                usd_path=f"{ISAAC_NUCLEUS_DIR}/Props/Blocks/DexCube/dex_cube_instanceable.usd",
-                scale=(0.8, 0.8, 2),
+                usd_path=f"omniverse://localhost/Library/usd/Object/SM_PlasticCup.usd",
+                scale=(1.0, 1.0, 1.0),
                 rigid_props=RigidBodyPropertiesCfg(
                     solver_position_iteration_count=16,
                     solver_velocity_iteration_count=1,
                     max_angular_velocity=1000.0,
                     max_linear_velocity=1000.0,
-                    max_depenetration_velocity=100.0,
+                    max_depenetration_velocity=5.0,
                     disable_gravity=False,
                 ),
                 mass_props=MassPropertiesCfg(mass=0.5),
             ),
         )
+
+        # self.scene.cup2 = RigidObjectCfg(
+        #     prim_path="{ENV_REGEX_NS}/Cup2",
+        #     init_state=RigidObjectCfg.InitialStateCfg(pos=[0.8, 0.0, 0.71], rot=[1, 0, 0, 0]), #[0.8, 0.0, 0.72], [1, 0, 0, 0]
+        #     spawn=UsdFileCfg(
+        #         usd_path=f"omniverse://localhost/Library/usd/Object/Cylinder.usd", #f"{ISAAC_NUCLEUS_DIR}/Props/Blocks/DexCube/dex_cube_instanceable.usd"     f"omniverse://localhost/Library/usd/Object/Cylinder.usd"
+        #         scale=(1.0, 1.0, 1.0), #(0.8, 0.8, 2.0)
+        #         rigid_props=RigidBodyPropertiesCfg(
+        #             solver_position_iteration_count=16,
+        #             solver_velocity_iteration_count=1,
+        #             max_angular_velocity=1000.0,
+        #             max_linear_velocity=1000.0,
+        #             max_depenetration_velocity=100.0, # 5.0
+        #             disable_gravity=False,
+        #         ),
+        #         mass_props=MassPropertiesCfg(mass=0.5),
+        #     ),
+        # )
 
         # Listens to the required transforms
         marker_cfg = FRAME_MARKER_CFG.copy()
@@ -99,7 +99,7 @@ class UR5eShelfGraspingEnvCfg(ShelfGraspingEnvCfg):
                     prim_path="{ENV_REGEX_NS}/Robot/robotiq_arg2f_base_link_01",
                     name="end_effector",
                     offset=OffsetCfg(
-                        pos=[0.0, 0.0, 0.15],
+                        pos=[0.0, 0.0, 0.146],
                     ),
                 ),
             ],
