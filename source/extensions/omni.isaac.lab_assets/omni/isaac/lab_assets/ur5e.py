@@ -36,9 +36,9 @@ UR5e_CFG = ArticulationCfg(
             "shoulder_pan_joint": -1.6, # -1.7540559 / -1.6
             "shoulder_lift_joint": -1.9, # -1.27409 / -1.9
             "elbow_joint": 1.9, # 1.3439 / 1.9
-            "wrist_1_joint": 0.0, # 0.0 
+            "wrist_1_joint": 0.05, # 0.0 
             "wrist_2_joint": 1.57, # 1.5708 / 1.57
-            "wrist_3_joint": 1.57, # 1.5708 / 1.57
+            "wrist_3_joint": 2.1, # 1.5708 / 1.57
             "left_outer_knuckle_joint": 0.0, # 0.0
             "right_outer_knuckle_joint": 0.0, # 0.0
         },
