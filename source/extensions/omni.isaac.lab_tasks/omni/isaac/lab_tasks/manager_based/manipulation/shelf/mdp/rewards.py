@@ -448,7 +448,7 @@ class Home_pose(ManagerTermBase):
         self._top_offset = torch.zeros((env.num_envs, 3), device=env.device)
         self._top_offset[:, :3] = torch.tensor([0.0, 0.0, 0.07]) #0.0 0.0 0.07
 
-        self.home_position = torch.tensor([-1.6, -1.9, 1.9, 0.05, 1.57, 2.1, 0.0, 0.0], device=env.device).repeat(env.num_envs, 1)
+        self.home_position = torch.tensor([-1.6, -1.9, 1.9, 0.05, 1.57, 2.1], device=env.device).repeat(env.num_envs, 1)
     
     def __call__(self, env: ManagerBasedRLEnv,):
 
@@ -490,7 +490,7 @@ class Home_pose(ManagerTermBase):
         
         drop_con = torch.where(delta_z_D < 0.01, 1, 0)
 
-        joint_pos_error = torch.sum(torch.abs(self._robot.data.joint_pos[:, :8] - self.home_position), dim=1)
+        joint_pos_error = torch.sum(torch.abs(self._robot.data.joint_pos[:, :6] - self.home_position), dim=1)
 
         reward_for_home_pose = dis_obj * zeta_s * drop_con * (1 - torch.tanh(joint_pos_error / 2.0))
         # reward_for_home_pose = drop_con * (1 - torch.tanh(joint_pos_error / 2.0))
