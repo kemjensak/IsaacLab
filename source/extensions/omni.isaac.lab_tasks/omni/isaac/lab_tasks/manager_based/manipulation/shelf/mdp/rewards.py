@@ -334,7 +334,7 @@ class shelf_Collision(ManagerTermBase):
         collision_dynamic = self.shelf_dynamic_penalty(env)
         collision_dynamic_upper = self.shelf_dynamic_penalty_upper(env)
         # print(self._shelf.)
-        return collision + collision_dynamic
+        return collision + collision_dynamic + collision_dynamic_upper
 
     def shelf_collision_pentaly(self,env: ManagerBasedRLEnv,) -> torch.Tensor:
         
