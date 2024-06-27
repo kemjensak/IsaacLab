@@ -47,11 +47,11 @@ class ObjectShelfGraspingSceneCfg(InteractiveSceneCfg):
     cup2: RigidObjectCfg = MISSING
 
     # Table
-    table = AssetBaseCfg(
-        prim_path="{ENV_REGEX_NS}/Table",
-        init_state=AssetBaseCfg.InitialStateCfg(pos=[0.0, 0.8, 0], rot=[0.707, 0, 0, 0.707]),
-        spawn=UsdFileCfg(usd_path=f"omniverse://localhost/Library/usd/Arena/Table.usd"),
-    )
+    # table = AssetBaseCfg(
+    #     prim_path="{ENV_REGEX_NS}/Table",
+    #     init_state=AssetBaseCfg.InitialStateCfg(pos=[0.0, 0.8, 0], rot=[0.707, 0, 0, 0.707]),
+    #     spawn=UsdFileCfg(usd_path=f"omniverse://localhost/Library/usd/Arena/Table.usd"),
+    # )
 
     # plane
     plane = AssetBaseCfg(
@@ -62,10 +62,13 @@ class ObjectShelfGraspingSceneCfg(InteractiveSceneCfg):
 
     shelf = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/Shelf",
-        spawn=UsdFileCfg(usd_path=f"omniverse://localhost/Library/usd/Arena/Shelf3.usd", mass_props=MassPropertiesCfg(mass=50)),
+        spawn=UsdFileCfg(usd_path=f"omniverse://localhost/Library/usd/Arena/Shelf3.usd", mass_props=MassPropertiesCfg(mass=50), activate_contact_sensors = True),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(0.8, 0.0, 0.0), rot=(0.0, 0.0, 0.0, 1.0)),
         debug_vis=False,
     )
+    # contact_forces = ContactSensorCfg(
+    #     prim_path="{ENV_REGEX_NS}/Robot/.*_FOOT", update_period=0.0, history_length=6, debug_vis=True
+    # )
 
      # robot mount
     mount_cfg = RigidObjectCfg(
@@ -116,6 +119,7 @@ class ObservationsCfg:
 
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
+        eef_pos = ObsTerm(func=mdp.eef_pos_in_robot_root_frame)
         object_position = ObsTerm(func=mdp.object_position_in_robot_root_frame)
         actions = ObsTerm(func=mdp.last_action)
         eef_pos = ObsTerm(func=mdp.eef_pos_in_robot_root_frame)
@@ -134,15 +138,15 @@ class EventCfg:
 
     reset_all = EventTerm(func=mdp.reset_scene_to_default, mode="reset")
 
-    # reset_object_position = EventTerm(
-    #     func=mdp.reset_root_state_uniform,
-    #     mode="reset",
-    #     params={
-    #         "pose_range": {"x": (-0.15, 0.15), "y": (-0.15, 0.15), "z": (0.0, 0.0)},
-    #         "velocity_range": {},
-    #         "asset_cfg": SceneEntityCfg("cup", body_names="SM_Cup_empty"),
-    #     },
-    # )
+    reset_object_position = EventTerm(
+        func=mdp.reset_root_state_uniform,
+        mode="reset",
+        params={
+            "pose_range": {"x": (-0.02, 0.02), "y": (-0.05, 0.05), "z": (0.0, 0.0)},
+            "velocity_range": {},
+            "asset_cfg": SceneEntityCfg("cup2"),
+        },
+    )
 
 
 @configclass
@@ -167,18 +171,18 @@ class RewardsCfg:
     home_pose = RewTerm(func=mdp.Home_pose, params={}, weight=20)
 
     # action penalty
-    action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-3)
+    action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-4)
 
     joint_vel = RewTerm(
         func=mdp.joint_vel_l2,
-        weight=-1e-3,
+        weight=-1e-4,
         params={"asset_cfg": SceneEntityCfg("robot")},
     )
 
     # collision penalty
-    shelf_collision = RewTerm(func=mdp.shelf_Collision, params={}, weight=-8.0)
+    shelf_collision = RewTerm(func=mdp.shelf_Collision, params={}, weight=-0.1)
     # object_collision = RewTerm(func=mdp.object_collision_pentaly, params={}, weight=-1.0)
-    object_drop = RewTerm(func=mdp.Object_drop, weight=-4.0)
+    object_drop = RewTerm(func=mdp.Object_drop, weight=-0.1)
 
 @configclass
 class TerminationsCfg:

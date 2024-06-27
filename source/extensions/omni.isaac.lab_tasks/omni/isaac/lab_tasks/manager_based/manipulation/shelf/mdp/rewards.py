@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from omni.isaac.lab.assets import RigidObject, Articulation
 from omni.isaac.lab.managers import SceneEntityCfg, ManagerTermBase
+from omni.isaac.lab.sensors import FrameTransformerCfg, ContactSensor, ContactSensorCfg
 from omni.isaac.lab.managers import RewardTermCfg as RewTerm
 from omni.isaac.lab.sensors import FrameTransformer
 from omni.isaac.lab.utils.math import combine_frame_transforms, matrix_from_quat, euler_xyz_from_quat, quat_mul, transform_points
@@ -332,13 +333,14 @@ class shelf_Collision(ManagerTermBase):
         collision = self.shelf_collision_pentaly(env)
         collision_dynamic = self.shelf_dynamic_penalty(env)
         collision_dynamic_upper = self.shelf_dynamic_penalty_upper(env)
+        # print(self._shelf.)
         return collision + collision_dynamic
 
     def shelf_collision_pentaly(self,env: ManagerBasedRLEnv,) -> torch.Tensor:
         
         shelf_vel = self._shelf.data.root_lin_vel_w
         shelf_delta = self._shelf.data.root_pos_w - self._initial_shelf_pos
-        moved = torch.where(torch.norm(shelf_delta , dim=-1, p=2) + torch.norm(shelf_vel , dim=-1, p=2)> 0.005, 1.0, 0.0)
+        moved = torch.where(torch.norm(shelf_delta , dim=-1, p=2) + torch.norm(shelf_vel , dim=-1, p=2)> 0.05, 1.0, 0.0)
 
         return moved
 
