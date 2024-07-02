@@ -49,6 +49,34 @@ def object_reached_goal(
 class Object_drop_Termination(ManagerTermBase):
     def __init__(self, cfg: DoneTerm , env: ManagerBasedRLEnv):
         super().__init__(cfg, env)
+        object_cfg = SceneEntityCfg("cup")
+        ee_frame_cfg = SceneEntityCfg("ee_frame")
+
+        self._target: RigidObject = env.scene[object_cfg.name]
+        self._ee: FrameTransformer = env.scene[ee_frame_cfg.name]
+
+        self._target_last_w = self._target.data.root_pos_w.clone()
+
+        self._top_offset = torch.zeros((env.num_envs, 3), device=env.device)
+        self._top_offset[:, :3] = torch.tensor([0.0, 0.0, 0.07])
+
+    def __call__(self, env:ManagerBasedRLEnv,):
+        drop = self.object_drop(env)
+
+        return drop
+
+    def object_drop(self, env: ManagerBasedRLEnv,)-> torch.Tensor:
+        
+        offset_pos = transform_points(self._top_offset,self._target.data.root_pos_w, self._target.data.root_state_w[:, 3:7] )[..., 0 , :]
+
+        # print(offset_pos[:, 2])
+
+        return offset_pos[:, 2] < 0.712 #0.762
+
+
+class Object2_drop_Termination(ManagerTermBase):
+    def __init__(self, cfg: DoneTerm , env: ManagerBasedRLEnv):
+        super().__init__(cfg, env)
         object_cfg = SceneEntityCfg("cup2")
         ee_frame_cfg = SceneEntityCfg("ee_frame")
 

@@ -43,7 +43,7 @@ class ObjectShelfGraspingSceneCfg(InteractiveSceneCfg):
     wrist_frame: FrameTransformerCfg = MISSING
     wrist_upper_frame: FrameTransformerCfg = MISSING
     # target object: will be populated by agent env cfg
-    # cup: RigidObjectCfg = MISSING
+    cup: RigidObjectCfg = MISSING
     cup2: RigidObjectCfg = MISSING
 
     # Table
@@ -168,7 +168,7 @@ class RewardsCfg:
     )
     # lifting_object = RewTerm(func=mdp.object_lift, params={"threshold": 0.71}, weight=20.0)
 
-    home_pose = RewTerm(func=mdp.Home_pose, params={}, weight=20)
+    home_pose = RewTerm(func=mdp.Home_pose, params={}, weight=10)
 
     # action penalty
     action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-4)
@@ -180,9 +180,10 @@ class RewardsCfg:
     )
 
     # collision penalty
-    shelf_collision = RewTerm(func=mdp.shelf_Collision, params={}, weight=-0.1)
+    shelf_collision = RewTerm(func=mdp.shelf_Collision, params={}, weight=-0.2)
     # object_collision = RewTerm(func=mdp.object_collision_pentaly, params={}, weight=-1.0)
-    object_drop = RewTerm(func=mdp.Object_drop, weight=-0.1)
+    object_drop = RewTerm(func=mdp.Object_drop, weight=-0.2)
+    object2_drop = RewTerm(func=mdp.Object2_drop, weight=-0.2)
 
 @configclass
 class TerminationsCfg:
@@ -190,6 +191,8 @@ class TerminationsCfg:
 
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
     object_drop = DoneTerm(func=mdp.Object_drop_Termination, time_out=True)
+    object2_drop = DoneTerm(func=mdp.Object2_drop_Termination, time_out=True)
+
 
 
 @configclass

@@ -68,6 +68,24 @@ class UR5eShelfGraspingEnvCfg(ShelfGraspingEnvCfg):
             ),
         )
 
+        self.scene.cup = RigidObjectCfg(
+            prim_path="{ENV_REGEX_NS}/Cup",
+            init_state=RigidObjectCfg.InitialStateCfg(pos=[0.72, -0.2, 0.66], rot=[1, 0, 0, 0]),
+            spawn=UsdFileCfg(
+                usd_path=f"omniverse://localhost/Library/usd/Object/SM_Cup_empty.usd",
+                scale=(1.0, 1.0, 1.0),
+                rigid_props=RigidBodyPropertiesCfg(
+                    solver_position_iteration_count=16,
+                    solver_velocity_iteration_count=1,
+                    max_angular_velocity=1000.0,
+                    max_linear_velocity=1000.0,
+                    max_depenetration_velocity=5.0,
+                    disable_gravity=False,
+                ),
+                mass_props=MassPropertiesCfg(mass=0.5),
+            ),
+        )
+
         # self.scene.cup2 = RigidObjectCfg(
         #     prim_path="{ENV_REGEX_NS}/Cup2",
         #     init_state=RigidObjectCfg.InitialStateCfg(pos=[0.8, 0.0, 0.71], rot=[1, 0, 0, 0]), #[0.8, 0.0, 0.72], [1, 0, 0, 0]
