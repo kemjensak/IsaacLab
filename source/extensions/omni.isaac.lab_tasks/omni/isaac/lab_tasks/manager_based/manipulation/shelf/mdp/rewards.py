@@ -334,7 +334,7 @@ class shelf_Collision(ManagerTermBase):
         collision_dynamic = self.shelf_dynamic_penalty(env)
         collision_dynamic_upper = self.shelf_dynamic_penalty_upper(env)
         # print(self._shelf.)
-        return collision + collision_dynamic + collision_dynamic_upper
+        return collision + collision_dynamic
 
     def shelf_collision_pentaly(self,env: ManagerBasedRLEnv,) -> torch.Tensor:
         
@@ -397,6 +397,41 @@ class shelf_Collision(ManagerTermBase):
 class Object_drop(ManagerTermBase):
     def __init__(self, cfg: RewTerm, env: ManagerBasedRLEnv):
         super().__init__(cfg, env)
+        object_cfg = SceneEntityCfg("cup")
+        ee_frame_cfg = SceneEntityCfg("ee_frame")
+
+        self._target: RigidObject = env.scene[object_cfg.name]
+        self._ee: FrameTransformer = env.scene[ee_frame_cfg.name]
+
+        self._target_last_w = self._target.data.root_pos_w.clone()
+
+        self._top_offset = torch.zeros((env.num_envs, 3), device=env.device)
+        self._top_offset[:, :3] = torch.tensor([0.0, 0.0, 0.07]) #0.0 0.0 0.07  
+
+    def __call__(self, env:ManagerBasedRLEnv,):
+        drop = self.object_drop(env)
+        vel = self.object_velocity(env)
+        return drop + vel
+
+    def object_drop(self, env: ManagerBasedRLEnv,)-> torch.Tensor:
+
+        offset_pos = transform_points(self._top_offset,self._target.data.root_pos_w, self._target.data.root_state_w[:, 3:7] )[..., 0 , :]
+        object_vel = self._target.data.root_lin_vel_w
+
+        delta_z = 0.73 - offset_pos[:, 2] #0.73
+
+        penalty_object = torch.tanh(5 * torch.abs(delta_z) / 0.01)
+        return penalty_object
+    
+    def object_velocity(self, env: ManagerBasedRLEnv,)-> torch.Tensor:
+        object_lin_vel_w = self._target.data.root_lin_vel_w.clone()
+        object_lin_vel_norm = torch.norm(object_lin_vel_w, dim=-1, p=2)
+        penalty = torch.where(object_lin_vel_norm > 1, 1, 0)
+        return penalty
+    
+class Object2_drop(ManagerTermBase):
+    def __init__(self, cfg: RewTerm, env: ManagerBasedRLEnv):
+        super().__init__(cfg, env)
         object_cfg = SceneEntityCfg("cup2")
         ee_frame_cfg = SceneEntityCfg("ee_frame")
 
@@ -448,7 +483,7 @@ class Home_pose(ManagerTermBase):
         self._top_offset = torch.zeros((env.num_envs, 3), device=env.device)
         self._top_offset[:, :3] = torch.tensor([0.0, 0.0, 0.07]) #0.0 0.0 0.07
 
-        self.home_position = torch.tensor([-1.6, -1.9, 1.9, 0.05, 1.57, 2.1], device=env.device).repeat(env.num_envs, 1)
+        self.home_position = torch.tensor([-1.6, -1.9, 1.9, 0.05, 1.57, 1.57], device=env.device).repeat(env.num_envs, 1)
     
     def __call__(self, env: ManagerBasedRLEnv,):
 
@@ -484,7 +519,7 @@ class Home_pose(ManagerTermBase):
         delta_z = (object_pos_w[:, 2] - self._initial_object_pos[:, 2])
 
         # indicator factor
-        zeta_s = torch.where(torch.abs(delta_z) > 0.02, 1, 0)
+        zeta_s = torch.where(torch.abs(delta_z) > 0.04, 1, 0)
 
         delta_z_D = 0.73 - offset_pos[:, 2] #0.73
         
@@ -492,7 +527,8 @@ class Home_pose(ManagerTermBase):
 
         joint_pos_error = torch.sum(torch.abs(self._robot.data.joint_pos[:, :6] - self.home_position), dim=1)
 
-        reward_for_home_pose = dis_obj * zeta_s * drop_con * (1 - torch.tanh(joint_pos_error / 2.0))
+        reward_for_home_pose = zeta_s * (1 - torch.tanh(joint_pos_error / 3.0))
+        # reward_for_home_pose = dis_obj * zeta_s * drop_con * (1 - torch.tanh(joint_pos_error / 2.0))
         # reward_for_home_pose = drop_con * (1 - torch.tanh(joint_pos_error / 2.0))
 
         return reward_for_home_pose
