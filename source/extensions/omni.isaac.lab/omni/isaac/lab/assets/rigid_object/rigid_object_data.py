@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import torch
+import weakref
 
 import omni.physics.tensors.impl.api as physx
 
@@ -24,7 +25,12 @@ class RigidObjectData:
     """
 
     _root_physx_view: physx.RigidBodyView
-    """The root rigid body view of the object."""
+    """The root rigid body view of the object.
+
+    Note:
+        Internally, this is stored as a weak reference to avoid circular references between the asset class
+        and the data container. This is important to avoid memory leaks.
+    """
 
     def __init__(self, root_physx_view: physx.RigidBodyView, device: str):
         """Initializes the rigid object data.
@@ -35,12 +41,20 @@ class RigidObjectData:
         """
         # Set the parameters
         self.device = device
-        self._root_physx_view = root_physx_view
+        self._root_physx_view = weakref.proxy(root_physx_view)  # weak reference to avoid circular references
         # Set initial time stamp
         self._sim_timestamp = 0.0
 
+        # Obtain global physics sim view
+        physics_sim_view = physx.create_simulation_view("torch")
+        physics_sim_view.set_subspace_roots("/")
+        gravity = physics_sim_view.get_gravity()
+        # Convert to direction vector
+        gravity_dir = torch.tensor((gravity[0], gravity[1], gravity[2]), device=self.device)
+        gravity_dir = math_utils.normalize(gravity_dir.unsqueeze(0)).squeeze(0)
+
         # Initialize constants
-        self.GRAVITY_VEC_W = torch.tensor((0.0, 0.0, -1.0), device=self.device).repeat(self._root_physx_view.count, 1)
+        self.GRAVITY_VEC_W = gravity_dir.repeat(self._root_physx_view.count, 1)
         self.FORWARD_VEC_B = torch.tensor((1.0, 0.0, 0.0), device=self.device).repeat(self._root_physx_view.count, 1)
 
         # Initialize buffers for finite differencing
@@ -115,12 +129,7 @@ class RigidObjectData:
 
     @property
     def projected_gravity_b(self):
-        """Projection of the gravity direction on base frame. Shape is (num_instances, 3).
-
-        Note:
-            This quantity is computed by assuming that the gravity direction is along the z-direction,
-            i.e. :math:`(0, 0, -1)`.
-        """
+        """Projection of the gravity direction on base frame. Shape is (num_instances, 3)."""
         return math_utils.quat_rotate_inverse(self.root_quat_w, self.GRAVITY_VEC_W)
 
     @property

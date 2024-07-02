@@ -1,6 +1,45 @@
 Changelog
 ---------
 
+0.18.6 (2024-07-01)
+~~~~~~~~~~~~~~~~~~~
+
+Fixed
+^^^^^
+
+* Fixed the environment stepping logic. Earlier, the environments' rendering logic was updating the kit app which
+  would in turn step the physics :attr:`omni.isaac.lab.sim.SimulationCfg.render_interval` times. Now, a render
+  call only does rendering and does not step the physics.
+
+
+0.18.5 (2024-06-26)
+~~~~~~~~~~~~~~~~~~~
+
+Fixed
+^^^^^
+
+* Fixed the gravity vector direction used inside the :class:`omni.isaac.lab.assets.RigidObjectData`class.
+  Earlier, the gravity direction was hard-coded as (0, 0, -1) which may be different from the actual
+  gravity direction in the simulation. Now, the gravity direction is obtained from the simulation context
+  and used to compute the projection of the gravity vector on the object.
+
+
+0.18.4 (2024-06-26)
+~~~~~~~~~~~~~~~~~~~
+
+Fixed
+^^^^^
+
+* Fixed double reference count of the physics sim view inside the asset classes. This was causing issues
+  when destroying the asset class instance since the physics sim view was not being properly released.
+
+Added
+^^^^^
+
+* Added the attribute :attr:`~omni.isaac.lab.assets.AssetBase.is_initialized` to check if the asset and sensor
+  has been initialized properly. This can be used to ensure that the asset or sensor is ready to use in the simulation.
+
+
 0.18.3 (2024-06-25)
 ~~~~~~~~~~~~~~~~~~~
 
