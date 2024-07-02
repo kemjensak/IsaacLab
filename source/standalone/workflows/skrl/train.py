@@ -180,10 +180,6 @@ def main():
         device=env.device,
     )
 
-    if args_cli.checkpoint:
-        resume_path = os.path.abspath(args_cli.checkpoint)
-        agent.load(resume_path)
-
     # configure and instantiate a custom RL trainer for logging episode events
     # https://skrl.readthedocs.io/en/latest/api/trainers.html
     trainer_cfg = experiment_cfg["trainer"]
