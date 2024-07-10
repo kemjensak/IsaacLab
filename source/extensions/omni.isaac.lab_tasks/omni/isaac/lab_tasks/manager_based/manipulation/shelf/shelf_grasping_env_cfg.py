@@ -155,10 +155,10 @@ class RewardsCfg:
     
     # task terms
     # reaching_object = RewTerm(func=mdp.shelf_Reaching, params={}, weight=2.0)
-    reaching_grasp_object = RewTerm(func=mdp.shelf_Grasp_Reaching, params={}, weight=2.0)
+    reaching_grasp_object = RewTerm(func=mdp.rewards_grasp.shelf_Grasp_Reaching, params={}, weight=2.0)
     # sweeping_object = RewTerm(func=mdp.shelf_Pushing, params={}, weight=20.0)
     grasp_handle = RewTerm(
-        func=mdp.grasp_handle,
+        func=mdp.rewards_grasp.grasp_handle,
         weight=10,
         params={
             "threshold": 0.02,
@@ -168,7 +168,7 @@ class RewardsCfg:
     )
     # lifting_object = RewTerm(func=mdp.object_lift, params={"threshold": 0.71}, weight=20.0)
 
-    home_pose = RewTerm(func=mdp.Home_pose, params={}, weight=10)
+    home_pose = RewTerm(func=mdp.rewards_grasp.Home_pose, params={}, weight=10)
 
     # action penalty
     action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-4)
@@ -180,10 +180,10 @@ class RewardsCfg:
     )
 
     # collision penalty
-    shelf_collision = RewTerm(func=mdp.shelf_Collision, params={}, weight=-0.2)
+    shelf_collision = RewTerm(func=mdp.rewards_grasp.helf_Collision, params={}, weight=-0.2)
     # object_collision = RewTerm(func=mdp.object_collision_pentaly, params={}, weight=-1.0)
-    object_drop = RewTerm(func=mdp.Object_drop, weight=-0.2)
-    object2_drop = RewTerm(func=mdp.Object2_drop, weight=-0.2)
+    object_drop = RewTerm(func=mdp.rewards_grasp.Object_drop, weight=-0.2)
+    object2_drop = RewTerm(func=mdp.rewards_grasp.Object2_drop, weight=-0.2)
 
 @configclass
 class TerminationsCfg:
