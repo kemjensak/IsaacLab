@@ -68,6 +68,25 @@ class UR5eShelfEnvCfg(ShelfSweepingEnvCfg):
             ),
         )
 
+        # Set Cube as object
+        self.scene.cup2 = RigidObjectCfg(
+            prim_path="{ENV_REGEX_NS}/Cup",
+            init_state=RigidObjectCfg.InitialStateCfg(pos=[0.88, 0.0, 0.66], rot=[1, 0, 0, 0]),
+            spawn=UsdFileCfg(
+                usd_path=f"omniverse://localhost/Library/usd/Object/SM_PlasticCup.usd",
+                scale=(1.0, 1.0, 1.0),
+                rigid_props=RigidBodyPropertiesCfg(
+                    solver_position_iteration_count=16,
+                    solver_velocity_iteration_count=1,
+                    max_angular_velocity=1000.0,
+                    max_linear_velocity=1000.0,
+                    max_depenetration_velocity=5.0,
+                    disable_gravity=False,
+                ),
+                mass_props=MassPropertiesCfg(mass=1.0),
+            ),
+        )
+
         # Listens to the required transforms
         marker_cfg = FRAME_MARKER_CFG.copy()
         marker_cfg.markers["frame"].scale = (0.1, 0.1, 0.1)

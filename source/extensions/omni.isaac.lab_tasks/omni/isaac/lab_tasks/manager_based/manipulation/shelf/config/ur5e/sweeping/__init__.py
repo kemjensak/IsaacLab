@@ -21,6 +21,7 @@ gym.register(
     kwargs={
         "env_cfg_entry_point": joint_pos_env_cfg.UR5eShelfEnvCfg,
        "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.ShelfSweepPPORunnerCfg,
+       "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml"
     },
     disable_env_checker=True,
 )
@@ -31,6 +32,7 @@ gym.register(
     kwargs={
         "env_cfg_entry_point": joint_pos_env_cfg.UR5eShelfEnvCfg_PLAY,
         "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.ShelfSweepPPORunnerCfg,
+        "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml"
     },
     disable_env_checker=True,
 )

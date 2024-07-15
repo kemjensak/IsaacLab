@@ -180,7 +180,7 @@ class RewardsCfg:
     )
 
     # collision penalty
-    shelf_collision = RewTerm(func=mdp.rewards_grasp.helf_Collision, params={}, weight=-0.2)
+    shelf_collision = RewTerm(func=mdp.rewards_grasp.shelf_Collision, params={}, weight=-0.2)
     # object_collision = RewTerm(func=mdp.object_collision_pentaly, params={}, weight=-1.0)
     object_drop = RewTerm(func=mdp.rewards_grasp.Object_drop, weight=-0.2)
     object2_drop = RewTerm(func=mdp.rewards_grasp.Object2_drop, weight=-0.2)

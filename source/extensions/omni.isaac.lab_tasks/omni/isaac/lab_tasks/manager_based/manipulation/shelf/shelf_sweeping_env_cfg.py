@@ -43,6 +43,7 @@ class ObjectShelfSceneCfg(InteractiveSceneCfg):
     wrist_frame: FrameTransformerCfg = MISSING
     # target object: will be populated by agent env cfg
     cup: RigidObjectCfg = MISSING
+    cup2: RigidObjectCfg = MISSING
 
     # Table
     table = AssetBaseCfg(
@@ -150,7 +151,7 @@ class RewardsCfg:
     reaching_object = RewTerm(func=mdp.rewards_sweep.shelf_Reaching, params={}, weight=2.0)
     align_ee = RewTerm(func=mdp.rewards_sweep.shelf_Align, params={}, weight=2.0)
     sweeping_object = RewTerm(func=mdp.rewards_sweep.shelf_Pushing, params={}, weight=20.0)
-    homing_after_sweep = RewTerm(func=mdp.rewards_sweep.Home_pose, params={}, weight=50)
+    # homing_after_sweep = RewTerm(func=mdp.rewards_sweep.Home_pose, params={}, weight=20.0)
     # lifting_object = RewTerm(func=mdp.object_lift, params={}, weight=5.0)
 
     # action penalty
@@ -163,9 +164,9 @@ class RewardsCfg:
     )
 
     # collision penalty
-    shelf_collision = RewTerm(func=mdp.rewards_sweep.shelf_Collision, params={}, weight=-8.0)
+    shelf_collision = RewTerm(func=mdp.rewards_sweep.shelf_Collision, params={}, weight=-0.2)
     # object_collision = RewTerm(func=mdp.object_collision_pentaly, params={}, weight=-1.0)
-    object_drop = RewTerm(func=mdp.rewards_sweep.Object_drop, weight=-8.0)
+    object_drop = RewTerm(func=mdp.rewards_sweep.Object_drop, weight=-0.2)
 
 @configclass
 class TerminationsCfg:
