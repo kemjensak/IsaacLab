@@ -70,7 +70,7 @@ class UR5eShelfEnvCfg(ShelfSweepingEnvCfg):
 
         # Set Cube as object
         self.scene.cup2 = RigidObjectCfg(
-            prim_path="{ENV_REGEX_NS}/Cup",
+            prim_path="{ENV_REGEX_NS}/Cup2",
             init_state=RigidObjectCfg.InitialStateCfg(pos=[0.88, 0.0, 0.66], rot=[1, 0, 0, 0]),
             spawn=UsdFileCfg(
                 usd_path=f"omniverse://localhost/Library/usd/Object/SM_PlasticCup.usd",

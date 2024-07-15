@@ -186,8 +186,8 @@ class shelf_Pushing(ManagerTermBase):
         zeta_s = torch.where(torch.abs(object_pos_w[:, 1] - self._initial_object_pos[:, 1]) > 0.21, 0, 1)
         zeta_m = torch.where(distance < 0.03 , 1, 0)
 
-        velocity_reward = torch.where(v_y_ee < 0.4, v_y_ee * 5, -5 * v_y_ee)
-        pushing_reward = zeta_s * zeta_m * ((3*torch.tanh(2*delta_y/0.2)) - 0.1 * (torch.tanh(2 * D_x_ee/0.1)) + velocity_reward) + 2 * (1 - zeta_s)
+        velocity_reward = torch.where(v_y_ee < 0.4, v_y_ee * 3, -3 * v_y_ee)
+        pushing_reward = zeta_s * zeta_m * ((4*torch.tanh(2*delta_y/0.2)) - 0.1 * (torch.tanh(2 * D_x_ee/0.1)) + velocity_reward) + 2 * (1 - zeta_s)
         pushing_reward = torch.clamp(pushing_reward, -4, 4)
 
         R = pushing_reward
