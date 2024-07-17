@@ -70,28 +70,27 @@ gym.register(
 # # Inverse Kinematics - Relative Pose Control
 # ##
 
-# gym.register(
-#     id="Isaac-Lift-Cube-Franka-IK-Rel-v0",
-#     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
-#     kwargs={
-#         "env_cfg_entry_point": ik_rel_env_cfg.FrankaGraspObjectEnvCfg,
-#         "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.LiftCubePPORunnerCfg,
-#         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
-#         "robomimic_bc_cfg_entry_point": os.path.join(agents.__path__[0], "robomimic/bc.json"),
-#     },
-#     disable_env_checker=True,
-# )
+gym.register(
+    id="Isaac-Grasp-Object-Franka-IK-Rel-v0",
+    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
+    kwargs={
+        "env_cfg_entry_point": ik_rel_env_cfg.FrankaGraspObjectEnvCfg,
+        "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.GraspPPORunnerCfg,
+        "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
+    },
+    disable_env_checker=True,
+)
 
-# gym.register(
-#     id="Isaac-Lift-Cube-Franka-IK-Rel-Play-v0",
-#     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
-#     kwargs={
-#         "env_cfg_entry_point": ik_rel_env_cfg.FrankaGraspObjectEnvCfg_PLAY,
-#         "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.LiftCubePPORunnerCfg,
-#         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
-#     },
-#     disable_env_checker=True,
-# )
+gym.register(
+    id="Isaac-Grasp-Object-Franka-IK-Rel-Play-v0",
+    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
+    kwargs={
+        "env_cfg_entry_point": ik_rel_env_cfg.FrankaGraspObjectEnvCfg_PLAY,
+        "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.GraspPPORunnerCfg,
+        "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
+    },
+    disable_env_checker=True,
+)
 
 # gym.register(
 #     id="Isaac-Lift-Cube-Franka-IK-Rel-SAC-v0",

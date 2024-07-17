@@ -6,6 +6,7 @@
 from omni.isaac.lab.controllers.differential_ik_cfg import DifferentialIKControllerCfg
 from omni.isaac.lab.envs.mdp.actions.actions_cfg import DifferentialInverseKinematicsActionCfg
 from omni.isaac.lab.utils import configclass
+from omni.isaac.lab.assets.articulation import ArticulationCfg
 
 from . import joint_pos_env_cfg
 
@@ -23,7 +24,23 @@ class FrankaFlipObjectEnvCfg(joint_pos_env_cfg.FrankaFlipObjectEnvCfg):
 
         # Set Franka as robot
         # We switch here to a stiffer PD controller for IK tracking to be better.
-        self.scene.robot = FRANKA_PANDA_HIGH_PD_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
+        # FRANKA_PANDA_HIGH_PD_CFG.actuators["panda_joint[1-4]"].velocity_limit = 2.175/2
+        # FRANKA_PANDA_HIGH_PD_CFG.actuators["panda_joint[5-7]"].velocity_limit = 2.61/2
+        self.scene.robot = FRANKA_PANDA_HIGH_PD_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot",
+                                                    init_state=ArticulationCfg.InitialStateCfg(
+                                                        joint_pos={
+                                                            "panda_joint1": -1.5708,
+                                                            "panda_joint2": 0.0,
+                                                            "panda_joint3": 0.785398,
+                                                            "panda_joint4": -3.05433,
+                                                            "panda_joint5": 2.04204, # 0.0
+                                                            "panda_joint6": 1.67552,
+                                                            "panda_joint7": 0.837758,
+                                                            "panda_finger_joint.*": 0.04,
+                                                        },
+                                                    ),
+                                                    )
+        
 
         # Set actions for the specific robot type (franka)
         self.actions.body_joint_pos = DifferentialInverseKinematicsActionCfg(
