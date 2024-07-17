@@ -23,8 +23,21 @@ class FrankaGraspObjectEnvCfg(joint_pos_env_cfg.FrankaGraspObjectEnvCfg):
 
         # Set Franka as robot
         # We switch here to a stiffer PD controller for IK tracking to be better.
-        self.scene.robot = FRANKA_PANDA_HIGH_PD_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
-
+        self.scene.robot = FRANKA_PANDA_HIGH_PD_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot",
+                                                    init_state=ArticulationCfg.InitialStateCfg(
+                                                        joint_pos={
+                                                            "panda_joint1": -1.5708,
+                                                            "panda_joint2": 0.0,
+                                                            "panda_joint3": 0.785398,
+                                                            "panda_joint4": -3.05433,
+                                                            "panda_joint5": 2.04204, # 0.0
+                                                            "panda_joint6": 1.67552,
+                                                            "panda_joint7": 0.837758,
+                                                            "panda_finger_joint.*": 0.04,
+                                                        },
+                                                    ),
+                                                    )
+        
         # Set actions for the specific robot type (franka)
         self.actions.body_joint_pos = DifferentialInverseKinematicsActionCfg(
             asset_name="robot",

@@ -362,9 +362,9 @@ def home_after_flip(
     object: RigidObject = env.scene[object_cfg.name]
     z_axis = torch.tensor([0.0, 0.0, 1.0], device=env.device).repeat(env.num_envs, 1)
     z_component = quat_apply(object.data.root_quat_w, z_axis)[:, 2]
-    grasp_ready_position = torch.tensor([0.0, -0.569, 0.0, -2.810, 0.0, 3.037, 0.741, 0.04, 0.04], device=env.device).repeat(env.num_envs, 1)
-    joint_pos_error = torch.sum(torch.abs(robot.data.joint_pos[:, asset_cfg.joint_ids] - grasp_ready_position), dim=1)
-    # joint_pos_error = torch.sum(torch.abs(robot.data.joint_pos[:, asset_cfg.joint_ids] - robot.data.default_joint_pos[:, asset_cfg.joint_ids]), dim=1)
+    # grasp_ready_position = torch.tensor([0.0, -0.569, 0.0, -2.810, 0.0, 3.037, 0.741, 0.04, 0.04], device=env.device).repeat(env.num_envs, 1)
+    # joint_pos_error = torch.sum(torch.abs(robot.data.joint_pos[:, asset_cfg.joint_ids] - grasp_ready_position), dim=1)
+    joint_pos_error = torch.sum(torch.abs(robot.data.joint_pos[:, asset_cfg.joint_ids] - robot.data.default_joint_pos[:, asset_cfg.joint_ids]), dim=1)
 
     reward_for_home_pose = 1.0 - torch.tanh(joint_pos_error / 2.0)
     
