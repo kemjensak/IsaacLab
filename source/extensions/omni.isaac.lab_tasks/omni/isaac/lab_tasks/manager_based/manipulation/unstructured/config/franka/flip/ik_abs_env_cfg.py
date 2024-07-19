@@ -24,8 +24,6 @@ class FrankaFlipObjectEnvCfg(joint_pos_env_cfg.FrankaFlipObjectEnvCfg):
 
         # Set Franka as robot
         # We switch here to a stiffer PD controller for IK tracking to be better.
-        FRANKA_PANDA_HIGH_PD_CFG.actuators["panda_shoulder"].velocity_limit = 2.175/5
-        FRANKA_PANDA_HIGH_PD_CFG.actuators["panda_forearm"].velocity_limit = 2.61/5
         self.scene.robot = FRANKA_PANDA_HIGH_PD_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot",
                                                     init_state=ArticulationCfg.InitialStateCfg(
                                                         joint_pos={
