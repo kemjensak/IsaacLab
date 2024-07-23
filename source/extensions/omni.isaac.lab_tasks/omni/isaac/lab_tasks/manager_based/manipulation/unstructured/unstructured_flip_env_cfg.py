@@ -407,6 +407,7 @@ class UnstructuredFlipEnvCfg(ManagerBasedRLEnvCfg):
         self.episode_length_s = 4.0
         # simulation settings
         self.sim.dt = 0.01  # 100Hz
+        self.sim.render_interval = self.decimation
 
         self.sim.physx.bounce_threshold_velocity = 2.0
         # self.sim.physx.bounce_threshold_velocity = 0.01

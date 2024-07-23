@@ -410,10 +410,11 @@ class UnstructuredGraspEnvCfg(ManagerBasedRLEnvCfg):
     def __post_init__(self):
         """Post initialization."""
         # general settings
-        self.decimation = 2
+        self.decimation = 2 # 2
         self.episode_length_s = 5.0
         # simulation settings
         self.sim.dt = 0.01  # 100Hz
+        self.sim.render_interval = self.decimation
 
         self.sim.physx.bounce_threshold_velocity = 0.2
         self.sim.physx.bounce_threshold_velocity = 0.01
