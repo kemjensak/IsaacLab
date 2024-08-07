@@ -32,7 +32,7 @@ agent:
   rollouts: 16
   learning_epochs: 8
   mini_batches: 8
-  discount_factor: 0.9
+  discount_factor: 0.98
   lambda: 0.95
   learning_rate: 3.e-4
   learning_rate_scheduler: "KLAdaptiveLR"
@@ -54,7 +54,7 @@ agent:
   rewards_shaper_scale: 0.01
   # logging and checkpoint
   experiment:
-    directory: "ur5e_shelf_sweep"
+    directory: "franka_shelf_sweep"
     experiment_name: ""
     write_interval: 120
     checkpoint_interval: 1200

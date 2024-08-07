@@ -148,7 +148,7 @@ class RewardsCfg:
     """Reward terms for the MDP."""
     
     # task terms
-    reaching_object = RewTerm(func=mdp.shelf_Reaching, params={}, weight=2.0)
+    # reaching_object = RewTerm(func=mdp.shelf_Reaching, params={}, weight=2.0)
 
     # action penalty
     action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-4)

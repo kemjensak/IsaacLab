@@ -69,9 +69,10 @@ class Object_drop_Termination(ManagerTermBase):
         
         offset_pos = transform_points(self._top_offset,self._target.data.root_pos_w, self._target.data.root_state_w[:, 3:7] )[..., 0 , :]
 
-        # print(offset_pos[:, 2])
+        # print("cup1: {}".format(offset_pos[:, 2]))
 
-        return offset_pos[:, 2] < 0.712 #0.762
+
+        return offset_pos[:, 2] < 0.71 #0.762
 
 
 class Object2_drop_Termination(ManagerTermBase):
@@ -97,9 +98,9 @@ class Object2_drop_Termination(ManagerTermBase):
         
         offset_pos = transform_points(self._top_offset,self._target.data.root_pos_w, self._target.data.root_state_w[:, 3:7] )[..., 0 , :]
 
-        # print(offset_pos[:, 2])
+        # print("cup2: {}".format(offset_pos[:, 2]))
 
-        return offset_pos[:, 2] < 0.712 #0.762
+        return offset_pos[:, 2] < 0.71 #0.762
     
 
 class Object_vel_Termination(ManagerTermBase):

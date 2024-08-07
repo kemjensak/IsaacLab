@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedRLEnv
 
 
-class shelf_Reaching(ManagerTermBase):
+class ee_Reaching(ManagerTermBase):
     def __init__(self, cfg: RewTerm, env: ManagerBasedRLEnv):
         super().__init__(cfg, env)
         object_cfg = SceneEntityCfg("cup")
@@ -51,8 +51,8 @@ class shelf_Reaching(ManagerTermBase):
 
         offset_pos = self._target.data.root_pos_w.clone()
         offset_pos[:,0] = offset_pos[:, 0] + 0.06
-        offset_pos[:,1] = offset_pos[:, 1] + 0.12
-        offset_pos[:,2] = offset_pos[:, 2] + 0.05 
+        offset_pos[:,1] = offset_pos[:, 1] + 0.11
+        offset_pos[:,2] = offset_pos[:, 2] + 0.08 
 
         # initial object & ee state
         reset_mask = env.episode_length_buf == 1
@@ -68,7 +68,7 @@ class shelf_Reaching(ManagerTermBase):
         return reward
     
 
-class shelf_Align(ManagerTermBase):
+class ee_Align(ManagerTermBase):
     def __init__(self, cfg: RewTerm, env: ManagerBasedRLEnv):
         super().__init__(cfg, env)
         object_cfg = SceneEntityCfg("cup")
@@ -115,7 +115,7 @@ class shelf_Align(ManagerTermBase):
 
         align_x = torch.bmm(ee_tcp_x.unsqueeze(1), init_ee_x.unsqueeze(-1)).squeeze(-1).squeeze(-1)
         align_y = torch.bmm(ee_tcp_y.unsqueeze(1), init_ee_y.unsqueeze(-1)).squeeze(-1).squeeze(-1)
-        return 0.5 * (torch.sign(align_x) * align_x**2 + torch.sign(align_y) * align_y**2 )
+        return torch.sign(align_y) * align_y**2
     
 
 class shelf_Pushing(ManagerTermBase):
@@ -161,20 +161,21 @@ class shelf_Pushing(ManagerTermBase):
         # ee target position
         offset_pos = self._target.data.root_pos_w.clone()
         offset_pos[:,0] = offset_pos[:, 0] + 0.06
-        offset_pos[:,1] = offset_pos[:, 1] + 0.12
-        offset_pos[:,2] = offset_pos[:, 2] + 0.05 
+        offset_pos[:,1] = offset_pos[:, 1] + 0.11
+        offset_pos[:,2] = offset_pos[:, 2] + 0.08
 
         # distance between ee and object
         distance = torch.norm(offset_pos - self._ee.data.target_pos_w[..., 0, :], dim=-1, p=2)
-        distance_f = torch.norm(self._initial_ee_pos[..., 0, :] - self._ee.data.target_pos_w[..., 0, :],  dim=-1, p=2)   
 
         # Displacement of end-effector from initial state
-        D_y_ee = (ee_pos_w[..., 0, 1] - self._initial_ee_pos[..., 0, 1])
         D_x_ee = (ee_pos_w[..., 0, 0]- self._initial_object_pos[:, 0])
-        D_z_ee = (ee_pos_w[..., 0, 2] - self._initial_ee_pos[..., 0, 2])
 
         # Velocity of end-effector 
         v_y_ee = -1 * (ee_pos_w[..., 0, 1] - self._ee_pos_last_w[..., 0, 1])/env.step_dt
+
+        v_obj = self._target.data.root_lin_vel_w.clone()
+
+        # print(v_obj[:,0])
 
 
         # Displacement of cup from initial state
@@ -186,8 +187,10 @@ class shelf_Pushing(ManagerTermBase):
         zeta_s = torch.where(torch.abs(object_pos_w[:, 1] - self._initial_object_pos[:, 1]) > 0.21, 0, 1)
         zeta_m = torch.where(distance < 0.03 , 1, 0)
 
-        velocity_reward = torch.where(v_y_ee < 0.4, v_y_ee * 3, -3 * v_y_ee)
-        pushing_reward = zeta_s * zeta_m * ((4*torch.tanh(2*delta_y/0.2)) - 0.1 * (torch.tanh(2 * D_x_ee/0.1)) + velocity_reward) + 2 * (1 - zeta_s)
+        velocity_ee_reward = torch.where(v_y_ee < 0.3, v_y_ee * 2, -3 * v_y_ee)
+        velocity_obj_reward = torch.where(torch.abs(v_obj[:,1]) < 0.3, 1, -1)
+        pushing_reward = zeta_s * zeta_m * ((4*torch.tanh(3*delta_y/0.2)) - 0.15 * (torch.tanh(2 * D_x_ee/0.1)) - 0.05 * (torch.tanh(2 * delta_x/0.1)) + 0.5 * (velocity_ee_reward + velocity_obj_reward)) + 4 * (1 - zeta_s)
+        # pushing_reward = zeta_s * zeta_m * ((4*torch.tanh(3*delta_y/0.2)) - 0.15 * (torch.tanh(2 * D_x_ee/0.1)) - 0.05 * (torch.tanh(2 * delta_x/0.1)) + 0.5 * (velocity_ee_reward + velocity_obj_reward))
         pushing_reward = torch.clamp(pushing_reward, -4, 4)
 
         R = pushing_reward
@@ -245,8 +248,9 @@ class shelf_Collision(ManagerTermBase):
 
     def shelf_dynamic_penalty(self, env: ManagerBasedRLEnv,) -> torch.Tensor:
         object_pos_w = self._target.data.root_pos_w.clone()
-        object_pos_w[:, 2] = object_pos_w[:, 2] + 0.09
-        object_pos_w[:, 1] = object_pos_w[:, 1] + 0.08
+        object_pos_w[:,0] = object_pos_w[:, 0] + 0.06
+        object_pos_w[:,1] = object_pos_w[:, 1] + 0.11
+        object_pos_w[:,2] = object_pos_w[:, 2] + 0.08
 
         distance = torch.norm(object_pos_w - self._ee.data.target_pos_w[..., 0, :], dim=-1, p=2)
 
@@ -257,8 +261,8 @@ class shelf_Collision(ManagerTermBase):
 
         dst_wrist_shelf = self._wrist.data.target_pos_w[..., 0, 2] - (self._shelf.data.root_pos_w[:, 2] + 0.66)
 
-        reward_ee = 1 - dst_ee_shelf / 0.04
-        reward_wrist = 1 - dst_wrist_shelf / 0.04
+        reward_ee = 1 - dst_ee_shelf / 0.07
+        reward_wrist = 1 - dst_wrist_shelf / 0.07
 
         reward_ee = torch.clamp(reward_ee, 0, 1)
         reward_wrist = torch.clamp(reward_wrist, 0, 1)

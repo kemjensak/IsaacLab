@@ -61,7 +61,7 @@ class ObjectShelfSceneCfg(InteractiveSceneCfg):
 
     shelf = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/Shelf",
-        spawn=UsdFileCfg(usd_path=f"omniverse://localhost/Library/usd/Arena/Shelf3.usd", mass_props=MassPropertiesCfg(mass=50)),
+        spawn=UsdFileCfg(usd_path=f"omniverse://localhost/Library/usd/Arena/Shelf4.usd", mass_props=MassPropertiesCfg(mass=50)),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(0.8, 0.0, 0.0), rot=(0.0, 0.0, 0.0, 1.0)),
         debug_vis=False,
     )
@@ -148,11 +148,10 @@ class RewardsCfg:
     """Reward terms for the MDP."""
     
     # task terms
-    reaching_object = RewTerm(func=mdp.rewards_sweep.shelf_Reaching, params={}, weight=2.0)
-    align_ee = RewTerm(func=mdp.rewards_sweep.shelf_Align, params={}, weight=2.0)
-    sweeping_object = RewTerm(func=mdp.rewards_sweep.shelf_Pushing, params={}, weight=20.0)
+    reaching_object = RewTerm(func=mdp.rewards_sweep.ee_Reaching, params={}, weight=2.0)
+    align_ee = RewTerm(func=mdp.rewards_sweep.ee_Align, params={}, weight=2.0)
+    # sweeping_object = RewTerm(func=mdp.rewards_sweep.shelf_Pushing, params={}, weight=20.0)
     # homing_after_sweep = RewTerm(func=mdp.rewards_sweep.Home_pose, params={}, weight=20.0)
-    # lifting_object = RewTerm(func=mdp.object_lift, params={}, weight=5.0)
 
     # action penalty
     action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-4)
@@ -164,9 +163,9 @@ class RewardsCfg:
     )
 
     # collision penalty
-    shelf_collision = RewTerm(func=mdp.rewards_sweep.shelf_Collision, params={}, weight=-0.2)
+    shelf_collision = RewTerm(func=mdp.rewards_sweep.shelf_Collision, params={}, weight=-0.1)
     # object_collision = RewTerm(func=mdp.object_collision_pentaly, params={}, weight=-1.0)
-    object_drop = RewTerm(func=mdp.rewards_sweep.Object_drop, weight=-0.2)
+    object_drop = RewTerm(func=mdp.rewards_sweep.Object_drop, weight=-1.0)
 
 @configclass
 class TerminationsCfg:
@@ -186,7 +185,7 @@ class CurriculumCfg:
     )
 
     joint_vel = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 10000}
+        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -2e-1, "num_steps": 10000}
     )
 
 
