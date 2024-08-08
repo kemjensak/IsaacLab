@@ -38,24 +38,14 @@ FRANKA_PANDA_CFG = ArticulationCfg(
     init_state=ArticulationCfg.InitialStateCfg(
         joint_pos={
             "panda_joint1": 0.0,
-            "panda_joint2": -0.569,
+            "panda_joint2": 0.667,
             "panda_joint3": 0.0,
-            "panda_joint4": -2.810,
+            "panda_joint4": -1.152,
             "panda_joint5": -1.57,
-            "panda_joint6": 3.14,
+            "panda_joint6": 3.037,
             "panda_joint7": 0.741,
             "panda_finger_joint.*": 0.04,
         },
-        # joint_pos={
-        #     "panda_joint1": 0.0,
-        #     "panda_joint2": 0.667,
-        #     "panda_joint3": 0.0,
-        #     "panda_joint4": -1.152,
-        #     "panda_joint5": -1.57,
-        #     "panda_joint6": 3.037,
-        #     "panda_joint7": 0.741,
-        #     "panda_finger_joint.*": 0.04,
-        # },
         
     ),
     actuators={
