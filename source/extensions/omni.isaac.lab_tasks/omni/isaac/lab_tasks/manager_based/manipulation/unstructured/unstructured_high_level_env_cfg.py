@@ -24,8 +24,8 @@ from omni.isaac.lab.sim.schemas.schemas_cfg import RigidBodyPropertiesCfg
 from omni.isaac.lab_tasks.manager_based.manipulation.unstructured import unstructured_env_tools as tools
 
 from .unstructured_flip_env_cfg import UnstructuredFlipEnvCfg
-from .config.franka.flip.joint_pos_env_cfg import FrankaFlipObjectEnvCfg
-from .config.franka.grasp.joint_pos_env_cfg import FrankaGraspObjectEnvCfg
+from .config.franka.flip.ik_abs_env_cfg import FrankaFlipObjectEnvCfg
+from .config.franka.grasp.ik_abs_env_cfg import FrankaGraspObjectEnvCfg
 from omni.isaac.lab_tasks.manager_based.manipulation.lift.config.franka.joint_pos_env_cfg import FrankaCubeLiftEnvCfg
 from . import mdp
 
@@ -47,11 +47,11 @@ class ActionsCfg:
 
     pre_trained_policy_action: mdp.PreTrainedPolicyActionCfg = mdp.PreTrainedPolicyActionCfg(
         asset_name="robot",
-        grasp_policy_path=f"/home/kjs-dt/RL/orbit/logs/rsl_rl/franka_grasp/2024-06-16_19-47-03/exported/policy.pt",
-        flip_policy_path=f"/home/kjs-dt/RL/orbit/logs/rsl_rl/franka_flip/2024-06-15_23-18-36/exported/policy.pt",
+        grasp_policy_path=f"/home/kjs-dt/RL/orbit/logs/rsl_rl/franka_grasp/2024-08-08_15-51-12/exported/policy.pt",
+        flip_policy_path=f"/home/kjs-dt/RL/orbit/logs/rsl_rl/franka_flip/2024-08-07_15-49-56/exported/policy.pt",
         low_level_decimation=2,
-        low_level_body_action=LOW_LEVEL_FLIP_ENV_CFG.actions.body_joint_pos,
-        low_level_finger_action=LOW_LEVEL_FLIP_ENV_CFG.actions.finger_joint_pos,
+        low_level_body_action=LOW_LEVEL_FLIP_ENV_CFG.actions.arm_action,
+        low_level_finger_action=LOW_LEVEL_FLIP_ENV_CFG.actions.gripper_action,
         low_level_flip_observations=LOW_LEVEL_FLIP_ENV_CFG.observations.policy,
         low_level_grasp_observations=LOW_LEVEL_GRASP_ENV_CFG.observations.policy,
     )
