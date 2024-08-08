@@ -41,7 +41,7 @@ class FrankaFlipObjectEnvCfg(joint_pos_env_cfg.FrankaFlipObjectEnvCfg):
         
 
         # Set actions for the specific robot type (franka)
-        self.actions.body_joint_pos = DifferentialInverseKinematicsActionCfg(
+        self.actions.arm_action = DifferentialInverseKinematicsActionCfg(
             asset_name="robot",
             joint_names=["panda_joint.*"],
             body_name="panda_hand",
