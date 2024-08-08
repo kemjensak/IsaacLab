@@ -6,8 +6,7 @@
 import gymnasium as gym
 import os
 
-from . import agents
-from . import ik_abs_env_cfg, ik_rel_env_cfg, joint_pos_env_cfg
+from . import agents, ik_abs_env_cfg, ik_rel_env_cfg, joint_pos_env_cfg
 
 ##
 # Register Gym environments.
@@ -22,7 +21,7 @@ gym.register(
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
         "env_cfg_entry_point": joint_pos_env_cfg.FrankaFlipObjectEnvCfg,
-        "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.FlipPPORunnerCfg,
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:FlipPPORunnerCfg",
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
     },
     disable_env_checker=True,
@@ -33,7 +32,7 @@ gym.register(
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
         "env_cfg_entry_point": joint_pos_env_cfg.FrankaFlipObjectEnvCfg_PLAY,
-        "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.FlipPPORunnerCfg,
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_cfg:FlipPPORunnerCfg",
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
     },
     disable_env_checker=True,
@@ -44,7 +43,7 @@ gym.register(
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
         "env_cfg_entry_point": ik_abs_env_cfg.FrankaFlipObjectEnvCfg,
-        "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.FlipPPORunnerCfg,
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:FlipPPORunnerCfg",
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
     },
     disable_env_checker=True,
@@ -55,7 +54,7 @@ gym.register(
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
         "env_cfg_entry_point": ik_abs_env_cfg.FrankaFlipObjectEnvCfg,
-        "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.FlipPPORunnerCfg,
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:FlipPPORunnerCfg",
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
     },
     disable_env_checker=True,
@@ -66,7 +65,7 @@ gym.register(
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
         "env_cfg_entry_point": ik_rel_env_cfg.FrankaFlipObjectEnvCfg,
-        "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.FlipPPORunnerCfg,
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:FlipPPORunnerCfg",
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
     },
     disable_env_checker=True,
@@ -77,7 +76,7 @@ gym.register(
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
         "env_cfg_entry_point": ik_rel_env_cfg.FrankaFlipObjectEnvCfg,
-        "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.FlipPPORunnerCfg,
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:FlipPPORunnerCfg",
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
     },
     disable_env_checker=True,

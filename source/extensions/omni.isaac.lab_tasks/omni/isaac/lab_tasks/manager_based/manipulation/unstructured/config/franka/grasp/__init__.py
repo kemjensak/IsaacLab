@@ -23,7 +23,7 @@ gym.register(
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
         "env_cfg_entry_point": joint_pos_env_cfg.FrankaGraspObjectEnvCfg,
-        "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.GraspPPORunnerCfg,
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:GraspPPORunnerCfg",
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
     },
     disable_env_checker=True,
@@ -34,7 +34,7 @@ gym.register(
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
         "env_cfg_entry_point": joint_pos_env_cfg.FrankaGraspObjectEnvCfg_PLAY,
-        "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.GraspPPORunnerCfg,
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:GraspPPORunnerCfg",
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
     },
     disable_env_checker=True,
@@ -49,7 +49,7 @@ gym.register(
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
         "env_cfg_entry_point": ik_abs_env_cfg.FrankaGraspObjectEnvCfg,
-        "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.GraspPPORunnerCfg,
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:GraspPPORunnerCfg",
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
     },
     disable_env_checker=True,
@@ -60,7 +60,7 @@ gym.register(
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
         "env_cfg_entry_point": ik_abs_env_cfg.FrankaGraspObjectEnvCfg_PLAY,
-        "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.GraspPPORunnerCfg,
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:GraspPPORunnerCfg",
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
     },
     disable_env_checker=True,
@@ -75,7 +75,7 @@ gym.register(
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
         "env_cfg_entry_point": ik_rel_env_cfg.FrankaGraspObjectEnvCfg,
-        "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.GraspPPORunnerCfg,
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:GraspPPORunnerCfg",
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
     },
     disable_env_checker=True,
@@ -86,7 +86,7 @@ gym.register(
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
         "env_cfg_entry_point": ik_rel_env_cfg.FrankaGraspObjectEnvCfg_PLAY,
-        "rsl_rl_cfg_entry_point": agents.rsl_rl_cfg.GraspPPORunnerCfg,
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:GraspPPORunnerCfg",
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
     },
     disable_env_checker=True,
