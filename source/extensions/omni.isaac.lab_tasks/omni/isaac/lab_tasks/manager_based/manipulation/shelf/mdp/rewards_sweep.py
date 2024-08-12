@@ -50,7 +50,7 @@ class ee_Reaching(ManagerTermBase):
         object_pos_w = self._target.data.root_pos_w.clone()
 
         offset_pos = self._target.data.root_pos_w.clone()
-        offset_pos[:,0] = offset_pos[:, 0] + 0.04
+        offset_pos[:,0] = offset_pos[:, 0] + 0.02
         offset_pos[:,1] = offset_pos[:, 1] + 0.1
         offset_pos[:,2] = offset_pos[:, 2] + 0.07 
 
@@ -160,7 +160,7 @@ class shelf_Pushing(ManagerTermBase):
 
         # ee target position
         offset_pos = self._target.data.root_pos_w.clone()
-        offset_pos[:,0] = offset_pos[:, 0] + 0.04
+        offset_pos[:,0] = offset_pos[:, 0] + 0.02
         offset_pos[:,1] = offset_pos[:, 1] + 0.1
         offset_pos[:,2] = offset_pos[:, 2] + 0.07
 
@@ -173,7 +173,6 @@ class shelf_Pushing(ManagerTermBase):
         # Velocity of end-effector 
         v_y_ee = -1 * (ee_pos_w[..., 0, 1] - self._ee_pos_last_w[..., 0, 1])/env.step_dt
 
-        v_obj = self._target.data.root_lin_vel_w.clone()
 
         # Displacement of cup from initial state
         delta_y = -1*(object_pos_w[:, 1] - self._initial_object_pos[:, 1])
@@ -185,8 +184,8 @@ class shelf_Pushing(ManagerTermBase):
         zeta_m = torch.where(distance < 0.03 , 1, 0)
 
         velocity_ee_reward = torch.where(v_y_ee < 0.3, v_y_ee * 2, -3 * v_y_ee)
-        velocity_obj_reward = torch.where(torch.abs(v_obj[:,1]) < 0.3, 1, -1)
-        pushing_reward = zeta_s * zeta_m * ((4*torch.tanh(3*delta_y/0.2)) - 0.15 * (torch.tanh(2 * D_x_ee/0.1)) - 0.05 * (torch.tanh(2 * delta_x/0.1)) + 0.5 * (velocity_ee_reward + velocity_obj_reward)) + 4 * (1 - zeta_s)
+
+        pushing_reward = zeta_s * zeta_m * ((4*torch.tanh(3*delta_y/0.2)) - 0.15 * (torch.tanh(2 * D_x_ee/0.1)) - 0.05 * (torch.tanh(2 * delta_x/0.1)) + velocity_ee_reward ) + 4 * (1 - zeta_s)
         # pushing_reward = zeta_s * zeta_m * ((4*torch.tanh(3*delta_y/0.2)) - 0.15 * (torch.tanh(2 * D_x_ee/0.1)) - 0.05 * (torch.tanh(2 * delta_x/0.1)) + 0.5 * (velocity_ee_reward + velocity_obj_reward))
         pushing_reward = torch.clamp(pushing_reward, -4, 4)
 
@@ -245,7 +244,7 @@ class shelf_Collision(ManagerTermBase):
 
     def shelf_dynamic_penalty(self, env: ManagerBasedRLEnv,) -> torch.Tensor:
         object_pos_w = self._target.data.root_pos_w.clone()
-        object_pos_w[:,0] = object_pos_w[:, 0] + 0.04
+        object_pos_w[:,0] = object_pos_w[:, 0] + 0.02
         object_pos_w[:,1] = object_pos_w[:, 1] + 0.1
         object_pos_w[:,2] = object_pos_w[:, 2] + 0.07
 
