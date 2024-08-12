@@ -150,7 +150,7 @@ class RewardsCfg:
     # task terms
     reaching_object = RewTerm(func=mdp.rewards_sweep.ee_Reaching, params={}, weight=2.0)
     align_ee = RewTerm(func=mdp.rewards_sweep.ee_Align, params={}, weight=2.0)
-    # sweeping_object = RewTerm(func=mdp.rewards_sweep.shelf_Pushing, params={}, weight=20.0)
+    sweeping_object = RewTerm(func=mdp.rewards_sweep.shelf_Pushing, params={}, weight=20.0)
     # homing_after_sweep = RewTerm(func=mdp.rewards_sweep.Home_pose, params={}, weight=20.0)
 
     # action penalty
@@ -173,6 +173,7 @@ class TerminationsCfg:
 
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
     object_drop = DoneTerm(func=mdp.Object_drop_Termination, time_out=True)
+    object_drop2 = DoneTerm(func=mdp.Object2_drop_Termination, time_out=True)
     object_vel = DoneTerm(func = mdp.Object_vel_Termination, time_out=True)
 
 
@@ -187,6 +188,10 @@ class CurriculumCfg:
     joint_vel = CurrTerm(
         func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -2e-1, "num_steps": 10000}
     )
+
+    # sweep = CurrTerm(
+    #     func=mdp.modify_reward_weight, params={"term_name": "sweeping_object", "weight": 20.0, "num_steps": 15000}
+    # )
 
 
 ##
