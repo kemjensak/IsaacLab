@@ -51,8 +51,8 @@ class ee_Reaching(ManagerTermBase):
 
         offset_pos = self._target.data.root_pos_w.clone()
         offset_pos[:,0] = offset_pos[:, 0] + 0.02
-        offset_pos[:,1] = offset_pos[:, 1] + 0.1
-        offset_pos[:,2] = offset_pos[:, 2] + 0.07 
+        offset_pos[:,1] = offset_pos[:, 1] + 0.08
+        offset_pos[:,2] = offset_pos[:, 2] + 0.08 
 
         # initial object & ee state
         reset_mask = env.episode_length_buf == 1
@@ -161,8 +161,8 @@ class shelf_Pushing(ManagerTermBase):
         # ee target position
         offset_pos = self._target.data.root_pos_w.clone()
         offset_pos[:,0] = offset_pos[:, 0] + 0.02
-        offset_pos[:,1] = offset_pos[:, 1] + 0.1
-        offset_pos[:,2] = offset_pos[:, 2] + 0.07
+        offset_pos[:,1] = offset_pos[:, 1] + 0.08
+        offset_pos[:,2] = offset_pos[:, 2] + 0.08
 
         # distance between ee and object
         distance = torch.norm(offset_pos - self._ee.data.target_pos_w[..., 0, :], dim=-1, p=2)
@@ -185,7 +185,7 @@ class shelf_Pushing(ManagerTermBase):
 
         velocity_ee_reward = torch.where(v_y_ee < 0.3, v_y_ee * 2, -3 * v_y_ee)
 
-        pushing_reward = zeta_s * zeta_m * ((4*torch.tanh(3*delta_y/0.2)) - 0.15 * (torch.tanh(2 * D_x_ee/0.1)) - 0.05 * (torch.tanh(2 * delta_x/0.1)) + velocity_ee_reward ) + 4 * (1 - zeta_s)
+        pushing_reward = zeta_s * zeta_m * ((4*torch.tanh(3*delta_y/0.2)) - 0.15 * (torch.tanh(2 * D_x_ee/0.1)) + velocity_ee_reward ) + 4 * (1 - zeta_s)
         # pushing_reward = zeta_s * zeta_m * ((4*torch.tanh(3*delta_y/0.2)) - 0.15 * (torch.tanh(2 * D_x_ee/0.1)) - 0.05 * (torch.tanh(2 * delta_x/0.1)) + 0.5 * (velocity_ee_reward + velocity_obj_reward))
         pushing_reward = torch.clamp(pushing_reward, -4, 4)
 
@@ -245,8 +245,8 @@ class shelf_Collision(ManagerTermBase):
     def shelf_dynamic_penalty(self, env: ManagerBasedRLEnv,) -> torch.Tensor:
         object_pos_w = self._target.data.root_pos_w.clone()
         object_pos_w[:,0] = object_pos_w[:, 0] + 0.02
-        object_pos_w[:,1] = object_pos_w[:, 1] + 0.1
-        object_pos_w[:,2] = object_pos_w[:, 2] + 0.07
+        object_pos_w[:,1] = object_pos_w[:, 1] + 0.08
+        object_pos_w[:,2] = object_pos_w[:, 2] + 0.08
 
         distance = torch.norm(object_pos_w - self._ee.data.target_pos_w[..., 0, :], dim=-1, p=2)
 

@@ -15,7 +15,7 @@ from omni.isaac.lab_tasks.utils.wrappers.rsl_rl import (
 @configclass
 class ShelfSweepPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     num_steps_per_env = 24
-    max_iterations = 5000
+    max_iterations = 10000
     save_interval = 50
     experiment_name = "Shelf_sweep"
     empirical_normalization = False
@@ -34,7 +34,7 @@ class ShelfSweepPPORunnerCfg(RslRlOnPolicyRunnerCfg):
         num_mini_batches=4,
         learning_rate=1.0e-4,
         schedule="adaptive",
-        gamma=0.9,
+        gamma=0.92,
         lam=0.95,
         desired_kl=0.01,
         max_grad_norm=1.0,
