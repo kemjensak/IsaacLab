@@ -148,8 +148,8 @@ class RewardsCfg:
     """Reward terms for the MDP."""
     
     # task terms
-    # reaching_object = RewTerm(func=mdp.rewards_sweep.ee_Reaching, params={}, weight=2.0)
-    # align_ee = RewTerm(func=mdp.rewards_sweep.ee_Align, params={}, weight=2.0)
+    reaching_object = RewTerm(func=mdp.rewards_sweep.ee_Reaching, params={}, weight=2.0)
+    align_ee = RewTerm(func=mdp.rewards_sweep.ee_Align, params={}, weight=2.0)
     sweeping_object = RewTerm(func=mdp.rewards_sweep.shelf_Pushing, params={}, weight=20.0)
     # homing_after_sweep = RewTerm(func=mdp.rewards_sweep.Home_pose, params={}, weight=20.0)
 
@@ -163,9 +163,9 @@ class RewardsCfg:
     )
 
     # collision penalty
-    shelf_collision = RewTerm(func=mdp.rewards_sweep.shelf_Collision, params={}, weight=-1.0)
+    shelf_collision = RewTerm(func=mdp.rewards_sweep.shelf_Collision, params={}, weight=-0.3)
     # object_collision = RewTerm(func=mdp.object_collision_pentaly, params={}, weight=-1.0)
-    object_drop = RewTerm(func=mdp.rewards_sweep.Object_drop, weight=-1.0)
+    object_drop = RewTerm(func=mdp.rewards_sweep.Object_drop, weight=-0.3)
 
 @configclass
 class TerminationsCfg:
@@ -182,11 +182,11 @@ class CurriculumCfg:
     """Curriculum terms for the MDP."""
 
     action_rate = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "action_rate", "weight": -1e-1, "num_steps": 50000}
+        func=mdp.modify_reward_weight, params={"term_name": "action_rate", "weight": -1e-1, "num_steps": 10000}
     )
 
     joint_vel = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 50000}
+        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 10000}
     )
 
     # sweep = CurrTerm(
