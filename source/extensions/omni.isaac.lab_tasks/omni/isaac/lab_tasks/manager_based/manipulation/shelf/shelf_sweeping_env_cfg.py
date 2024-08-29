@@ -132,15 +132,15 @@ class EventCfg:
 
     reset_all = EventTerm(func=mdp.reset_scene_to_default, mode="reset")
 
-    # reset_object_position = EventTerm(
-    #     func=mdp.reset_root_state_uniform,
-    #     mode="reset",
-    #     params={
-    #         "pose_range": {"x": (-0.1, 0.1), "y": (-0.05, 0.05), "z": (0.0, 0.0)},
-    #         "velocity_range": {},
-    #         "asset_cfg": SceneEntityCfg("cup", body_names="SM_Cup_empty"),
-    #     },
-    # )
+    reset_object_position = EventTerm(
+        func=mdp.reset_root_state_uniform,
+        mode="reset",
+        params={
+            "pose_range": {"x": (-0.05, 0.05), "y": (-0.2, 0.2), "z": (0.0, 0.0)},
+            "velocity_range": {},
+            "asset_cfg": SceneEntityCfg("cup", body_names="SM_Cup_empty"),
+        },
+    )
 
 
 @configclass
@@ -163,9 +163,9 @@ class RewardsCfg:
     )
 
     # collision penalty
-    shelf_collision = RewTerm(func=mdp.rewards_sweep.shelf_Collision, params={}, weight=-0.3)
+    shelf_collision = RewTerm(func=mdp.rewards_sweep2.shelf_Collision, params={}, weight=-0.2)
     # object_collision = RewTerm(func=mdp.object_collision_pentaly, params={}, weight=-1.0)
-    object_drop = RewTerm(func=mdp.rewards_sweep.Object_drop, weight=-0.3)
+    object_drop = RewTerm(func=mdp.rewards_sweep2.Object_drop, weight=-0.2)
 
 @configclass
 class TerminationsCfg:

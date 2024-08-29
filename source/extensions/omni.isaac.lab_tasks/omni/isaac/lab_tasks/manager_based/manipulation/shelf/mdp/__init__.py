@@ -11,4 +11,5 @@ from .observations import *  # noqa: F401, F403
 from .terminations import *  # noqa: F401, F403
 from .pre_trained_policy_action import *
 from .rewards_sweep import *
+from .rewards_sweep2 import *
 from .rewards_grasp import *
