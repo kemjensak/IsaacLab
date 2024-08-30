@@ -31,7 +31,7 @@ models:
 agent:
   rollouts: 16
   learning_epochs: 8 # default 8
-  mini_batches: 2 # default 8
+  mini_batches: 8 # default 8
   discount_factor: 0.98
   lambda: 0.95
   learning_rate: 3.e-4
