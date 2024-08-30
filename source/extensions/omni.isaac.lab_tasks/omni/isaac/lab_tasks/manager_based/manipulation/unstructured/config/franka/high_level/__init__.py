@@ -7,7 +7,7 @@ import gymnasium as gym
 import os
 
 from . import agents
-from omni.isaac.lab_tasks.manager_based.manipulation.unstructured.unstructured_high_level_env_cfg import HighLevelEnvCfg
+from omni.isaac.lab_tasks.manager_based.manipulation.unstructured.high_level_env_cfg import HighLevelEnvCfg
 
 
 ##

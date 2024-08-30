@@ -14,7 +14,7 @@ from omni.isaac.lab.utils import configclass
 from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR, NVIDIA_NUCLEUS_DIR
 
 from omni.isaac.lab_tasks.manager_based.manipulation.unstructured import mdp
-from omni.isaac.lab_tasks.manager_based.manipulation.unstructured.unstructured_flip_env_cfg import UnstructuredFlipEnvCfg
+from omni.isaac.lab_tasks.manager_based.manipulation.unstructured.flip_env_cfg import UnstructuredFlipEnvCfg
 from omni.isaac.lab.assets.articulation import ArticulationCfg
 
 ##

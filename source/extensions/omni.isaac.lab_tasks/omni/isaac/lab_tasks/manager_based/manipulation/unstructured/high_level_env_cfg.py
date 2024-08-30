@@ -21,9 +21,9 @@ from omni.isaac.lab.sim.spawners.from_files.from_files_cfg import GroundPlaneCfg
 from omni.isaac.lab.utils import configclass
 from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR, ISAACLAB_NUCLEUS_DIR
 from omni.isaac.lab.sim.schemas.schemas_cfg import RigidBodyPropertiesCfg
-from omni.isaac.lab_tasks.manager_based.manipulation.unstructured import unstructured_env_tools as tools
+from omni.isaac.lab_tasks.manager_based.manipulation.unstructured import env_tools as tools
 
-from .unstructured_flip_env_cfg import UnstructuredFlipEnvCfg
+from .flip_env_cfg import UnstructuredFlipEnvCfg
 from .config.franka.flip.ik_abs_env_cfg import FrankaFlipObjectEnvCfg
 from .config.franka.grasp.ik_abs_env_cfg import FrankaGraspObjectEnvCfg
 from omni.isaac.lab_tasks.manager_based.manipulation.lift.config.franka.joint_pos_env_cfg import FrankaCubeLiftEnvCfg
