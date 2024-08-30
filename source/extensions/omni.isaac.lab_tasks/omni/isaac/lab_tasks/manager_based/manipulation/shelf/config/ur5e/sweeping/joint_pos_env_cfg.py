@@ -55,7 +55,7 @@ class UR5eShelfEnvCfg(ShelfSweepingEnvCfg):
             init_state=RigidObjectCfg.InitialStateCfg(pos=[0.75, 0.0, 0.66], rot=[1, 0, 0, 0]),
             spawn=UsdFileCfg(
                 usd_path=f"omniverse://localhost/Library/usd/Object/SM_Cup_empty.usd",
-                scale=(1.0, 1.0, 1.0),
+                scale=(0.9, 0.9, 1.0),
                 rigid_props=RigidBodyPropertiesCfg(
                     solver_position_iteration_count=16,
                     solver_velocity_iteration_count=1,
