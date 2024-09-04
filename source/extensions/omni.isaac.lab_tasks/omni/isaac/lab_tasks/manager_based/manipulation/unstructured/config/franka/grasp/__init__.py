@@ -6,8 +6,8 @@
 import gymnasium as gym
 import os
 
-from . import agents
-from . import ik_abs_env_cfg, ik_rel_env_cfg, joint_pos_env_cfg, ik_rel_env_cfg_sac
+from . import agents, rgb_ik_abs_env_cfg
+from . import ik_abs_env_cfg, ik_rel_env_cfg, joint_pos_env_cfg
 
 
 ##
@@ -40,9 +40,9 @@ gym.register(
     disable_env_checker=True,
 )
 
-# ##
-# # Inverse Kinematics - Absolute Pose Control
-# ##
+##
+# Inverse Kinematics - Absolute Pose Control
+##
 
 gym.register(
     id="Isaac-Grasp-Object-Franka-IK-Abs-v0",
@@ -66,9 +66,9 @@ gym.register(
     disable_env_checker=True,
 )
 
-# ##
-# # Inverse Kinematics - Relative Pose Control
-# ##
+##
+# Inverse Kinematics - Relative Pose Control
+##
 
 gym.register(
     id="Isaac-Grasp-Object-Franka-IK-Rel-v0",
@@ -92,12 +92,27 @@ gym.register(
     disable_env_checker=True,
 )
 
-# gym.register(
-#     id="Isaac-Lift-Cube-Franka-IK-Rel-SAC-v0",
-#     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
-#     kwargs={
-#         "env_cfg_entry_point": ik_rel_env_cfg_sac.FrankaGraspObjectEnvCfg,
-#         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_sac_cfg.yaml",
-#     },
-#     disable_env_checker=True,
-# )
+##
+# Inverse Kinematics - Relative Pose Control + RGB cam
+##
+
+gym.register(
+    id="Isaac-Grasp-Object-Franka-RGB-Camera-IK-Abs-v0",
+    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
+    kwargs={
+        "env_cfg_entry_point": rgb_ik_abs_env_cfg.FrankaGraspObjectEnvCfg,
+        "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
+    },
+    disable_env_checker=True,
+)
+
+gym.register(
+    id="Isaac-Grasp-Object-Franka-RGB-Camera-IK-Abs-Play-v0",
+    entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
+    kwargs={
+        "env_cfg_entry_point": rgb_ik_abs_env_cfg.FrankaGraspObjectEnvCfg,
+        "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
+    },
+    disable_env_checker=True,
+)
+

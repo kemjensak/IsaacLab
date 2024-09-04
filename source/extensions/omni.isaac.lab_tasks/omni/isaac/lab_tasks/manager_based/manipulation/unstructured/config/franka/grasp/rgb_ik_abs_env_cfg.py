@@ -3,10 +3,8 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
-import omni.isaac.lab.sim as sim_utils
-from omni.isaac.lab.actuators import ImplicitActuatorCfg
 from omni.isaac.lab.assets import RigidObjectCfg
-from omni.isaac.lab.sensors import FrameTransformerCfg, CameraCfg, ContactSensorCfg, RayCasterCfg, patterns 
+from omni.isaac.lab.sensors import FrameTransformerCfg
 from omni.isaac.lab.sensors.frame_transformer.frame_transformer_cfg import OffsetCfg
 from omni.isaac.lab.sim.schemas.schemas_cfg import RigidBodyPropertiesCfg, CollisionPropertiesCfg
 from omni.isaac.lab.sim.spawners.from_files.from_files_cfg import UsdFileCfg
@@ -14,22 +12,25 @@ from omni.isaac.lab.utils import configclass
 from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR, NVIDIA_NUCLEUS_DIR
 
 from omni.isaac.lab_tasks.manager_based.manipulation.unstructured import mdp
-from omni.isaac.lab_tasks.manager_based.manipulation.unstructured.grasp_env_cfg import UnstructuredGraspEnvCfg
+from omni.isaac.lab_tasks.manager_based.manipulation.unstructured.grasp_rgb_env_cfg import UnstructuredGraspRGBCameraEnvCfg
+
+from omni.isaac.lab.controllers.differential_ik_cfg import DifferentialIKControllerCfg
+from omni.isaac.lab.envs.mdp.actions.actions_cfg import DifferentialInverseKinematicsActionCfg
 
 ##
 # Pre-defined configs
 ##
 from omni.isaac.lab.markers.config import FRAME_MARKER_CFG  # isort: skip
-from omni.isaac.lab_assets.franka import FRANKA_PANDA_CFG  # isort: skip
+from omni.isaac.lab_assets.franka import FRANKA_PANDA_HIGH_PD_CFG  # isort: skip
 
 @configclass
-class FrankaGraspObjectEnvCfg(UnstructuredGraspEnvCfg):
+class FrankaGraspObjectEnvCfg(UnstructuredGraspRGBCameraEnvCfg):
     def __post_init__(self):
         # post init of parent
         super().__post_init__()
 
         # Set Franka as robot
-        self.scene.robot = FRANKA_PANDA_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot",
+        self.scene.robot = FRANKA_PANDA_HIGH_PD_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot",
                                                     # init_state=ArticulationCfg.InitialStateCfg(
                                                     #     joint_pos={
                                                     #         "panda_joint1": -1.5708,
@@ -42,35 +43,17 @@ class FrankaGraspObjectEnvCfg(UnstructuredGraspEnvCfg):
                                                     #         "panda_finger_joint.*": 0.04,
                                                     #     },
                                                     # ),
-                                                    actuators={
-                                                        "panda_shoulder": ImplicitActuatorCfg(
-                                                            joint_names_expr=["panda_joint[1-4]"],
-                                                            effort_limit=87.0,
-                                                            velocity_limit=2.175/10,
-                                                            stiffness=80.0,
-                                                            damping=4.0,
-                                                        ),
-                                                        "panda_forearm": ImplicitActuatorCfg(
-                                                            joint_names_expr=["panda_joint[5-7]"],
-                                                            effort_limit=12.0,
-                                                            velocity_limit=2.61/10,
-                                                            stiffness=80.0,
-                                                            damping=4.0,
-                                                        ),
-                                                        "panda_hand": ImplicitActuatorCfg(
-                                                            joint_names_expr=["panda_finger_joint.*"],
-                                                            effort_limit=200.0,
-                                                            velocity_limit=0.2,
-                                                            stiffness=2e3,
-                                                            damping=1e2,
-                                                        ),
-                                                    }
                                                     )
         
         # Set actions for the specific robot type (franka)
-        self.actions.arm_action = mdp.JointPositionActionCfg(
-            asset_name="robot", joint_names=["panda_joint.*"], scale=0.5, use_default_offset=True
+        self.actions.arm_action = DifferentialInverseKinematicsActionCfg(
+            asset_name="robot",
+            joint_names=["panda_joint.*"],
+            body_name="panda_hand",
+            controller=DifferentialIKControllerCfg(command_type="pose", use_relative_mode=False, ik_method="dls"),
+            body_offset=DifferentialInverseKinematicsActionCfg.OffsetCfg(pos=[0.0, 0.0, 0.107]),
         )
+
         self.actions.gripper_action = mdp.BinaryJointPositionActionCfg(
             asset_name="robot",
             joint_names=["panda_finger.*"],
