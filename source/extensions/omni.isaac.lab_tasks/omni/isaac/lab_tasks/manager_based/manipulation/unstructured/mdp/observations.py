@@ -11,12 +11,21 @@ from typing import TYPE_CHECKING
 from omni.isaac.lab.assets import RigidObject
 from omni.isaac.lab.managers import SceneEntityCfg, ManagerTermBase
 from omni.isaac.lab.utils.math import subtract_frame_transforms, quat_mul, transform_points
-from omni.isaac.lab.sensors import FrameTransformerData
+from omni.isaac.lab.sensors import FrameTransformerData, TiledCamera
 from omni.isaac.lab.managers import ObservationTermCfg as ObsTrem
 
 if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedRLEnv
 
+def rgb_cam(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
+    """Height scan from the given sensor w.r.t. the sensor's frame.
+
+    The provided offset (Defaults to 0.5) is subtracted from the returned values.
+    """
+    # extract the used quantities (to enable type-hinting)
+    sensor: TiledCamera = TiledCamera(sensor_cfg)
+    # height scan: height = sensor_height - hit_point_z - offset
+    return sensor.data.output["rgb"].clone()
 
 def object_position_in_robot_root_frame(
     env: ManagerBasedRLEnv,
