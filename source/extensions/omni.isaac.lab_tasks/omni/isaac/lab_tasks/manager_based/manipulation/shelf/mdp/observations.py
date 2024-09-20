@@ -9,9 +9,11 @@ import torch
 from typing import TYPE_CHECKING
 
 from omni.isaac.lab.assets import RigidObject
-from omni.isaac.lab.managers import SceneEntityCfg
-from omni.isaac.lab.utils.math import subtract_frame_transforms
-from omni.isaac.lab.sensors import FrameTransformerData
+from omni.isaac.lab.utils.math import subtract_frame_transforms, quat_unique
+from omni.isaac.lab.sensors import FrameTransformerData, ContactSensorData
+from omni.isaac.lab.managers import SceneEntityCfg, ManagerTermBase
+from omni.isaac.lab.sensors import FrameTransformer
+from omni.isaac.lab.managers import ObservationTermCfg as ObsTerm
 
 if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedRLEnv
@@ -45,3 +47,34 @@ def eef_pos_in_robot_root_frame(
     )
     # return ee_pos_r
     return ee_pos_r
+
+def eef_pose_in_robot_root_frame(
+    env: ManagerBasedRLEnv,
+    robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> torch.Tensor:
+    """The pose of the end effector in the robot's root frame."""
+    robot: RigidObject = env.scene[robot_cfg.name]
+    ee_tf_data: FrameTransformerData = env.scene["ee_frame"].data
+    ee_pos_w = ee_tf_data.target_pos_w[..., 0, :]
+    ee_quat_w = ee_tf_data.target_quat_w[..., 0, :]
+    ee_pos_r, _ = subtract_frame_transforms(
+        robot.data.root_state_w[:, :3], robot.data.root_state_w[:, 3:7], ee_pos_w
+    )
+    # return ee_pos_r
+    return torch.concat((ee_pos_r, ee_quat_w), dim=1)
+
+
+def Contact_sensor(env: ManagerBasedRLEnv, 
+            robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),) -> torch.Tensor:
+    
+    contact_data: ContactSensorData = env.scene["contact_sensor"].data
+
+
+    force_net = contact_data.net_forces_w
+    flatten_force_net = force_net.reshape(env.num_envs, -1)
+
+    # print(force_net)
+
+    return flatten_force_net
+    
+

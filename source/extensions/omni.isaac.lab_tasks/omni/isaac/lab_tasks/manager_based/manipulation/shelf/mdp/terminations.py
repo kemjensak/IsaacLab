@@ -127,4 +127,4 @@ class Object_vel_Termination(ManagerTermBase):
         object_vel = self._target.data.root_lin_vel_w.clone()
         velocity = torch.norm(object_vel, dim=-1, p=2)
 
-        return velocity > 2
+        return velocity > 2.0

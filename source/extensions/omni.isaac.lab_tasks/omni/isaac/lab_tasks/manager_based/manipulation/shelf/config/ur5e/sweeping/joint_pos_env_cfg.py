@@ -5,6 +5,7 @@
 
 from omni.isaac.lab.assets import RigidObjectCfg
 from omni.isaac.lab.sensors import FrameTransformerCfg
+from omni.isaac.lab.sensors import ContactSensorCfg
 from omni.isaac.lab.sensors.frame_transformer.frame_transformer_cfg import OffsetCfg
 from omni.isaac.lab.sim.schemas.schemas_cfg import RigidBodyPropertiesCfg
 from omni.isaac.lab.sim.spawners.from_files.from_files_cfg import UsdFileCfg
@@ -31,7 +32,7 @@ class UR5eShelfEnvCfg(ShelfSweepingEnvCfg):
         self.scene.robot = UR5e_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
 
         # Set actions for the specific robot type (franka)
-        self.actions.body_joint_pos = mdp.JointPositionActionCfg(
+        self.actions.arm_action = mdp.JointPositionActionCfg(
             asset_name="robot", 
             joint_names=["shoulder_pan_joint",
                         "shoulder_lift_joint",
@@ -48,6 +49,8 @@ class UR5eShelfEnvCfg(ShelfSweepingEnvCfg):
             open_command_expr={"left_outer_knuckle_joint": 0.0, "right_outer_knuckle_joint": 0.0},
             close_command_expr={"left_outer_knuckle_joint": 0.5, "right_outer_knuckle_joint": 0.5},
         )
+
+        
 
         # Set Cube as object
         self.scene.cup = RigidObjectCfg(
@@ -119,6 +122,10 @@ class UR5eShelfEnvCfg(ShelfSweepingEnvCfg):
                     ),
                 ),
             ],
+        )
+
+        self.scene.contact_sensor = ContactSensorCfg(
+            prim_path="{ENV_REGEX_NS}/Robot/.*finger_01", update_period=0, history_length=6, debug_vis=True
         )
 
 @configclass

@@ -10,7 +10,7 @@ from omni.isaac.lab.assets import RigidObject, Articulation
 from omni.isaac.lab.managers import SceneEntityCfg, ManagerTermBase
 from omni.isaac.lab.managers import RewardTermCfg as RewTerm
 from omni.isaac.lab.sensors import FrameTransformer
-from omni.isaac.lab.utils.math import combine_frame_transforms, matrix_from_quat, euler_xyz_from_quat, quat_mul, transform_points
+from omni.isaac.lab.utils.math import combine_frame_transforms, matrix_from_quat, euler_xyz_from_quat, quat_mul, transform_points, quat_error_magnitude
 if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedRLEnv
 
@@ -51,7 +51,7 @@ class ee_Reaching(ManagerTermBase):
 
         offset_pos = self._target.data.root_pos_w.clone()
         offset_pos[:,0] = offset_pos[:, 0] + 0.04
-        offset_pos[:,1] = offset_pos[:, 1] + 0.11
+        offset_pos[:,1] = offset_pos[:, 1] + 0.12
         offset_pos[:,2] = offset_pos[:, 2] + 0.05
 
         # initial object & ee state
@@ -59,7 +59,7 @@ class ee_Reaching(ManagerTermBase):
         self._initial_object_pos[reset_mask] = self._target.data.root_pos_w[reset_mask, :].clone()
         distance = torch.norm(offset_pos - self._ee.data.target_pos_w[..., 0, :], dim=-1, p=2)
         zeta_s = torch.where(torch.abs(object_pos_w[:, 1] - self._initial_object_pos[:, 1]) > 0.19, 0, 1)
-        reward = zeta_s * torch.exp(-1.2 * distance) + (1 - zeta_s)
+        reward = torch.exp(-1.2 * distance)
 
         # print("distance: {}".format(distance))
         # print("ee: {}".format(self._ee.data.target_pos_w[..., 0, :]))
@@ -102,21 +102,17 @@ class ee_Align(ManagerTermBase):
         reset_mask = env.episode_length_buf == 1
         self._initial_ee_quat[reset_mask] = self._ee.data.target_quat_w[reset_mask, :].clone()
 
-
         ee_tcp_quat = self._ee.data.target_quat_w[..., 0, :]
         
         ee_tcp_rot_mat = matrix_from_quat(ee_tcp_quat)
         init_rot_mat = matrix_from_quat(self._initial_ee_quat[..., 0, :])
 
-        init_ee_x = init_rot_mat[..., 0]
-        ee_tcp_x = ee_tcp_rot_mat[..., 0]
-
         init_ee_y = init_rot_mat[..., 1]
         ee_tcp_y = ee_tcp_rot_mat[..., 1]
 
-        align_x = torch.bmm(ee_tcp_x.unsqueeze(1), init_ee_x.unsqueeze(-1)).squeeze(-1).squeeze(-1)
         align_y = torch.bmm(ee_tcp_y.unsqueeze(1), init_ee_y.unsqueeze(-1)).squeeze(-1).squeeze(-1)
         return torch.sign(align_y) * align_y**2
+
     
 
 class shelf_Pushing(ManagerTermBase):
@@ -186,10 +182,10 @@ class shelf_Pushing(ManagerTermBase):
 
         velocity_ee_reward = torch.where(v_y_ee < 0.2, v_y_ee * 2, -3 * v_y_ee)
 
-        pushing_reward = zeta_s * zeta_m * ((4*torch.tanh(3*delta_y/0.2)) - 0.15 * (torch.tanh(2 * torch.abs(delta_x)/0.1)) + velocity_ee_reward ) 
+        pushing_reward = zeta_s * zeta_m * ((4*torch.tanh(3 * delta_y/0.2)) - 0.15 * (torch.tanh(2 * torch.abs(delta_x)/0.1)))
         pushing_reward = torch.clamp(pushing_reward, -4, 4)
-
-        R = pushing_reward
+        self._ee_pos_last_w = self._ee.data.target_pos_w.clone()
+        
         # print("Distance: {}".format(distance))
         # print("delta_y: {}".format(delta_y))
         # print("delta_x: {}".format(D_x_ee))
@@ -203,9 +199,9 @@ class shelf_Pushing(ManagerTermBase):
         # print("dt: {}".format(v_y_ee))
         # print(f"reward: {pushing_reward}")
 
-        self._ee_pos_last_w = self._ee.data.target_pos_w.clone()
+
         
-        return R
+        return pushing_reward
 
 
 class shelf_Collision(ManagerTermBase):
@@ -337,7 +333,7 @@ class Home_pose(ManagerTermBase):
         self._top_offset = torch.zeros((env.num_envs, 3), device=env.device)
         self._top_offset[:, :3] = torch.tensor([0.0, 0.0, 0.07]) #0.0 0.0 0.07
 
-        self.home_position = torch.tensor([-1.6, -1.9, 1.9, 0.05, 1.57, 2.0, 0.0, 0.0], device=env.device).repeat(env.num_envs, 1)
+        self.home_position = torch.tensor([-1.6, -1.9, 1.9, 0.05, 1.57, 2.1], device=env.device).repeat(env.num_envs, 1)
     
     def __call__(self, env: ManagerBasedRLEnv,):
 
@@ -353,11 +349,7 @@ class Home_pose(ManagerTermBase):
         # initial object & ee state
         reset_mask = env.episode_length_buf == 1
         self._initial_object_pos[reset_mask] = self._target.data.root_pos_w[reset_mask, :].clone()
-        self._initial_ee_pos[reset_mask] = self._ee.data.target_pos_w[reset_mask, :].clone()
-
-        # ee target position
-        offset_pos = transform_points(self._top_offset,self._target.data.root_pos_w, self._target.data.root_state_w[:, 3:7] )[..., 0 , :]
-      
+        self._initial_ee_pos[reset_mask] = self._ee.data.target_pos_w[reset_mask, :].clone()      
 
         # Displacement of cup from initial state
         delta_y = -1*(object_pos_w[:, 1] - self._initial_object_pos[:, 1])
@@ -365,13 +357,10 @@ class Home_pose(ManagerTermBase):
         # indicator factor
         zeta_s = torch.where(torch.abs(delta_y) > 0.19, 1, 0)
 
-        delta_z = 0.73 - offset_pos[:, 2]
+        joint_pos_error = torch.sum(torch.abs(self._robot.data.joint_pos[:, :6] - self.home_position), dim=1)
 
+        reward_for_home_pose = (1.0 - torch.tanh(joint_pos_error/2.0))
 
-        drop_con = torch.where(delta_z < 0.02, 1, 0)
+        return torch.where(torch.abs(delta_y) > 0.19, reward_for_home_pose, 0)
 
-        joint_pos_error = torch.sum(torch.abs(self._robot.data.joint_pos[:, :8] - self.home_position), dim=1)
-
-        reward_for_home_pose = zeta_s * (1 - torch.tanh(joint_pos_error/3.0))
-
-        return reward_for_home_pose
+        # return reward_for_home_pose
