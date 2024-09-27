@@ -1,0 +1,2 @@
+from .commands_cfg import ObjectGoalPosCommandCfg
+from .position_command import ObjectGaolPosCommand

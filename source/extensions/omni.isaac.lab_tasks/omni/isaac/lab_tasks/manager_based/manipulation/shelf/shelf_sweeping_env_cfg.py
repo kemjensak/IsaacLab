@@ -65,7 +65,7 @@ class ObjectShelfSceneCfg(InteractiveSceneCfg):
         prim_path="{ENV_REGEX_NS}/Shelf",
         spawn=UsdFileCfg(usd_path=f"omniverse://localhost/Library/Shelf/Arena/Shelf4.usd", mass_props=MassPropertiesCfg(mass=50)),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(0.8, 0.0, 0.0), rot=(0.0, 0.0, 0.0, 1.0)),
-        debug_vis=False,
+        debug_vis=True,
     )
 
      # robot mount
@@ -95,7 +95,13 @@ class ObjectShelfSceneCfg(InteractiveSceneCfg):
 class CommandsCfg:
     """Command terms for the MDP."""
 
-    null_command = mdp.NullCommandCfg() 
+    target_goal_pos = mdp.ObjectGoalPosCommandCfg(
+        asset_name="cup",
+        init_pos_offset=(0.0, -0.2, 0.0),
+        update_goal_on_success=False,
+        position_success_threshold=0.03,
+        debug_vis=True
+    )
 
 
 @configclass
@@ -117,9 +123,10 @@ class ObservationsCfg:
 
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
-        object_position = ObsTerm(func=mdp.object_position_in_robot_root_frame)
-        eef_pose = ObsTerm(func=mdp.eef_pose_in_robot_root_frame)
-        force = ObsTerm(func=mdp.Contact_sensor)
+        object_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame)
+        ee_pos = ObsTerm(func=mdp.ee_pos)
+        ee_quat = ObsTerm(func=mdp.ee_quat)
+        target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "target_goal_pos"})
         actions = ObsTerm(func=mdp.last_action)
 
         def __post_init__(self):
@@ -140,7 +147,7 @@ class EventCfg:
     #     func=mdp.reset_root_state_uniform,
     #     mode="reset",
     #     params={
-    #         "pose_range": {"x": (-0.05, 0.05), "y": (-0.2, 0.2), "z": (0.0, 0.0)},
+    #         "pose_range": {"x": (0.0, 0.0), "y": (-0.15, 0.15), "z": (0.0, 0.0)},
     #         "velocity_range": {},
     #         "asset_cfg": SceneEntityCfg("cup", body_names="SM_Cup_empty"),
     #     },
@@ -153,8 +160,10 @@ class RewardsCfg:
     
     # task terms
     reaching_object = RewTerm(func=mdp.rewards_sweep.ee_Reaching, params={}, weight=2.0)
-    # align_ee = RewTerm(func=mdp.rewards_sweep.ee_Align, params={}, weight=1.0)
-    sweeping_object = RewTerm(func=mdp.rewards_sweep.shelf_Pushing, params={}, weight=20.0)
+    align_ee = RewTerm(func=mdp.rewards_sweep.ee_Align, params={}, weight=2.0)
+    sweeping_object = RewTerm(func=mdp.rewards_sweep.pushing_target, 
+                              params={"std": 0.1, "command_name": "target_goal_pos"}, 
+                              weight=20.0)
     # homing_after_sweep = RewTerm(func=mdp.rewards_sweep.Home_pose, params={}, weight=20.0)
 
     # action penalty
@@ -167,9 +176,9 @@ class RewardsCfg:
     )
 
     # collision penalty
-    shelf_collision = RewTerm(func=mdp.rewards_sweep2.shelf_Collision, params={}, weight=-1.0)
+    shelf_collision = RewTerm(func=mdp.rewards_sweep.shelf_Collision, params={}, weight=-0.3)
     # object_collision = RewTerm(func=mdp.object_collision_pentaly, params={}, weight=-1.0)
-    object_drop = RewTerm(func=mdp.rewards_sweep2.Object_drop, weight=-1.0)
+    object_drop = RewTerm(func=mdp.rewards_sweep.Object_drop, weight=-0.3)
 
 @configclass
 class TerminationsCfg:
@@ -186,11 +195,11 @@ class CurriculumCfg:
     """Curriculum terms for the MDP."""
 
     action_rate = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "action_rate", "weight": -5e-2, "num_steps": 40000}
+        func=mdp.modify_reward_weight, params={"term_name": "action_rate", "weight": -1e-1, "num_steps": 10000}
     )
 
     joint_vel = CurrTerm(
-        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -5e-2, "num_steps": 40000}
+        func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 10000}
     )
 
 

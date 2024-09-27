@@ -11,6 +11,7 @@ from omni.isaac.lab.managers import SceneEntityCfg, ManagerTermBase
 from omni.isaac.lab.managers import RewardTermCfg as RewTerm
 from omni.isaac.lab.sensors import FrameTransformer
 from omni.isaac.lab.utils.math import combine_frame_transforms, matrix_from_quat, euler_xyz_from_quat, quat_mul, transform_points, quat_error_magnitude
+
 if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedRLEnv
 
@@ -48,7 +49,6 @@ class ee_Reaching(ManagerTermBase):
         # ee target position
 
         object_pos_w = self._target.data.root_pos_w.clone()
-
         offset_pos = self._target.data.root_pos_w.clone()
         offset_pos[:,0] = offset_pos[:, 0] + 0.04
         offset_pos[:,1] = offset_pos[:, 1] + 0.12
@@ -98,10 +98,17 @@ class ee_Align(ManagerTermBase):
         return align
 
     def align_ee_target(self, env: ManagerBasedRLEnv,) -> torch.Tensor:      
+        
+
+        offset_pos = self._target.data.root_pos_w.clone()
+        offset_pos[:,0] = offset_pos[:, 0] + 0.04
+        offset_pos[:,1] = offset_pos[:, 1] + 0.12
+        offset_pos[:,2] = offset_pos[:, 2] + 0.05
+
+        distance = torch.norm(offset_pos - self._ee.data.target_pos_w[..., 0, :], dim=-1, p=2)
 
         reset_mask = env.episode_length_buf == 1
         self._initial_ee_quat[reset_mask] = self._ee.data.target_quat_w[reset_mask, :].clone()
-
         ee_tcp_quat = self._ee.data.target_quat_w[..., 0, :]
         
         ee_tcp_rot_mat = matrix_from_quat(ee_tcp_quat)
@@ -110,10 +117,42 @@ class ee_Align(ManagerTermBase):
         init_ee_y = init_rot_mat[..., 1]
         ee_tcp_y = ee_tcp_rot_mat[..., 1]
 
-        align_y = torch.bmm(ee_tcp_y.unsqueeze(1), init_ee_y.unsqueeze(-1)).squeeze(-1).squeeze(-1)
-        return torch.sign(align_y) * align_y**2
+        zeta_d = torch.where(distance < 0.15, 1, 0)
 
+        align_y = torch.bmm(ee_tcp_y.unsqueeze(1), init_ee_y.unsqueeze(-1)).squeeze(-1).squeeze(-1)
+        return zeta_d * torch.sign(align_y) * align_y**2
+
+
+def pushing_target(env: ManagerBasedRLEnv, std: float, command_name: str,):
+    object_cfg = SceneEntityCfg("cup")
+    ee_frame_cfg = SceneEntityCfg("ee_frame")
+
+    target: RigidObject = env.scene[object_cfg.name]
+    ee: FrameTransformer = env.scene[ee_frame_cfg.name]
+    command = env.command_manager.get_command(command_name)
+
+    # obtain the desired and current positions
+    des_pos_w = command[:, :3]
+    curr_pos_w = target.data.root_pos_w[:, :3]  # type: ignore
+    distance = torch.norm(curr_pos_w - des_pos_w, dim=1)
+
+    ee_pos_w = ee.data.target_pos_w[..., 0, :]
+    offset_pos = curr_pos_w.clone()
+    offset_pos[:, 0] = offset_pos[:, 0] + 0.04
+    offset_pos[:, 1] = offset_pos[:, 1] + 0.11
+    offset_pos[:, 2] = offset_pos[:, 2] + 0.05
+
+    zeta_m = torch.where((torch.norm(offset_pos - ee_pos_w, dim=-1, p=2)) < 0.04 , 1, 0)
+
+    # print(f"des_pos_w: {des_pos_w}")
+    # print(f"curr_pos_w: {curr_pos_w}")
+    # print(f"goal_pos distance: {distance}")
+    # print(f"distance: {torch.norm(offset_pos - ee_pos_w)}")
+    # print(f"zeta_m: {zeta_m}")
+
+    return zeta_m * (1 - torch.tanh(distance/std))
     
+
 
 class shelf_Pushing(ManagerTermBase):
     def __init__(self, cfg: RewTerm, env: ManagerBasedRLEnv):
@@ -198,9 +237,7 @@ class shelf_Pushing(ManagerTermBase):
         # print("vel rew: {}".format(velocity_reward))
         # print("dt: {}".format(v_y_ee))
         # print(f"reward: {pushing_reward}")
-
-
-        
+   
         return pushing_reward
 
 
@@ -231,7 +268,7 @@ class shelf_Collision(ManagerTermBase):
         return collision + collision_dynamic
 
     def shelf_collision_pentaly(self,env: ManagerBasedRLEnv,) -> torch.Tensor:
-        
+
         shelf_vel = self._shelf.data.root_lin_vel_w
         shelf_delta = self._shelf.data.root_pos_w - self._initial_shelf_pos
         moved = torch.where(torch.norm(shelf_delta , dim=-1, p=2) + torch.norm(shelf_vel , dim=-1, p=2)> 0.005, 1.0, 0.0)
