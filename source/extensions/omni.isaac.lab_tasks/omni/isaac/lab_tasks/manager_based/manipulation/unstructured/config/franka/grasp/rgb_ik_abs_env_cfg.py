@@ -12,7 +12,7 @@ from omni.isaac.lab.utils import configclass
 from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR, NVIDIA_NUCLEUS_DIR
 
 from omni.isaac.lab_tasks.manager_based.manipulation.unstructured import mdp
-from omni.isaac.lab_tasks.manager_based.manipulation.unstructured.grasp_rgb_env_cfg import UnstructuredGraspRGBCameraEnvCfg
+from omni.isaac.lab_tasks.manager_based.manipulation.unstructured.grasp_cam_env_cfg import UnstructuredGraspRGBCameraEnvCfg
 
 from omni.isaac.lab.controllers.differential_ik_cfg import DifferentialIKControllerCfg
 from omni.isaac.lab.envs.mdp.actions.actions_cfg import DifferentialInverseKinematicsActionCfg
