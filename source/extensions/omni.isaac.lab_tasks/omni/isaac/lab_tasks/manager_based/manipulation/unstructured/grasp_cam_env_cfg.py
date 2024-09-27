@@ -28,14 +28,14 @@ class UnstructuredTableSceneRGBCameraCfg(UnstructuredTableSceneCfg):
     # Top-Down Camera
     topdown_rgb: TiledCameraCfg = TiledCameraCfg(
         prim_path="{ENV_REGEX_NS}/Robot/topdown_rgb",
-            update_period=0.05, # rgb 30hz / depth 90hz
-            height=480,
-            width=640,
+            # update_period=0.05, # rgb 30hz / depth 90hz
+            height=80,
+            width=80,
             data_types=["rgb"], # rgb or depth
             spawn=sim_utils.PinholeCameraCfg(
                 focal_length=24.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 1.0e5)
             ),
-            offset=TiledCameraCfg.OffsetCfg(pos=(0.510, 0.0, 0.015), rot=(0.5, -0.5, 0.5, -0.5), convention="ros"),
+            offset=TiledCameraCfg.OffsetCfg(pos=(0.510, 0.0, 0.015), rot=(0.5, -0.5, 0.5, -0.5), convention="world"),
     )
 
 #TODO: Add depth cam
@@ -45,14 +45,14 @@ class UnstructuredTableSceneDepthCameraCfg(UnstructuredTableSceneCfg):
     """
     topdown_depth: TiledCameraCfg = TiledCameraCfg(
         prim_path="{ENV_REGEX_NS}/Robot/topdown_rgb",
-            update_period=0.05, # rgb 30hz / depth 90hz
+            # update_period=0.05, # rgb 30hz / depth 90hz
             height=480,
             width=640,
             data_types=["depth"], # rgb or depth
             spawn=sim_utils.PinholeCameraCfg(
                 focal_length=24.0, focus_distance=400.0, horizontal_aperture=20.955, clipping_range=(0.1, 1.0e5)
             ),
-            offset=TiledCameraCfg.OffsetCfg(pos=(0.510, 0.0, 0.015), rot=(0.5, -0.5, 0.5, -0.5), convention="ros"),
+            offset=TiledCameraCfg.OffsetCfg(pos=(0.510, 0.0, 0.015), rot=(0.5, -0.5, 0.5, -0.5), convention="world"),
     )
 
 ##
