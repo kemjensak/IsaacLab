@@ -99,7 +99,6 @@ class ManagerBasedRLEnv(ManagerBasedEnv, gym.Env):
     def max_episode_length(self) -> int:
         """Maximum episode length in environment steps."""
         return math.ceil(self.max_episode_length_s / self.step_dt)
-    
 
     """
     Operations - Setup.
