@@ -71,6 +71,7 @@ class ManagerTermBase(ABC):
     def num_envs(self) -> int:
         """Number of environments."""
         return self._env.num_envs
+    
 
     @property
     def device(self) -> str:

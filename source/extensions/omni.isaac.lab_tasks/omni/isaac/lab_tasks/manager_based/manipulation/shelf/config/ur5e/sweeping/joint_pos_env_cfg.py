@@ -13,7 +13,7 @@ from omni.isaac.lab.utils import configclass
 from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
 from omni.isaac.lab.sim.schemas.schemas_cfg import MassPropertiesCfg
 
-from omni.isaac.lab_tasks.manager_based.manipulation.lift import mdp
+from omni.isaac.lab_tasks.manager_based.manipulation.shelf import mdp
 from omni.isaac.lab_tasks.manager_based.manipulation.shelf.shelf_sweeping_env_cfg import ShelfSweepingEnvCfg
 import torch
 ##
@@ -76,7 +76,7 @@ class UR5eShelfEnvCfg(ShelfSweepingEnvCfg):
             prim_path="{ENV_REGEX_NS}/Cup2",
             init_state=RigidObjectCfg.InitialStateCfg(pos=[0.88, 0.0, 0.66], rot=[1, 0, 0, 0]),
             spawn=UsdFileCfg(
-                usd_path=f"omniverse://localhost/Library/Shelf/Object/PlasticCup.usd",
+                usd_path=f"omniverse://localhost/Library/Shelf/Object/SM_PlasticCup.usd",
                 scale=(1.0, 1.0, 1.0),
                 rigid_props=RigidBodyPropertiesCfg(
                     solver_position_iteration_count=16,
@@ -126,6 +126,14 @@ class UR5eShelfEnvCfg(ShelfSweepingEnvCfg):
 
         self.scene.contact_sensor = ContactSensorCfg(
             prim_path="{ENV_REGEX_NS}/Robot/.*finger_01", update_period=0, history_length=6, debug_vis=True
+        )
+
+        self.commands.target_goal_pos = mdp.ObjectGoalPosCommandCfg(
+            asset_name="cup",
+            init_pos_offset=(0.0, -0.2, 0.0),
+            position_success_threshold=0.03,
+            update_goal_on_success=False,
+            debug_vis=True,
         )
 
 @configclass
