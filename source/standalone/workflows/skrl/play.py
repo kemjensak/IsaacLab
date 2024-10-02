@@ -155,7 +155,7 @@ def main():
         # run everything in inference mode
         with torch.inference_mode():
             # agent stepping
-            actions = runner.agent.act(obs, timestep=0, timesteps=0)[0]
+            actions = runner.agent.act(obs, timestep=0, timesteps=0)[2]["mean_actions"]
             # env stepping
             obs, _, _, _, _ = env.step(actions)
         if args_cli.video:

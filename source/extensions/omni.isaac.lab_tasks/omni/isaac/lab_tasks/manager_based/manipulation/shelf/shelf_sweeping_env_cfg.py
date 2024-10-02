@@ -69,7 +69,7 @@ class ObjectShelfSceneCfg(InteractiveSceneCfg):
     )
 
      # robot mount
-    mount_cfg = RigidObjectCfg(
+    mount_cfg =AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Mount",
         spawn=sim_utils.CuboidCfg(
             size=(0.3, 0.3, 0.3),
@@ -123,10 +123,10 @@ class ObservationsCfg:
 
         joint_pos = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.joint_vel_rel)
-        object_pose = ObsTerm(func=mdp.object_pose_in_robot_root_frame)
-        ee_pos = ObsTerm(func=mdp.ee_pos)
+        object_pose = ObsTerm(func=mdp.object_position_in_robot_root_frame)
+        ee_pos = ObsTerm(func=mdp.ee_pos_r)
         ee_quat = ObsTerm(func=mdp.ee_quat)
-        target_object_position = ObsTerm(func=mdp.generated_commands, params={"command_name": "target_goal_pos"})
+        target_goal_position = ObsTerm(func=mdp.target_goal_pose, params={"command_name": "target_goal_pos"})
         actions = ObsTerm(func=mdp.last_action)
 
         def __post_init__(self):
@@ -147,7 +147,7 @@ class EventCfg:
     #     func=mdp.reset_root_state_uniform,
     #     mode="reset",
     #     params={
-    #         "pose_range": {"x": (0.0, 0.0), "y": (-0.15, 0.15), "z": (0.0, 0.0)},
+    #         "pose_range": {"x": (0.0, 0.0), "y": (-0.1, 0.1), "z": (0.0, 0.0)},
     #         "velocity_range": {},
     #         "asset_cfg": SceneEntityCfg("cup", body_names="SM_Cup_empty"),
     #     },
@@ -161,10 +161,11 @@ class RewardsCfg:
     # task terms
     reaching_object = RewTerm(func=mdp.rewards_sweep.ee_Reaching, params={}, weight=2.0)
     align_ee = RewTerm(func=mdp.rewards_sweep.ee_Align, params={}, weight=2.0)
+    # sweeping_object = RewTerm(func=mdp.shelf_Pushing, params={}, weight=10.0)
     sweeping_object = RewTerm(func=mdp.rewards_sweep.pushing_target, 
-                              params={"std": 0.1, "command_name": "target_goal_pos"}, 
-                              weight=20.0)
-    # homing_after_sweep = RewTerm(func=mdp.rewards_sweep.Home_pose, params={}, weight=20.0)
+                              params={"command_name": "target_goal_pos"}, 
+                              weight=10.0)
+    homing_after_sweep = RewTerm(func=mdp.rewards_sweep.homing_rew, params={"command_name": "target_goal_pos"}, weight=20.0)
 
     # action penalty
     action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-4)
@@ -176,7 +177,7 @@ class RewardsCfg:
     )
 
     # collision penalty
-    shelf_collision = RewTerm(func=mdp.rewards_sweep.shelf_Collision, params={}, weight=-0.3)
+    shelf_collision = RewTerm(func=mdp.rewards_sweep.shelf_Collision, params={}, weight=-0.4)
     # object_collision = RewTerm(func=mdp.object_collision_pentaly, params={}, weight=-1.0)
     object_drop = RewTerm(func=mdp.rewards_sweep.Object_drop, weight=-0.3)
 
@@ -228,8 +229,8 @@ class ShelfSweepingEnvCfg(ManagerBasedRLEnvCfg):
     def __post_init__(self):
         """Post initialization."""
         # general settings
-        self.decimation = 2
-        self.episode_length_s = 6.0
+        self.decimation = 1
+        self.episode_length_s = 3.0
         # simulation settings
         self.sim.dt = 0.01  # 100Hz
 

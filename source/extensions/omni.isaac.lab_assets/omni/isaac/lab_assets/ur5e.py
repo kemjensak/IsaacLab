@@ -31,9 +31,9 @@ UR5e_CFG = ArticulationCfg(
     ),
     init_state=ArticulationCfg.InitialStateCfg(
         pos=(0.0, 0.0, 0.3),
-        rot=(0.7071,0 ,0 ,0.7071),
+        rot=(1.0 ,0.0 ,0.0 ,0.0),
         joint_pos={
-            "shoulder_pan_joint": -1.6, # -1.7540559 / -1.6
+            "shoulder_pan_joint": 0.0, # -1.7540559 / -1.6
             "shoulder_lift_joint": -1.9, # -1.27409 / -1.9
             "elbow_joint": 1.9, # 1.3439 / 1.9
             "wrist_1_joint": 0.0, # 0.0 
@@ -51,10 +51,10 @@ UR5e_CFG = ArticulationCfg(
                               "wrist_1_joint",
                               "wrist_2_joint",
                               "wrist_3_joint"],
-            velocity_limit=40.0,
-            effort_limit=40.0,
-            stiffness=400.0,
-            damping=50.0,
+            velocity_limit=100.0,
+            effort_limit=87.0,
+            stiffness=80.0,
+            damping=4.0,
         ),
 
         "gripper": ImplicitActuatorCfg(

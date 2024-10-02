@@ -50,9 +50,9 @@ class ee_Reaching(ManagerTermBase):
 
         object_pos_w = self._target.data.root_pos_w.clone()
         offset_pos = self._target.data.root_pos_w.clone()
-        offset_pos[:,0] = offset_pos[:, 0] + 0.04
-        offset_pos[:,1] = offset_pos[:, 1] + 0.12
-        offset_pos[:,2] = offset_pos[:, 2] + 0.05
+        offset_pos[:,0] = offset_pos[:, 0] + 0.02
+        offset_pos[:,1] = offset_pos[:, 1] + 0.11
+        offset_pos[:,2] = offset_pos[:, 2] + 0.06
 
         # initial object & ee state
         reset_mask = env.episode_length_buf == 1
@@ -94,14 +94,12 @@ class ee_Align(ManagerTermBase):
 
         align = self.align_ee_target(env)
 
-
         return align
 
     def align_ee_target(self, env: ManagerBasedRLEnv,) -> torch.Tensor:      
         
-
         offset_pos = self._target.data.root_pos_w.clone()
-        offset_pos[:,0] = offset_pos[:, 0] + 0.04
+        offset_pos[:,0] = offset_pos[:, 0] + 0.02
         offset_pos[:,1] = offset_pos[:, 1] + 0.12
         offset_pos[:,2] = offset_pos[:, 2] + 0.05
 
@@ -123,7 +121,7 @@ class ee_Align(ManagerTermBase):
         return zeta_d * torch.sign(align_y) * align_y**2
 
 
-def pushing_target(env: ManagerBasedRLEnv, std: float, command_name: str,):
+def pushing_target(env: ManagerBasedRLEnv, command_name: str,):
     object_cfg = SceneEntityCfg("cup")
     ee_frame_cfg = SceneEntityCfg("ee_frame")
 
@@ -134,25 +132,49 @@ def pushing_target(env: ManagerBasedRLEnv, std: float, command_name: str,):
     # obtain the desired and current positions
     des_pos_w = command[:, :3]
     curr_pos_w = target.data.root_pos_w[:, :3]  # type: ignore
-    distance = torch.norm(curr_pos_w - des_pos_w, dim=1)
+
+    curr_v_w = target.data.root_lin_vel_w[:, :3]
+    
 
     ee_pos_w = ee.data.target_pos_w[..., 0, :]
     offset_pos = curr_pos_w.clone()
-    offset_pos[:, 0] = offset_pos[:, 0] + 0.04
+    offset_pos[:, 0] = offset_pos[:, 0] + 0.02
     offset_pos[:, 1] = offset_pos[:, 1] + 0.11
     offset_pos[:, 2] = offset_pos[:, 2] + 0.05
 
+    distance = torch.norm((des_pos_w - curr_pos_w), dim=-1, p=2)
     zeta_m = torch.where((torch.norm(offset_pos - ee_pos_w, dim=-1, p=2)) < 0.04 , 1, 0)
+    vel_rew = torch.where(torch.abs(curr_v_w[:, 1]) < 0.5, 2 * torch.abs(curr_v_w[:, 1]) , -1)
+    success = torch.where(distance < 0.02, 0, 1)
+    # return zeta_m * (torch.exp(-3 * distance)) + success
+    return zeta_m * success * (1 - distance/0.2 + vel_rew) + (1 - success)
+    # return torch.where(distance < 0.02, 2, zeta_m * (1 - distance/0.2 + vel_rew) + success)
 
-    # print(f"des_pos_w: {des_pos_w}")
-    # print(f"curr_pos_w: {curr_pos_w}")
-    # print(f"goal_pos distance: {distance}")
-    # print(f"distance: {torch.norm(offset_pos - ee_pos_w)}")
-    # print(f"zeta_m: {zeta_m}")
+def homing_rew(env: ManagerBasedRLEnv, command_name: str):
+    object_cfg = SceneEntityCfg("cup")
+    ee_frame_cfg = SceneEntityCfg("ee_frame")
+    asset_cfg = SceneEntityCfg("robot")
 
-    return zeta_m * (1 - torch.tanh(distance/std))
+    target: RigidObject = env.scene[object_cfg.name]
+    ee: FrameTransformer = env.scene[ee_frame_cfg.name]
+    robot: Articulation = env.scene[asset_cfg.name]
+
+    command = env.command_manager.get_command(command_name)
+
+    # obtain the desired and current positions
+    des_pos_w = command[:, :3]
+    curr_pos_w = target.data.root_pos_w[:, :3]  # type: ignore
+
+    distance = torch.norm((des_pos_w - curr_pos_w), dim=-1, p=2)
+
+    joint_pos_error = torch.sum(torch.abs(robot.data.joint_pos[:, : 6] - robot.data.default_joint_pos[:, :6]), dim=1)
+
     
 
+    reward_for_home_pose = 1.0 - torch.tanh(joint_pos_error / 2.0)
+
+    return torch.where(distance < 0.02 , reward_for_home_pose, 0)
+    
 
 class shelf_Pushing(ManagerTermBase):
     def __init__(self, cfg: RewTerm, env: ManagerBasedRLEnv):
@@ -217,12 +239,12 @@ class shelf_Pushing(ManagerTermBase):
 
         # indicator factor
         zeta_s = torch.where(torch.abs(object_pos_w[:, 1] - self._initial_object_pos[:, 1]) > 0.21, 0, 1)
-        zeta_m = torch.where(distance < 0.03 , 1, 0)
+        zeta_m = torch.where(distance < 0.04 , 1, 0)
 
         velocity_ee_reward = torch.where(v_y_ee < 0.2, v_y_ee * 2, -3 * v_y_ee)
 
-        pushing_reward = zeta_s * zeta_m * ((4*torch.tanh(3 * delta_y/0.2)) - 0.15 * (torch.tanh(2 * torch.abs(delta_x)/0.1)))
-        pushing_reward = torch.clamp(pushing_reward, -4, 4)
+        pushing_reward = zeta_s * zeta_m * ((torch.tanh(3 * delta_y/0.2)) - 0.15 * (torch.tanh(2 * torch.abs(delta_x)/0.1)))
+        pushing_reward = torch.clamp(pushing_reward, -1, 1)
         self._ee_pos_last_w = self._ee.data.target_pos_w.clone()
         
         # print("Distance: {}".format(distance))
