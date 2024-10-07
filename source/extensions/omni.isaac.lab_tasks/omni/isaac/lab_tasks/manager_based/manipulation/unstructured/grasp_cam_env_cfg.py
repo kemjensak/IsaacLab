@@ -13,7 +13,6 @@ from omni.isaac.lab.managers import SceneEntityCfg
 from omni.isaac.lab.sensors import TiledCamera, TiledCameraCfg, ContactSensorCfg, RayCasterCfg, patterns 
 from omni.isaac.lab.utils import configclass
 from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
-from omni.isaac.lab.envs.mdp.observations import grab_images
 from . import mdp
 from .grasp_env_cfg import UnstructuredTableSceneCfg, UnstructuredGraspEnvCfg
 
@@ -67,7 +66,7 @@ class RGBObservationsCfg:
     class PolicyCfg(ObsGroup):
         """Observations for policy group."""
         rgb_cam = ObsTerm(
-            func=grab_images,
+            func=mdp.image,
             params={
                 "sensor_cfg": SceneEntityCfg("topdown_rgb"),
                 "data_type": "rgb",}
@@ -86,7 +85,7 @@ class DepthObservationsCfg:
     class PolicyCfg(ObsGroup):
         """Observations for policy group."""
         depth_cam = ObsTerm(
-            func=grab_images,
+            func=mdp.image,
             params={
                 "sensor_cfg": SceneEntityCfg("topdown_depth"),
                 "data_type": "depth",}
