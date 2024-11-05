@@ -14,6 +14,8 @@ from . import ik_abs_env_cfg, ik_rel_env_cfg, joint_pos_env_cfg
 # Register Gym environments.
 ##
 
+task_entry = "omni.isaac.lab_tasks.manager_based.manipulation.unstructured.config.franka.grasp"
+
 ##
 # Joint Position Control
 ##
@@ -22,7 +24,7 @@ gym.register(
     id="Isaac-Grasp-Object-Franka-v0",
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
-        "env_cfg_entry_point": joint_pos_env_cfg.FrankaGraspObjectEnvCfg,
+        "env_cfg_entry_point": f"{task_entry}.joint_pos_env_cfg:FrankaGraspObjectEnvCfg",
         "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:GraspPPORunnerCfg",
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
     },
@@ -33,7 +35,7 @@ gym.register(
     id="Isaac-Grasp-Object-Franka-Play-v0",
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
-        "env_cfg_entry_point": joint_pos_env_cfg.FrankaGraspObjectEnvCfg_PLAY,
+        "env_cfg_entry_point": f"{task_entry}.joint_pos_env_cfg:FrankaGraspObjectEnvCfg_PLAY",
         "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:GraspPPORunnerCfg",
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
     },
@@ -48,7 +50,7 @@ gym.register(
     id="Isaac-Grasp-Object-Franka-IK-Abs-v0",
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
-        "env_cfg_entry_point": ik_abs_env_cfg.FrankaGraspObjectEnvCfg,
+        "env_cfg_entry_point": f"{task_entry}.ik_abs_env_cfg:FrankaGraspObjectEnvCfg",
         "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:GraspPPORunnerCfg",
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
     },
@@ -59,7 +61,7 @@ gym.register(
     id="Isaac-Grasp-Object-Franka-IK-Abs-Play-v0",
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
-        "env_cfg_entry_point": ik_abs_env_cfg.FrankaGraspObjectEnvCfg_PLAY,
+        "env_cfg_entry_point": f"{task_entry}.ik_abs_env_cfg:FrankaGraspObjectEnvCfg_PLAY",
         "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:GraspPPORunnerCfg",
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
     },
@@ -74,7 +76,7 @@ gym.register(
     id="Isaac-Grasp-Object-Franka-IK-Rel-v0",
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
-        "env_cfg_entry_point": ik_rel_env_cfg.FrankaGraspObjectEnvCfg,
+        "env_cfg_entry_point": f"{task_entry}.ik_rel_env_cfg:FrankaGraspObjectEnvCfg",
         "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:GraspPPORunnerCfg",
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
     },
@@ -85,7 +87,7 @@ gym.register(
     id="Isaac-Grasp-Object-Franka-IK-Rel-Play-v0",
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
-        "env_cfg_entry_point": ik_rel_env_cfg.FrankaGraspObjectEnvCfg_PLAY,
+        "env_cfg_entry_point": f"{task_entry}.ik_rel_env_cfg:FrankaGraspObjectEnvCfg_PLAY",
         "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:GraspPPORunnerCfg",
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cfg.yaml",
     },
@@ -100,7 +102,7 @@ gym.register(
     id="Isaac-Grasp-Object-Franka-RGB-Camera-IK-Abs-v0",
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
-        "env_cfg_entry_point": rgb_ik_abs_env_cfg.FrankaGraspObjectEnvCfg,
+        "env_cfg_entry_point": f"{task_entry}.rgb_ik_abs_env_cfg:FrankaGraspObjectEnvCfg",
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cnn_cfg.yaml",
     },
     disable_env_checker=True,
@@ -110,7 +112,7 @@ gym.register(
     id="Isaac-Grasp-Object-Franka-RGB-Camera-IK-Abs-Play-v0",
     entry_point="omni.isaac.lab.envs:ManagerBasedRLEnv",
     kwargs={
-        "env_cfg_entry_point": rgb_ik_abs_env_cfg.FrankaGraspObjectEnvCfg,
+        "env_cfg_entry_point": f"{task_entry}.rgb_ik_abs_env_cfg:FrankaGraspObjectEnvCfg",
         "skrl_cfg_entry_point": f"{agents.__name__}:skrl_ppo_cnn_cfg.yaml",
     },
     disable_env_checker=True,
