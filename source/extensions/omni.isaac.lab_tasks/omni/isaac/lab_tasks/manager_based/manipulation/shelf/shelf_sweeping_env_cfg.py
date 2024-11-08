@@ -42,7 +42,7 @@ class ObjectShelfSceneCfg(InteractiveSceneCfg):
     # end-effector sensor: will be populated by agent env cfg
     ee_frame: FrameTransformerCfg = MISSING
     wrist_frame: FrameTransformerCfg = MISSING
-    contact_sensor: ContactSensorCfg = MISSING
+    # cup_offset_frame: FrameTransformerCfg = MISSING
     # target object: will be populated by agent env cfg
     cup: RigidObjectCfg = MISSING
     cup2: RigidObjectCfg = MISSING
@@ -63,7 +63,7 @@ class ObjectShelfSceneCfg(InteractiveSceneCfg):
 
     shelf = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/Shelf",
-        spawn=UsdFileCfg(usd_path=f"omniverse://localhost/Library/Shelf/Arena/Shelf4.usd", mass_props=MassPropertiesCfg(mass=50)),
+        spawn=UsdFileCfg(usd_path=f"omniverse://localhost/Library/Shelf/Arena/Shelf3.usd", mass_props=MassPropertiesCfg(mass=50)),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(0.8, 0.0, 0.0), rot=(0.0, 0.0, 0.0, 1.0)),
         debug_vis=True,
     )
@@ -72,7 +72,7 @@ class ObjectShelfSceneCfg(InteractiveSceneCfg):
     mount_cfg =AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Mount",
         spawn=sim_utils.CuboidCfg(
-            size=(0.3, 0.3, 0.3),
+            size=(0.5, 0.5, 0.4),
             rigid_props=sim_utils.RigidBodyPropertiesCfg(),
             collision_props=sim_utils.CollisionPropertiesCfg(),
         ),
@@ -97,7 +97,15 @@ class CommandsCfg:
 
     target_goal_pos = mdp.ObjectGoalPosCommandCfg(
         asset_name="cup",
-        init_pos_offset=(0.0, -0.2, 0.0),
+        init_pos_offset=(0.0, -0.15, 0.0),
+        update_goal_on_success=False,
+        position_success_threshold=0.03,
+        debug_vis=True
+    )
+
+    ee_goal_pos = mdp.EEGoalPosCommandCfg(
+        asset_name = "ee_frame",
+        init_pos_offset=(0.0, 0.0, 0.0),
         update_goal_on_success=False,
         position_success_threshold=0.03,
         debug_vis=True
@@ -121,8 +129,8 @@ class ObservationsCfg:
     class PolicyCfg(ObsGroup):
         """Observations for policy group."""
 
-        joint_pos = ObsTerm(func=mdp.joint_pos_rel)
-        joint_vel = ObsTerm(func=mdp.joint_vel_rel)
+        joint_pos = ObsTerm(func=mdp.rl_joint_pos_rel)
+        joint_vel = ObsTerm(func=mdp.rl_joint_vel_rel)
         object_pose = ObsTerm(func=mdp.object_position_in_robot_root_frame)
         ee_pos = ObsTerm(func=mdp.ee_pos_r)
         ee_quat = ObsTerm(func=mdp.ee_quat)
@@ -159,27 +167,28 @@ class RewardsCfg:
     """Reward terms for the MDP."""
     
     # task terms
-    reaching_object = RewTerm(func=mdp.rewards_sweep.ee_Reaching, params={}, weight=2.0)
+    reaching_object = RewTerm(func=mdp.rewards_sweep.reaching_rew, params={"command_name": "target_goal_pos"}, weight=2.0)
     align_ee = RewTerm(func=mdp.rewards_sweep.ee_Align, params={}, weight=2.0)
-    # sweeping_object = RewTerm(func=mdp.shelf_Pushing, params={}, weight=10.0)
     sweeping_object = RewTerm(func=mdp.rewards_sweep.pushing_target, 
                               params={"command_name": "target_goal_pos"}, 
-                              weight=10.0)
-    homing_after_sweep = RewTerm(func=mdp.rewards_sweep.homing_rew, params={"command_name": "target_goal_pos"}, weight=20.0)
+                              weight=5.0)
+                              
+    sweeping_bonus = RewTerm(func=mdp.rewards_sweep.pushing_bonus, params={"command_name": "target_goal_pos"}, weight=5.0)
+    homing_after_sweep = RewTerm(func=mdp.rewards_sweep.homing_reward, params={"command_name": "target_goal_pos"}, weight=7.0)
+    # homing_bonus = RewTerm(func=mdp.rewards_sweep.homing_bonus, params={"command_name":"target_goal_pos"}, weight=7.0)
 
     # action penalty
     action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-4)
 
     joint_vel = RewTerm(
-        func=mdp.joint_vel_l2,
+        func=mdp.rewards_sweep.joint_vel_l2,
         weight=-1e-4,
         params={"asset_cfg": SceneEntityCfg("robot")},
     )
 
     # collision penalty
-    shelf_collision = RewTerm(func=mdp.rewards_sweep.shelf_Collision, params={}, weight=-0.4)
-    # object_collision = RewTerm(func=mdp.object_collision_pentaly, params={}, weight=-1.0)
-    object_drop = RewTerm(func=mdp.rewards_sweep.Object_drop, weight=-0.3)
+    shelf_collision = RewTerm(func=mdp.rewards_sweep.shelf_Collision, params={}, weight=-0.6)
+    object_drop = RewTerm(func=mdp.rewards_sweep.Object_drop, weight=-0.2)
 
 @configclass
 class TerminationsCfg:
@@ -202,6 +211,10 @@ class CurriculumCfg:
     joint_vel = CurrTerm(
         func=mdp.modify_reward_weight, params={"term_name": "joint_vel", "weight": -1e-1, "num_steps": 10000}
     )
+    
+    # homing = CurrTerm(
+    #     func=mdp.modify_reward_weight, params={"term_name": "homing_after_sweep", "weight" : 10.0, "num_steps": 50000}
+    # )
 
 
 
@@ -230,12 +243,12 @@ class ShelfSweepingEnvCfg(ManagerBasedRLEnvCfg):
         """Post initialization."""
         # general settings
         self.decimation = 1
-        self.episode_length_s = 3.0
+        self.episode_length_s = 8.0
         # simulation settings
         self.sim.dt = 0.01  # 100Hz
 
         self.sim.physx.bounce_threshold_velocity = 0.2
         self.sim.physx.bounce_threshold_velocity = 0.01
-        self.sim.physx.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4 * 16
+        self.sim.physx.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 16 * 16
         self.sim.physx.gpu_total_aggregate_pairs_capacity = 16 * 1024 * 16
         self.sim.physx.friction_correlation_distance = 0.00625

@@ -8,7 +8,7 @@ from __future__ import annotations
 import torch
 from typing import TYPE_CHECKING
 
-from omni.isaac.lab.assets import RigidObject
+from omni.isaac.lab.assets import RigidObject, Articulation
 from omni.isaac.lab.utils.math import subtract_frame_transforms, quat_unique
 from omni.isaac.lab.sensors import FrameTransformerData, ContactSensorData
 from omni.isaac.lab.managers import SceneEntityCfg, ManagerTermBase
@@ -96,28 +96,6 @@ def ee_quat_r(env: ManagerBasedRLEnv, make_quat_unique: bool = True) -> torch.Te
     return quat_unique(ee_quat_r) if make_quat_unique else ee_quat_r
 
 
-def distance_object_goal(
-        env: ManagerBasedRLEnv, 
-        command_name: str,
-        robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
-        object_cfg: SceneEntityCfg = SceneEntityCfg("cup")) -> torch.Tensor:
-    
-    robot: RigidObject = env.scene[robot_cfg.name]
-    object: RigidObject = env.scene[object_cfg.name]
-
-    command = env.command_manager.get_command(command_name)
-    des_pos_w = command[:, :3]
-
-    object_pos_w = object.data.root_pos_w[:, :3]
-    object_quat_w = object.data.root_quat_w[:, :4]
-    des_pos_o, _ = subtract_frame_transforms(
-        object_pos_w, object_quat_w, des_pos_w
-    )
-
-    # print(des_pos_o)
-
-    return des_pos_o
-
 def target_goal_pose(
         env: ManagerBasedRLEnv, 
         command_name: str,
@@ -136,10 +114,38 @@ def target_goal_pose(
     # print(f"des_pos_r: {des_pos_r}")
     return des_pos_b
 
-def Contact_sensor(env: ManagerBasedRLEnv, 
-            robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),) -> torch.Tensor:
+def ee_goal_pos(
+        env: ManagerBasedRLEnv, 
+        robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),) -> torch.Tensor:
+
+    robot:  Articulation = env.scene[robot_cfg.name]
+
+    # command = env.command_manager.get_command(command_name)
+    # des_pos_w = command[:, :3]
+    # des_pos_b, _ = subtract_frame_transforms(
+    #     robot.data.root_state_w[:, :3], robot.data.root_state_w[:, 3:7], des_pos_w
+    # )
     
-    contact_data: ContactSensorData = env.scene["contact_sensor"].data
-    force_net = contact_data.net_forces_w
-    norm_force_net = torch.norm(force_net,dim=2)
-    return norm_force_net
+    des_joint_pos = robot.data.default_joint_pos[:, :6]
+
+    # print(f"des_pos_w:{des_pos_w}")
+    # print(f"des_pos_r: {des_pos_b}")
+    return des_joint_pos
+
+def rl_joint_pos_rel(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
+    """The joint positions of the asset w.r.t. the default joint positions.
+
+    Note: Only the joints configured in :attr:`asset_cfg.joint_ids` will have their positions returned.
+    """
+    # extract the used quantities (to enable type-hinting)
+    asset: Articulation = env.scene[asset_cfg.name]
+    return asset.data.joint_pos[:, : 8] - asset.data.default_joint_pos[:, : 8]
+
+def rl_joint_vel_rel(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")):
+    """The joint velocities of the asset w.r.t. the default joint velocities.
+
+    Note: Only the joints configured in :attr:`asset_cfg.joint_ids` will have their velocities returned.
+    """
+    # extract the used quantities (to enable type-hinting)
+    asset: Articulation = env.scene[asset_cfg.name]
+    return asset.data.joint_vel[:, : 8] - asset.data.default_joint_vel[:, : 8]

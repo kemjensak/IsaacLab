@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: BSD-3-Clause
 
-from omni.isaac.lab.assets import RigidObjectCfg
+from omni.isaac.lab.assets import RigidObjectCfg, ArticulationCfg
 from omni.isaac.lab.sensors import FrameTransformerCfg
 from omni.isaac.lab.sensors import ContactSensorCfg
 from omni.isaac.lab.sensors.frame_transformer.frame_transformer_cfg import OffsetCfg
@@ -71,6 +71,8 @@ class UR5eShelfEnvCfg(ShelfSweepingEnvCfg):
             ),
         )
 
+        
+
         # Set Cube as object
         self.scene.cup2 = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/Cup2",
@@ -124,9 +126,6 @@ class UR5eShelfEnvCfg(ShelfSweepingEnvCfg):
             ],
         )
 
-        self.scene.contact_sensor = ContactSensorCfg(
-            prim_path="{ENV_REGEX_NS}/Robot/.*finger_01", update_period=0, history_length=6, debug_vis=True
-        )
 
         self.commands.target_goal_pos = mdp.ObjectGoalPosCommandCfg(
             asset_name="cup",

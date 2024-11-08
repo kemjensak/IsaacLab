@@ -1,2 +1,2 @@
-from .commands_cfg import ObjectGoalPosCommandCfg
-from .position_command import ObjectGaolPosCommand
+from .commands_cfg import ObjectGoalPosCommandCfg, EEGoalPosCommandCfg
+from .position_command import ObjectGoalPosCommand, EEGoalPosCommand

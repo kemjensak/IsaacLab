@@ -13,8 +13,7 @@ from omni.isaac.lab_tasks.manager_based.manipulation.reach.reach_env_cfg import 
 ##
 # Pre-defined configs
 ##
-from omni.isaac.lab_assets import UR10_CFG  # isort: skip
-
+from omni.isaac.lab_assets import UR10_CFG # isort: skip
 
 ##
 # Environment configuration

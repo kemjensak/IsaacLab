@@ -58,7 +58,7 @@ class Object_drop_Termination(ManagerTermBase):
         self._target_last_w = self._target.data.root_pos_w.clone()
 
         self._top_offset = torch.zeros((env.num_envs, 3), device=env.device)
-        self._top_offset[:, :3] = torch.tensor([0.0, 0.0, 0.07])
+        self._top_offset[:, :3] = torch.tensor([0.0, 0.0, 0.1])
 
     def __call__(self, env:ManagerBasedRLEnv,):
         drop = self.object_drop(env)
@@ -72,7 +72,7 @@ class Object_drop_Termination(ManagerTermBase):
         # print("cup1: {}".format(offset_pos[:, 2]))
 
 
-        return offset_pos[:, 2] < 0.71 #0.762
+        return offset_pos[:, 2] < 0.74 #0.762
 
 
 class Object2_drop_Termination(ManagerTermBase):
@@ -87,7 +87,7 @@ class Object2_drop_Termination(ManagerTermBase):
         self._target_last_w = self._target.data.root_pos_w.clone()
 
         self._top_offset = torch.zeros((env.num_envs, 3), device=env.device)
-        self._top_offset[:, :3] = torch.tensor([0.0, 0.0, 0.07])
+        self._top_offset[:, :3] = torch.tensor([0.0, 0.0, 0.1])
 
     def __call__(self, env:ManagerBasedRLEnv,):
         drop = self.object_drop(env)
@@ -100,7 +100,7 @@ class Object2_drop_Termination(ManagerTermBase):
 
         # print("cup2: {}".format(offset_pos[:, 2]))
 
-        return offset_pos[:, 2] < 0.71 #0.762
+        return offset_pos[:, 2] < 0.74 #0.762
     
 
 class Object_vel_Termination(ManagerTermBase):

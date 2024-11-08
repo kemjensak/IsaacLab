@@ -16,22 +16,23 @@ import omni.isaac.lab.sim as sim_utils
 from omni.isaac.lab.actuators import ImplicitActuatorCfg
 from omni.isaac.lab.assets.articulation import ArticulationCfg
 
+##
 # Configuration
 ##
 
 
-UR5e_CFG = ArticulationCfg(
+UR3_CFG = ArticulationCfg(
     spawn=sim_utils.UsdFileCfg(
-        usd_path=f"omniverse://localhost/Library/Shelf/Robots/UR5e/UR5e_v2.usd",
+        usd_path=f"omniverse://localhost/Library/Shelf/Robots/UR3/ur3_2f85.usd",
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
             disable_gravity=False,
             max_depenetration_velocity=5.0,
         ),
-        activate_contact_sensors=True,
+        activate_contact_sensors=False,
     ),
     init_state=ArticulationCfg.InitialStateCfg(
-        pos=(0.0, 0.0, 0.4),
-        rot=(1.0 ,0.0 ,0.0 ,0.0),
+        pos=(0.0, 0.0, 0.79),
+        rot=(0.0 ,0.0 ,0.0 ,1.0),
         joint_pos={
             "shoulder_pan_joint": 0.0, # -1.7540559 / -1.6
             "shoulder_lift_joint": -2.0, # -1.27409 / -1.9
@@ -53,10 +54,10 @@ UR5e_CFG = ArticulationCfg(
                               "wrist_3_joint"],
             velocity_limit=100.0,
             effort_limit=87.0,
-            stiffness=800.0,
-            damping=30.0,
+            stiffness=400.0,
+            damping=80.0,
         ),
-
+        
         "gripper": ImplicitActuatorCfg(
             joint_names_expr=["left_outer_knuckle_joint",
                               "right_outer_knuckle_joint"],
