@@ -35,7 +35,7 @@ class ee_Align(ManagerTermBase):
         
         offset_pos = self._target.data.root_pos_w.clone()
         offset_pos[:,0] = offset_pos[:, 0] 
-        offset_pos[:,1] = offset_pos[:, 1] + 0.09
+        offset_pos[:,1] = offset_pos[:, 1] - 0.09
         offset_pos[:,2] = offset_pos[:, 2] + 0.05
 
         # distance = torch.norm(offset_pos - self._ee.data.target_pos_w[..., 0, :], dim=-1, p=2)
@@ -50,27 +50,30 @@ class ee_Align(ManagerTermBase):
         ee_tcp_rot_mat = matrix_from_quat(ee_tcp_quat)
         init_rot_mat = matrix_from_quat(self._initial_ee_quat[..., 0, :])
 
-        init_ee_x = init_rot_mat[..., 0]
-        ee_tcp_x = ee_tcp_rot_mat[..., 0]
+        init_ee_z = init_rot_mat[..., 2]
+        ee_tcp_z = ee_tcp_rot_mat[..., 2]
 
-        align_x = torch.bmm(ee_tcp_x.unsqueeze(1), init_ee_x.unsqueeze(-1)).squeeze(-1).squeeze(-1)
-        return torch.sign(align_x) * align_x**2 
+        align_z = torch.bmm(ee_tcp_z.unsqueeze(1), init_ee_z.unsqueeze(-1)).squeeze(-1).squeeze(-1)
+        return torch.sign(align_z) * align_z**2 
 
 def reaching_rew(env: ManagerBasedRLEnv,
-                 command_name: str,
                 object_cfg: SceneEntityCfg = SceneEntityCfg("cup"),
                 ee_frame_cfg: SceneEntityCfg = SceneEntityCfg("ee_frame")):
     target: RigidObject = env.scene[object_cfg.name]
     ee: FrameTransformer = env.scene[ee_frame_cfg.name]
-    command = env.command_manager.get_command(command_name)
 
-    des_pos_w = command[:, :3]
     obj_cur_pos_w = target.data.root_pos_w[:, :3]
+    # # Fingertips position: (num_envs, n_fingertips, 3)
+    # ee_fingertips_w = env.scene["ee_frame"].data.target_pos_w[..., 1:, :]
+    # lfinger_pos = ee_fingertips_w[..., 0, :]
+    # rfinger_pos = ee_fingertips_w[..., 1, :]
+    
     ee_pos_w = ee.data.target_pos_w[..., 0, :]
 
+    
     offset_pos = obj_cur_pos_w.clone()
     offset_pos[:, 0] = offset_pos[:, 0] 
-    offset_pos[:, 1] = offset_pos[:, 1] + 0.09
+    offset_pos[:, 1] = offset_pos[:, 1] - 0.09
     offset_pos[:, 2] = offset_pos[:, 2] + 0.05
 
     distance = torch.norm((offset_pos - ee_pos_w), dim=-1, p=2)
@@ -78,7 +81,7 @@ def reaching_rew(env: ManagerBasedRLEnv,
     reward = torch.exp(-1.2 * distance)
     
     # print(f"offset pos: {offset_pos}")
-    # print(f"ee pos: {ee_pos_w}")
+    # print(f"ee pos: {rfinger_pos}")
 
     return reward
     
@@ -100,20 +103,22 @@ def pushing_target(env: ManagerBasedRLEnv, command_name: str,):
     ee_pos_w = ee.data.target_pos_w[..., 0, :]
     offset_pos = curr_pos_w.clone()
     offset_pos[:, 0] = offset_pos[:, 0] 
-    offset_pos[:, 1] = offset_pos[:, 1] + 0.09
+    offset_pos[:, 1] = offset_pos[:, 1] - 0.09
     offset_pos[:, 2] = offset_pos[:, 2] + 0.05
 
     distance = torch.norm((des_pos_w - curr_pos_w), dim=-1, p=2)
     zeta_m = torch.where((torch.norm(offset_pos - ee_pos_w, dim=-1, p=2)) < 0.03 , 1, 0)
     vel_rew = torch.where(torch.abs(curr_v_w[:, 1]) < 0.5, 4 * torch.abs(curr_v_w[:, 1]) , -1)
-    reward = (1 - distance/0.2 + vel_rew)
+    reward = (1 - distance/0.15) + vel_rew
 
     # print(f"offset pos: {offset_pos}")
     # print(f"ee pos: {ee_pos_w}")
 
     # print(f"ee_distance: {torch.norm(offset_pos - ee_pos_w, dim=-1, p=2)}")
+    # print(f"current position: {curr_pos_w}")
+    # print(f"goal_position: {des_pos_w}")
     # print(f"pushing distance: {distance}")
-    return torch.where(distance < 0.04, reward, zeta_m * reward)
+    return torch.where(distance < 0.03, reward, zeta_m * reward)
 
 def pushing_bonus(env: ManagerBasedRLEnv, 
                   command_name: str,
@@ -129,7 +134,7 @@ def pushing_bonus(env: ManagerBasedRLEnv,
     curr_pos_w = target.data.root_pos_w[:, :3]  
     distance = torch.norm((des_pos_w - curr_pos_w), dim=-1, p=2)
 
-    return torch.where(distance < 0.04, 1, 0)
+    return torch.where(distance < 0.03, 1, 0)
 
 def homing_reward(env: ManagerBasedRLEnv,
                   command_name: str,
@@ -151,7 +156,7 @@ def homing_reward(env: ManagerBasedRLEnv,
     # reward_for_home_pose = torch.exp(-0.5 * joint_pos_error)
     # print(f"joint reward: {torch.where(distance < 0.04, reward_for_home_pose, 0)}")
     
-    return torch.where(distance < 0.04, reward_for_home_pose, 0)
+    return torch.where(distance < 0.03, reward_for_home_pose, 0)
 
 # def homing_reward(env: ManagerBasedRLEnv,
 #                   object_cfg: SceneEntityCfg = SceneEntityCfg("cup"),
@@ -296,9 +301,11 @@ class shelf_Collision(ManagerTermBase):
         ee_frame_cfg = SceneEntityCfg("ee_frame")
         shelf_cfg = SceneEntityCfg("shelf")
         wrist_frame_cfg= SceneEntityCfg("wrist_frame")
+        finger_frame_cfg = SceneEntityCfg("finger_frame")
 
         self._target: RigidObject = env.scene[object_cfg.name]
         self._ee: FrameTransformer = env.scene[ee_frame_cfg.name]
+        self._finger: FrameTransformer = env.scene[finger_frame_cfg.name]
         self._shelf: RigidObject = env.scene[shelf_cfg.name]
         self._wrist: FrameTransformer = env.scene[wrist_frame_cfg.name]
         self._initial_shelf_pos = self._shelf.data.default_root_state[:, :3] + env.scene.env_origins
@@ -322,22 +329,25 @@ class shelf_Collision(ManagerTermBase):
 
     def shelf_dynamic_penalty(self, env: ManagerBasedRLEnv,) -> torch.Tensor:
         shelf_pos_w = self._shelf.data.root_pos_w .clone()
-        shelf_pos_w[:,2] = shelf_pos_w[:, 2] + 0.66
+        shelf_pos_w[:,2] = shelf_pos_w[:, 2] + 0.98
 
         distance = torch.norm(shelf_pos_w - self._ee.data.target_pos_w[..., 0, :], dim=-1, p=2)
-        zeta = torch.where(distance < 0.28, 1, 0)
-        dst_ee_shelf = self._ee.data.target_pos_w[..., 0, 2] - (shelf_pos_w[:,2])
+        zeta = torch.where(distance < 0.2, 1, 0)
+        dst_l_shelf = self._finger.data.target_pos_w[..., 0, 2] - (shelf_pos_w[:,2])
+        dst_r_shelf = self._finger.data.target_pos_w[..., 1, 2] - (shelf_pos_w[:,2])
         dst_wrist_shelf = self._wrist.data.target_pos_w[..., 0, 2] - (shelf_pos_w[:,2])
 
 
-        reward_ee = 1 - dst_ee_shelf / 0.06
+        reward_l = 1 - dst_l_shelf / 0.02
+        reward_r = 1 - dst_l_shelf / 0.02
         reward_wrist = 1 - dst_wrist_shelf / 0.06
 
 
-        reward_ee = torch.clamp(reward_ee, 0, 1)
+        reward_l = torch.clamp(reward_l, 0, 1)
+        reward_r = torch.clamp(reward_r, 0, 1)
         reward_wrist = torch.clamp(reward_wrist, 0, 1)
 
-        R = zeta * (reward_ee + reward_wrist)
+        R = zeta * (reward_l + reward_r + reward_wrist)
         
         # print(dst_ee_shelf)
         # print(f"ee: {reward_ee}")
@@ -374,7 +384,7 @@ class Object_drop(ManagerTermBase):
     def object_drop(self, env: ManagerBasedRLEnv,)-> torch.Tensor:
 
         offset_pos = transform_points(self._top_offset,self._target.data.root_pos_w, self._target.data.root_state_w[:, 3:7] )[..., 0 , :]
-        delta_z = 0.76 - offset_pos[:, 2] #0.73
+        delta_z = 1.08 - offset_pos[:, 2] #0.73
 
         penalty_object = torch.where(delta_z > 0.01, 1, 0)
         return penalty_object
@@ -383,7 +393,7 @@ class Object_drop(ManagerTermBase):
 
         offset_pos = transform_points(self._top_offset,self._target2.data.root_pos_w, self._target2.data.root_state_w[:, 3:7] )[..., 0 , :]
 
-        delta_z = 0.76 - offset_pos[:, 2] #0.73
+        delta_z = 1.08 - offset_pos[:, 2] #0.73
 
         penalty_object = torch.where(delta_z > 0.01, 1, 0)
         return penalty_object

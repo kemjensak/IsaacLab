@@ -31,7 +31,7 @@ UR3_CFG = ArticulationCfg(
         activate_contact_sensors=False,
     ),
     init_state=ArticulationCfg.InitialStateCfg(
-        pos=(0.0, 0.0, 0.79),
+        pos=(-0.1, 0.0, 0.79505),
         rot=(0.0 ,0.0 ,0.0 ,1.0),
         joint_pos={
             "shoulder_pan_joint": 0.0, # -1.7540559 / -1.6
@@ -39,32 +39,40 @@ UR3_CFG = ArticulationCfg(
             "elbow_joint": 2.0, # 1.3439 / 1.9
             "wrist_1_joint": 0.0, # 0.0 
             "wrist_2_joint": 1.57, # 1.5708 / 1.57
-            "wrist_3_joint": 2.2, # 1.5708 / 2.1
+            "wrist_3_joint": -0.8, # 1.5708 / 2.1
             "left_outer_knuckle_joint": 0.0, # 0.0
-            "right_outer_knuckle_joint": 0.0, # 0.0
+            "right_outer_knuckle_joint": 0.0, # 0.0  
+            
         },
     ),
     actuators={
         "arm": ImplicitActuatorCfg(
             joint_names_expr=["shoulder_pan_joint",
                               "shoulder_lift_joint",
-                              "elbow_joint",
-                              "wrist_1_joint",
+                              "elbow_joint",],
+            velocity_limit=3.14,
+            effort_limit=87.0,
+            stiffness=800,
+            damping=40,
+        ),
+        
+        "wrist": ImplicitActuatorCfg(
+            joint_names_expr=["wrist_1_joint",
                               "wrist_2_joint",
                               "wrist_3_joint"],
-            velocity_limit=100.0,
+            velocity_limit=6.28,
             effort_limit=87.0,
-            stiffness=400.0,
-            damping=80.0,
+            stiffness=800,
+            damping=40,            
         ),
         
         "gripper": ImplicitActuatorCfg(
             joint_names_expr=["left_outer_knuckle_joint",
-                              "right_outer_knuckle_joint"],
+            "right_outer_knuckle_joint"],
             effort_limit=200.0,
             velocity_limit=0.5,
-            stiffness=200,
-            damping=20
+            stiffness=50,
+            damping=1
         ),
     },
 )

@@ -60,19 +60,19 @@ class Object_drop_Termination(ManagerTermBase):
         self._top_offset = torch.zeros((env.num_envs, 3), device=env.device)
         self._top_offset[:, :3] = torch.tensor([0.0, 0.0, 0.1])
 
-    def __call__(self, env:ManagerBasedRLEnv,):
-        drop = self.object_drop(env)
+    def __call__(self, env:ManagerBasedRLEnv, condition: float):
+        drop = self.object_drop(env, condition=condition)
 
         return drop
 
-    def object_drop(self, env: ManagerBasedRLEnv,)-> torch.Tensor:
+    def object_drop(self, env: ManagerBasedRLEnv, condition: float)-> torch.Tensor:
         
         offset_pos = transform_points(self._top_offset,self._target.data.root_pos_w, self._target.data.root_state_w[:, 3:7] )[..., 0 , :]
 
         # print("cup1: {}".format(offset_pos[:, 2]))
 
 
-        return offset_pos[:, 2] < 0.74 #0.762
+        return offset_pos[:, 2] < condition #0.762
 
 
 class Object2_drop_Termination(ManagerTermBase):
@@ -89,18 +89,18 @@ class Object2_drop_Termination(ManagerTermBase):
         self._top_offset = torch.zeros((env.num_envs, 3), device=env.device)
         self._top_offset[:, :3] = torch.tensor([0.0, 0.0, 0.1])
 
-    def __call__(self, env:ManagerBasedRLEnv,):
-        drop = self.object_drop(env)
+    def __call__(self, env:ManagerBasedRLEnv, condition: flaot):
+        drop = self.object_drop(env, condition=condition)
 
         return drop
 
-    def object_drop(self, env: ManagerBasedRLEnv,)-> torch.Tensor:
+    def object_drop(self, env: ManagerBasedRLEnv, condition: float)-> torch.Tensor:
         
         offset_pos = transform_points(self._top_offset,self._target.data.root_pos_w, self._target.data.root_state_w[:, 3:7] )[..., 0 , :]
 
         # print("cup2: {}".format(offset_pos[:, 2]))
 
-        return offset_pos[:, 2] < 0.74 #0.762
+        return offset_pos[:, 2] < condition #0.762
     
 
 class Object_vel_Termination(ManagerTermBase):

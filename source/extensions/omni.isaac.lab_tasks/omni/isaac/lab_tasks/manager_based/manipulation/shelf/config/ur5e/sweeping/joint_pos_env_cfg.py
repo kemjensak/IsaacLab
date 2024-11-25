@@ -14,7 +14,7 @@ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
 from omni.isaac.lab.sim.schemas.schemas_cfg import MassPropertiesCfg
 
 from omni.isaac.lab_tasks.manager_based.manipulation.shelf import mdp
-from omni.isaac.lab_tasks.manager_based.manipulation.shelf.shelf_sweeping_env_cfg import ShelfSweepingEnvCfg
+from omni.isaac.lab_tasks.manager_based.manipulation.shelf.shelf_env_cfg import ShelfEnvCfg
 import torch
 ##
 # Pre-defined configs
@@ -23,7 +23,7 @@ from omni.isaac.lab.markers.config import FRAME_MARKER_CFG  # isort: skip
 from omni.isaac.lab_assets.ur5e import UR5e_CFG
 
 @configclass
-class UR5eShelfEnvCfg(ShelfSweepingEnvCfg):
+class UR5eShelfEnvCfg(ShelfEnvCfg):
     def __post_init__(self):
         # post init of parent
         super().__post_init__()
@@ -43,7 +43,7 @@ class UR5eShelfEnvCfg(ShelfSweepingEnvCfg):
             scale=0.5, 
             use_default_offset=True
         )
-        self.actions.finger_joint_pos = mdp.BinaryJointPositionActionCfg(
+        self.actions.gripper_action = mdp.BinaryJointPositionActionCfg(
             asset_name="robot",
             joint_names=["left_outer_knuckle_joint", "right_outer_knuckle_joint"],
             open_command_expr={"left_outer_knuckle_joint": 0.0, "right_outer_knuckle_joint": 0.0},
@@ -55,7 +55,7 @@ class UR5eShelfEnvCfg(ShelfSweepingEnvCfg):
         # Set Cube as object
         self.scene.cup = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/Cup",
-            init_state=RigidObjectCfg.InitialStateCfg(pos=[0.75, 0.0, 0.66], rot=[1, 0, 0, 0]),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=[-0.7, 0.0, 1.13], rot=[1, 0, 0, 0]),
             spawn=UsdFileCfg(
                 usd_path=f"omniverse://localhost/Library/Shelf/Object/SM_Cup_empty.usd",
                 scale=(0.9, 0.9, 1.0),
@@ -76,7 +76,7 @@ class UR5eShelfEnvCfg(ShelfSweepingEnvCfg):
         # Set Cube as object
         self.scene.cup2 = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/Cup2",
-            init_state=RigidObjectCfg.InitialStateCfg(pos=[0.88, 0.0, 0.66], rot=[1, 0, 0, 0]),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=[-0.85, 0.0, 1.13], rot=[1, 0, 0, 0]),
             spawn=UsdFileCfg(
                 usd_path=f"omniverse://localhost/Library/Shelf/Object/SM_PlasticCup.usd",
                 scale=(1.0, 1.0, 1.0),
@@ -129,11 +129,13 @@ class UR5eShelfEnvCfg(ShelfSweepingEnvCfg):
 
         self.commands.target_goal_pos = mdp.ObjectGoalPosCommandCfg(
             asset_name="cup",
-            init_pos_offset=(0.0, -0.2, 0.0),
+            init_pos_offset=(0.0, 0.15, 0.0),
             position_success_threshold=0.03,
             update_goal_on_success=False,
             debug_vis=True,
         )
+        
+        self.rewards.reaching_object.params["offset"] = torch.Tensor([0.0, -0.1, 0.05])
 
 @configclass
 class UR5eShelfEnvCfg_PLAY(UR5eShelfEnvCfg):

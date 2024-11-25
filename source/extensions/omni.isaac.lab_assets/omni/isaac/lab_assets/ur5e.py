@@ -30,8 +30,8 @@ UR5e_CFG = ArticulationCfg(
         activate_contact_sensors=True,
     ),
     init_state=ArticulationCfg.InitialStateCfg(
-        pos=(0.0, 0.0, 0.4),
-        rot=(1.0 ,0.0 ,0.0 ,0.0),
+        pos=(0.0, 0.0, 0.795),
+        rot=(0.0 ,0.0 ,0.0 ,1.0),
         joint_pos={
             "shoulder_pan_joint": 0.0, # -1.7540559 / -1.6
             "shoulder_lift_joint": -2.0, # -1.27409 / -1.9
@@ -47,14 +47,21 @@ UR5e_CFG = ArticulationCfg(
         "arm": ImplicitActuatorCfg(
             joint_names_expr=["shoulder_pan_joint",
                               "shoulder_lift_joint",
-                              "elbow_joint",
-                              "wrist_1_joint",
+                              "elbow_joint"],
+            velocity_limit=3.14,
+            effort_limit=87.0,
+            stiffness=210.0,
+            damping=21.0, 
+        ),
+
+        "wrist": ImplicitActuatorCfg(
+            joint_names_expr=["wrist_1_joint",
                               "wrist_2_joint",
                               "wrist_3_joint"],
-            velocity_limit=100.0,
+            velocity_limit = 6.28,
             effort_limit=87.0,
-            stiffness=800.0,
-            damping=30.0,
+            stiffness=210.0,
+            damping=21.0,
         ),
 
         "gripper": ImplicitActuatorCfg(

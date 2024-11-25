@@ -31,7 +31,7 @@ import omni.isaac.lab_tasks.manager_based.manipulation.shelf.mdp as mdp
 
 
 @configclass
-class ShelfSceneCfg(InteractiveSceneCfg):
+class TestSceneCfg(InteractiveSceneCfg):
     """Configuration for the scene with a robotic arm."""
 
     # world
@@ -47,13 +47,13 @@ class ShelfSceneCfg(InteractiveSceneCfg):
         spawn=sim_utils.DomeLightCfg(color=(0.75, 0.75, 0.75), intensity=2500.0),
     )
 
-    # mount = RigidObjectCfg(
-    #     prim_path="{ENV_REGEX_NS}/Mount",
-    #     spawn=sim_utils.UsdFileCfg(
-    #         usd_path=f"omniverse://localhost/Library/Shelf/Arena/thor_table.usd",
-    #     ),
-    #     init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.79505), rot=(1.0, 0.0, 0.0, 0.0)),
-    # )
+    mount = RigidObjectCfg(
+        prim_path="{ENV_REGEX_NS}/Mount",
+        spawn=sim_utils.UsdFileCfg(
+            usd_path=f"omniverse://localhost/Library/Shelf/Arena/thor_table.usd",
+        ),
+        init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.79505), rot=(1.0, 0.0, 0.0, 0.0)),
+    )
     
     shelf = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/Shelf",
@@ -65,10 +65,6 @@ class ShelfSceneCfg(InteractiveSceneCfg):
     # robots
     robot: ArticulationCfg = MISSING
 
-    # end-effector sensor: will be populated by agent env cfg
-    ee_frame: FrameTransformerCfg = MISSING
-    finger_frame: FrameTransformerCfg = MISSING
-    wrist_frame: FrameTransformerCfg = MISSING
     
     # objects
     cup: RigidObjectCfg = MISSING
@@ -100,7 +96,6 @@ class ActionsCfg:
     arm_action: ActionTerm = MISSING
     gripper_action: mdp.BinaryJointPositionActionCfg = MISSING
 
-
 @configclass
 class ObservationsCfg:
     """Observation specifications for the MDP."""
@@ -112,10 +107,6 @@ class ObservationsCfg:
         # observation terms (order preserved)
         joint_pos = ObsTerm(func=mdp.rl_joint_pos_rel)
         joint_vel = ObsTerm(func=mdp.rl_joint_vel_rel)
-        object_pose = ObsTerm(func=mdp.object_position_in_robot_root_frame)
-        ee_pos = ObsTerm(func=mdp.ee_pos_r)
-        ee_quat = ObsTerm(func=mdp.ee_quat)
-        target_goal_position = ObsTerm(func=mdp.target_goal_pose, params={"command_name": "target_goal_pos"})
         actions = ObsTerm(func=mdp.last_action)
 
         def __post_init__(self):
@@ -144,17 +135,7 @@ class EventCfg:
 @configclass
 class RewardsCfg:
     """Reward terms for the MDP."""
-
-    # task terms
-    reaching_object = RewTerm(func=mdp.rewards_sweep.reaching_rew, params={}, weight=2.0)
-    align_ee = RewTerm(func=mdp.rewards_sweep.ee_Align, params={}, weight=2.0)
-    sweeping_object = RewTerm(func=mdp.rewards_sweep.pushing_target, 
-                              params={"command_name": "target_goal_pos"}, 
-                              weight=5.0)
-                              
-    sweeping_bonus = RewTerm(func=mdp.rewards_sweep.pushing_bonus, params={"command_name": "target_goal_pos"}, weight=5.0)
-    homing_after_sweep = RewTerm(func=mdp.rewards_sweep.homing_reward, params={"command_name": "target_goal_pos"}, weight=7.0)
-    
+   
     # action penalty
     action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-4)
     joint_vel = RewTerm(
@@ -162,10 +143,7 @@ class RewardsCfg:
         weight=-1e-4,
         params={"asset_cfg": SceneEntityCfg("robot")},
     )
-    
-    # collision penalty
-    shelf_collision = RewTerm(func=mdp.rewards_sweep.shelf_Collision, params={}, weight=-0.4)
-    object_drop = RewTerm(func=mdp.rewards_sweep.Object_drop, weight=-0.2)
+
 
 
 @configclass
@@ -173,9 +151,7 @@ class TerminationsCfg:
     """Termination terms for the MDP."""
 
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
-    object_drop = DoneTerm(func=mdp.Object_drop_Termination, time_out=True, params={"condition": 1.04})
-    object_drop2 = DoneTerm(func=mdp.Object2_drop_Termination, time_out=True, params={"condition": 1.04})
-    object_vel = DoneTerm(func = mdp.Object_vel_Termination, time_out=True)
+
 
 
 @configclass
@@ -197,11 +173,11 @@ class CurriculumCfg:
 
 
 @configclass
-class ShelfEnvCfg(ManagerBasedRLEnvCfg):
+class TestEnvCfg(ManagerBasedRLEnvCfg):
     """Configuration for the reach end-effector pose tracking environment."""
 
     # Scene settings
-    scene: ShelfSceneCfg = ShelfSceneCfg(num_envs=4096, env_spacing=2.5)
+    scene: TestSceneCfg = TestSceneCfg(num_envs=1024, env_spacing=2.5)
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
@@ -222,7 +198,7 @@ class ShelfEnvCfg(ManagerBasedRLEnvCfg):
 
         self.sim.physx.bounce_threshold_velocity = 0.2
         # self.sim.physx.bounce_threshold_velocity = 0.01
-        self.sim.physx.gpu_found_lost_aggregate_pairs_capacity = 2**28
-        self.sim.physx.gpu_total_aggregate_pairs_capacity = 16 * 1024 * 32
+        self.sim.physx.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 16 * 4
+        self.sim.physx.gpu_total_aggregate_pairs_capacity = 16 * 1024 * 32 
         self.sim.physx.friction_correlation_distance = 0.00625
-        self.sim.physx.gpu_max_rigid_patch_count = 2**20
+        self.sim.physx.gpu_max_rigid_patch_count = 5 * 2**17

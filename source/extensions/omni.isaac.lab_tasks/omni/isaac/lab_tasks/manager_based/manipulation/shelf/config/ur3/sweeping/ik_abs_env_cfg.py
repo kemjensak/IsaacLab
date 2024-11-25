@@ -13,17 +13,17 @@ from . import joint_pos_env_cfg
 # Pre-defined configs
 ##
 
-from omni.isaac.lab_assets.ur5e import UR5e_CFG
+from omni.isaac.lab_assets import UR3_CFG
 
 
 @configclass
-class UR5eShelfEnvCfg(joint_pos_env_cfg.UR5eShelfEnvCfg):
+class UR3ShelfEnvCfg(joint_pos_env_cfg.UR3ShelfEnvCfg):
     def __post_init__(self):
         # post init of parent
         super().__post_init__()
 
         # Set the robot config
-        self.scene.robot = UR5e_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
+        self.scene.robot = UR3_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
 
         # Set actions for the specific robot type (UR5e)
         self.actions.arm_action = DifferentialInverseKinematicsActionCfg(
@@ -37,12 +37,12 @@ class UR5eShelfEnvCfg(joint_pos_env_cfg.UR5eShelfEnvCfg):
             body_name="flange",
             controller=DifferentialIKControllerCfg(command_type="pose", use_relative_mode=False, ik_method="dls"),
             body_offset=DifferentialInverseKinematicsActionCfg.OffsetCfg(pos=[0.0, 0.0, 0.14]),
-            scale=0.5,
+            scale=0.5
         )
 
 
 @configclass
-class UR5eShelfEnvCfg_PLAY(UR5eShelfEnvCfg):
+class UR3ShelfEnvCfg_PLAY(joint_pos_env_cfg.UR3ShelfEnvCfg):
     def __post_init__(self):
         # post init of parent
         super().__post_init__()
