@@ -50,6 +50,22 @@ def object_pose_in_robot_root_frame(
 
     return torch.concat((object_pos_b, object_quat_b), dim=1)
 
+def object_init_pos_in_robot_root_frame(
+    env: ManagerBasedRLEnv,
+    robot_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    object_cfg: SceneEntityCfg = SceneEntityCfg("cup"),
+) -> torch.Tensor:
+    
+    """The position of the object in the robot's root frame."""
+    robot: RigidObject = env.scene[robot_cfg.name]
+    object: RigidObject = env.scene[object_cfg.name]
+    object_init_pos_w = object.data.default_root_state[:, :3]
+    
+    object_pos_b, object_quat_b = subtract_frame_transforms(
+        robot.data.root_state_w[:, :3], robot.data.root_state_w[:, 3:7], object_init_pos_w
+    )
+    # print(object_pos_b)
+    return object_pos_b
 
 def ee_pos(env: ManagerBasedRLEnv) -> torch.Tensor:
     """The position of the end-effector relative to the environment origins."""

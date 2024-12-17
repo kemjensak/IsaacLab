@@ -75,14 +75,14 @@ class UR3ShelfEnvCfg(ShelfEnvCfg):
                     prim_path="{ENV_REGEX_NS}/Robot/robotiq_arg2f_base_link_01",
                     name="l_finger",
                     offset=OffsetCfg(
-                        pos=(0.0, -0.07, 0.09),
+                        pos=(0.0, -0.07, 0.11),
                     ),
                 ),
                 FrameTransformerCfg.FrameCfg(
                     prim_path="{ENV_REGEX_NS}/Robot/robotiq_arg2f_base_link_01",
                     name="r_finger",
                     offset=OffsetCfg(
-                        pos=(0.0, 0.07, 0.09),
+                        pos=(0.0, 0.07, 0.11),
                     ),
                 ),
             ],

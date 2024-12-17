@@ -74,7 +74,7 @@ def reaching_rew(env: ManagerBasedRLEnv,
     offset_pos = obj_cur_pos_w.clone()
     offset_pos[:, 0] = offset_pos[:, 0] 
     offset_pos[:, 1] = offset_pos[:, 1] - 0.09
-    offset_pos[:, 2] = offset_pos[:, 2] + 0.05
+    offset_pos[:, 2] = offset_pos[:, 2] + 0.06
 
     distance = torch.norm((offset_pos - ee_pos_w), dim=-1, p=2)
 
@@ -104,7 +104,7 @@ def pushing_target(env: ManagerBasedRLEnv, command_name: str,):
     offset_pos = curr_pos_w.clone()
     offset_pos[:, 0] = offset_pos[:, 0] 
     offset_pos[:, 1] = offset_pos[:, 1] - 0.09
-    offset_pos[:, 2] = offset_pos[:, 2] + 0.05
+    offset_pos[:, 2] = offset_pos[:, 2] + 0.06
 
     distance = torch.norm((des_pos_w - curr_pos_w), dim=-1, p=2)
     zeta_m = torch.where((torch.norm(offset_pos - ee_pos_w, dim=-1, p=2)) < 0.03 , 1, 0)

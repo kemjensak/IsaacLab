@@ -47,19 +47,19 @@ class ShelfSceneCfg(InteractiveSceneCfg):
         spawn=sim_utils.DomeLightCfg(color=(0.75, 0.75, 0.75), intensity=2500.0),
     )
 
-    # mount = RigidObjectCfg(
-    #     prim_path="{ENV_REGEX_NS}/Mount",
-    #     spawn=sim_utils.UsdFileCfg(
-    #         usd_path=f"omniverse://localhost/Library/Shelf/Arena/thor_table.usd",
-    #     ),
-    #     init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.79505), rot=(1.0, 0.0, 0.0, 0.0)),
-    # )
+    mount = RigidObjectCfg(
+        prim_path="{ENV_REGEX_NS}/Mount",
+        spawn=sim_utils.UsdFileCfg(
+            usd_path=f"omniverse://localhost/Library/Shelf/Arena/thor_table.usd",
+        ),
+        init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.79505), rot=(1.0, 0.0, 0.0, 0.0)),
+    )
     
     shelf = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/Shelf",
-        spawn=sim_utils.UsdFileCfg(usd_path=f"omniverse://localhost/Library/Shelf/Arena/gorilla_rack_ur3.usd", mass_props=MassPropertiesCfg(mass=50)),
+        spawn=sim_utils.UsdFileCfg(usd_path=f"omniverse://localhost/Library/Shelf/Arena/gorilla_rack_ur3.usd", mass_props=MassPropertiesCfg(mass=70)),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(-0.65, 0.0, 0.0), rot=(0.0, 0.0, 0.0, 1.0)),
-        debug_vis=True,
+        debug_vis=False,
     )
 
     # robots
@@ -135,7 +135,7 @@ class EventCfg:
         func=mdp.reset_root_state_uniform,
         mode="reset",
         params={
-            "pose_range": {"yaw":(-180, 180)},
+            "pose_range": {"x":(-0.1, 0.1), "y": (-0.05, 0.05),"yaw":(-180, 180)},
             "velocity_range": {},
             "asset_cfg": SceneEntityCfg("cup", body_names="Cup"),
         },
@@ -165,7 +165,7 @@ class RewardsCfg:
     
     # collision penalty
     shelf_collision = RewTerm(func=mdp.rewards_sweep.shelf_Collision, params={}, weight=-0.4)
-    object_drop = RewTerm(func=mdp.rewards_sweep.Object_drop, weight=-0.2)
+    object_drop = RewTerm(func=mdp.rewards_sweep.Object_drop, weight=-0.1)
 
 
 @configclass

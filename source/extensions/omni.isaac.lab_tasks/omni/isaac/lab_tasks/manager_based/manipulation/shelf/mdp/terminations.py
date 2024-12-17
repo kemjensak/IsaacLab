@@ -71,7 +71,6 @@ class Object_drop_Termination(ManagerTermBase):
 
         # print("cup1: {}".format(offset_pos[:, 2]))
 
-
         return offset_pos[:, 2] < condition #0.762
 
 
