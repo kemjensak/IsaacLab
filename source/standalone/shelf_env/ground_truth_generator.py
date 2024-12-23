@@ -200,12 +200,11 @@ def run_simulator(sim: sim_utils.SimulationContext, scene_entities: dict):
         colorize_instance_id_segmentation=camera.cfg.colorize_instance_id_segmentation,
         colorize_instance_segmentation=camera.cfg.colorize_instance_segmentation,
         colorize_semantic_segmentation=camera.cfg.colorize_semantic_segmentation,
-        colorize_depth=True
     )
 
     # Camera positions, targets, orientations
-    camera_positions = torch.tensor([[1.3, 0.0, 0.75]], device=sim.device)
-    camera_targets = torch.tensor([[0.0, 0.0, 0.75]], device=sim.device)
+    camera_positions = torch.tensor([[1.1, 0.0, 0.8]],  device = sim.device)
+    camera_targets = torch.tensor([[0.0, 0.0, 0.8]], device=sim.device)
 
     # Set pose: There are two ways to set the pose of the camera.
     # -- Option-1: Set pose using view
@@ -237,7 +236,9 @@ def run_simulator(sim: sim_utils.SimulationContext, scene_entities: dict):
                 # Save images from camera at camera_index
                 # note: BasicWriter only supports saving data in numpy format, so we need to convert the data to numpy.
                 # tensordict allows easy indexing of tensors in the dictionary
-                single_cam_data = convert_dict_to_backend(camera.data.output[camera_index], backend="numpy")
+                single_cam_data = convert_dict_to_backend(
+                {k: v[camera_index] for k, v in camera.data.output.items()}, backend="numpy"
+            )
 
                 # Extract the other information
                 single_cam_info = camera.data.info[camera_index]
