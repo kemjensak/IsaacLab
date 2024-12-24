@@ -72,7 +72,8 @@ class UsdFileCfg(FileCfg):
     ones. These include:
 
     - **Selecting variants**: This is done by specifying the :attr:`variants` parameter.
-    - **Creating and applying materials**: This is done by specifying the :attr:`visual_material` parameter.
+    - **Creating and applying materials**: This is done by specifying the :attr:`visual_material` and
+      :attr:`physics_material` parameters.
     - **Modifying existing properties**: This is done by specifying the respective properties in the configuration
       class. For instance, to modify the scale of the imported prim, set the :attr:`scale` parameter.
 
