@@ -519,7 +519,7 @@ def run_simulator(sim: sim_utils.SimulationContext, entities: dict, cfg: ENV_Cfg
     camera: Camera = entities["camera"]
 
     # Create output directory
-    output_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "output", "camera", f"{args_cli.target_object}")
+    output_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "output", "camera", f"{args_cli.target_object}", "scene")
     os.makedirs(output_dir, exist_ok=True)
     
     rep_writer = rep.BasicWriter(

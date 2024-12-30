@@ -329,7 +329,8 @@ class ActionManager(ManagerBase):
             raise ValueError(f"Invalid action shape, expected: {self.total_action_dim}, received: {action.shape[1]}.")
         # store the input actions
         self._prev_action[:] = self._action
-        self._action[:] = action.to(self.device)
+        # self._action[:] = action.to(self.device)
+        self._action[:] = torch.clip(action.to(self.device), min=-6.28, max=6.28)
 
         # split the actions and apply to each tensor
         idx = 0

@@ -47,17 +47,17 @@ class ShelfSceneCfg(InteractiveSceneCfg):
         spawn=sim_utils.DomeLightCfg(color=(0.75, 0.75, 0.75), intensity=2500.0),
     )
 
-    mount = RigidObjectCfg(
+    mount = AssetBaseCfg(
         prim_path="{ENV_REGEX_NS}/Mount",
         spawn=sim_utils.UsdFileCfg(
             usd_path=f"omniverse://localhost/Library/Shelf/Arena/thor_table.usd",
         ),
-        init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.79505), rot=(1.0, 0.0, 0.0, 0.0)),
+        init_state=AssetBaseCfg.InitialStateCfg(pos=(0.0, 0.0, 0.79505), rot=(1.0, 0.0, 0.0, 0.0),),
     )
     
     shelf = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/Shelf",
-        spawn=sim_utils.UsdFileCfg(usd_path=f"omniverse://localhost/Library/Shelf/Arena/gorilla_rack_ur3.usd", mass_props=MassPropertiesCfg(mass=70)),
+        spawn=sim_utils.UsdFileCfg(usd_path=f"omniverse://localhost/Library/Shelf/Arena/gorilla_rack_ur3.usd", mass_props=MassPropertiesCfg(mass=100)),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(-0.65, 0.0, 0.0), rot=(0.0, 0.0, 0.0, 1.0)),
         debug_vis=False,
     )
@@ -201,7 +201,7 @@ class ShelfEnvCfg(ManagerBasedRLEnvCfg):
     """Configuration for the reach end-effector pose tracking environment."""
 
     # Scene settings
-    scene: ShelfSceneCfg = ShelfSceneCfg(num_envs=4096, env_spacing=2.5)
+    scene: ShelfSceneCfg = ShelfSceneCfg(num_envs=6144, env_spacing=2.5)
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()

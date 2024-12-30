@@ -15,11 +15,11 @@ from omni.isaac.lab_tasks.utils.wrappers.rsl_rl import (
 @configclass
 class ShelfSweepPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     num_steps_per_env = 24
-    max_iterations = 5000
+    max_iterations = 10000
     save_interval = 50
-    experiment_name = "Test"
+    experiment_name = "UR3_shelf_grasp"
     empirical_normalization = False
-    seed = 42
+    seed = 0
     policy = RslRlPpoActorCriticCfg(
         init_noise_std=1.0,
         actor_hidden_dims=[256, 128, 64],

@@ -24,7 +24,6 @@ class ee_Align(ManagerTermBase):
         self._initial_ee_quat = self._ee.data.target_quat_w.clone()
         
 
-    
     def __call__(self, env: ManagerBasedRLEnv,):
 
         align = self.align_ee_target(env)
@@ -340,7 +339,7 @@ class shelf_Collision(ManagerTermBase):
 
         reward_l = 1 - dst_l_shelf / 0.02
         reward_r = 1 - dst_l_shelf / 0.02
-        reward_wrist = 1 - dst_wrist_shelf / 0.06
+        reward_wrist = 1 - dst_wrist_shelf / 0.07
 
 
         reward_l = torch.clamp(reward_l, 0, 1)

@@ -136,26 +136,11 @@ def design_scene() -> dict:
 
     # Xform to hold objects
     prim_utils.create_prim("/World/Objects", "Xform", translation=(-0.24, -0.3, 0.66))
-    prim_path = "/World/Objects/target"
-    common_properties = {
-            "rigid_props": sim_utils.RigidBodyPropertiesCfg(),
-            "mass_props": sim_utils.MassPropertiesCfg(mass=1.0),
-            "collision_props": sim_utils.CollisionPropertiesCfg(),
-            }    
+    
+     
 
     
-    obj = RigidObject(cfg=RigidObjectCfg(
-                                prim_path = prim_path,
-                                spawn=sim_utils.UsdFileCfg(
-                                    usd_path=f"omniverse://localhost/Library/Shelf/Object/Cup_1.usd",
-                                    scale=(1.0, 1.0, 1.0),
-                                    semantic_tags=[("class", "mug"),("color", "red")],
-                                    **common_properties
-                                ),
-                                init_state=RigidObjectCfg.InitialStateCfg(pos=(0.0, 0.0, 0.0)),
-                            ))
-    
-    scene_entities["target"]=obj
+    scene_entities = obj_spawn(scene_entities=scene_entities)
 
     # Sensors
     camera = define_sensor()
@@ -164,19 +149,55 @@ def design_scene() -> dict:
     scene_entities["camera"] = camera
     return scene_entities
 
+def obj_spawn(scene_entities:dict, 
+              prim_path = "/World/Objects/target", 
+              common_properties = {
+            "rigid_props": sim_utils.RigidBodyPropertiesCfg(),
+            "mass_props": sim_utils.MassPropertiesCfg(mass=1.0),
+            "collision_props": sim_utils.CollisionPropertiesCfg(),
+            },
+            pos=(0.0, 0.0, 0.0),
+            rot=(1.0, 0.0, 0.0, 0.0)) -> dict:
+    obj = RigidObject(cfg=RigidObjectCfg(
+                                prim_path = prim_path,
+                                spawn=sim_utils.UsdFileCfg(
+                                    usd_path=f"omniverse://localhost/Library/Shelf/Object/Can_1.usd",
+                                    scale=(1.0, 1.0, 1.0),
+                                    semantic_tags=[("class", "mug"),("color", "red")],
+                                    **common_properties
+                                ),
+                                init_state=RigidObjectCfg.InitialStateCfg(pos=pos, rot=rot),
+                            ))
+
+    scene_entities["target"]=obj
+    scene_entities["target_pos"]=torch.tensor(pos)
+    
+    return scene_entities
+
 def scene_update(sim: sim_utils.SimulationContext, scene_entities: dict, scene_count: int):
     target: RigidObject = scene_entities["target"]
-    
-    state_w = target.data.root_state_w.clone()
+    state_w = torch.zeros(7)
     
     quat_w = math.quat_from_euler_xyz(torch.tensor([0]), torch.tensor([0]), torch.tensor([scene_count * 0.79]))
     
-    state_w[0, 3:7] = quat_w
+    state_w[0:3] = scene_entities["target_pos"]
+    state_w[3:7] = quat_w
     
     if scene_count == 0:
-        state_w[0, 1] = torch.where(torch.abs(state_w[0, 1]) < 0.3, state_w[0, 1] + 0.01, -0.3)
+        if state_w[1] < 0.6:
+            state_w[1] = state_w[1] + 0.01
+        elif state_w[1] >= 0.6:
+            state_w[0] = state_w[0] + 0.12
+            state_w[1] = 0.0 
     
-    target.write_root_state_to_sim(state_w)
+    for key in list(scene_entities.keys()):
+            if (key == "target"):
+                prim_utils.delete_prim(scene_entities[key].cfg.prim_path)
+
+
+    scene_entities = obj_spawn(scene_entities=scene_entities, pos=state_w[0:3], rot=state_w[3:7])
+    
+    return scene_entities
     
     
 
@@ -255,10 +276,14 @@ def run_simulator(sim: sim_utils.SimulationContext, scene_entities: dict):
                 rep_output["trigger_outputs"] = {"on_time": camera.frame[camera_index]}
                 rep_writer.write(rep_output)
             
+            if (count > 1000) & (scene_entities["target_pos"][0] >= 0.24):
+                raise RuntimeError
+                    
+            
             if scene_count == 8:
                 scene_count = 0
-            
-            scene_update(sim=sim,scene_entities=scene_entities, scene_count=scene_count)
+
+            scene_entities = scene_update(sim=sim,scene_entities=scene_entities, scene_count=scene_count)
             scene_count += 1
 
 

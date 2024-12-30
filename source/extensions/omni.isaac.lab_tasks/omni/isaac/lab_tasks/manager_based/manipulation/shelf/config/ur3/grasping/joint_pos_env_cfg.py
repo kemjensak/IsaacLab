@@ -13,7 +13,7 @@ from omni.isaac.lab.utils.assets import ISAAC_NUCLEUS_DIR
 from omni.isaac.lab.sim.schemas.schemas_cfg import MassPropertiesCfg
 
 from omni.isaac.lab_tasks.manager_based.manipulation.lift import mdp
-from omni.isaac.lab_tasks.manager_based.manipulation.shelf.shelf_test_env_cfg import TestEnvCfg
+from omni.isaac.lab_tasks.manager_based.manipulation.shelf.shelf_ur3_grasping_cfg import ShelfEnvCfg
 import torch
 ##
 # Pre-defined configs
@@ -22,7 +22,7 @@ from omni.isaac.lab.markers.config import FRAME_MARKER_CFG  # isort: skip
 from omni.isaac.lab_assets import UR3_CFG
 
 @configclass
-class TestEnvCfg(TestEnvCfg):
+class UR3ShelfEnvCfg(ShelfEnvCfg):
     def __post_init__(self):
         # post init of parent
         super().__post_init__()
@@ -42,7 +42,6 @@ class TestEnvCfg(TestEnvCfg):
             scale=0.5, 
             use_default_offset=True
         )
-        
         self.actions.gripper_action = mdp.BinaryJointPositionActionCfg(
             asset_name="robot",
             joint_names=["left_outer_knuckle_joint","right_outer_knuckle_joint"],
@@ -50,10 +49,64 @@ class TestEnvCfg(TestEnvCfg):
             close_command_expr={"left_outer_knuckle_joint":0.0,"right_outer_knuckle_joint": 0.5},
         )
         
+        # Listens to the required transforms
+        marker_cfg = FRAME_MARKER_CFG.copy()
+        marker_cfg.markers["frame"].scale = (0.05, 0.05, 0.05)
+        marker_cfg.prim_path = "/Visuals/FrameTransformer"
+        self.scene.ee_frame = FrameTransformerCfg(
+            prim_path="{ENV_REGEX_NS}/Robot/base_link",
+            debug_vis=True,
+            visualizer_cfg=marker_cfg,
+            target_frames=[
+                FrameTransformerCfg.FrameCfg(
+                    prim_path="{ENV_REGEX_NS}/Robot/robotiq_arg2f_base_link_01",
+                    name="ee_tcp",
+                    offset=OffsetCfg(pos=(0.0, 0.0, 0.14),),
+                ),
+            ],
+        )
+        
+        self.scene.finger_frame = FrameTransformerCfg(
+            prim_path="{ENV_REGEX_NS}/Robot/base_link",
+            debug_vis=True,
+            visualizer_cfg=marker_cfg,
+            target_frames=[
+                FrameTransformerCfg.FrameCfg(
+                    prim_path="{ENV_REGEX_NS}/Robot/robotiq_arg2f_base_link_01",
+                    name="l_finger",
+                    offset=OffsetCfg(
+                        pos=(0.0, -0.07, 0.11),
+                    ),
+                ),
+                FrameTransformerCfg.FrameCfg(
+                    prim_path="{ENV_REGEX_NS}/Robot/robotiq_arg2f_base_link_01",
+                    name="r_finger",
+                    offset=OffsetCfg(
+                        pos=(0.0, 0.07, 0.11),
+                    ),
+                ),
+            ],
+        )
+        
+        self.scene.wrist_frame = FrameTransformerCfg(
+            prim_path="{ENV_REGEX_NS}/Robot/base_link",
+            debug_vis=True,
+            visualizer_cfg=marker_cfg,
+            target_frames=[
+                FrameTransformerCfg.FrameCfg(
+                    prim_path="{ENV_REGEX_NS}/Robot/robotiq_arg2f_base_link_01",
+                    name="wrist",
+                    offset=OffsetCfg(
+                        pos=(0.0, 0.0, -0.14),
+                    ),
+                ),
+            ],
+        )
+        
         # Set Cup as object
         self.scene.cup = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/Cup",
-            init_state=RigidObjectCfg.InitialStateCfg(pos=[-0.55, 0.0, 0.97], rot=[1.0, 0.0, 0.0, 0.0]),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=[-0.55, 0.0, 0.98], rot=[1.0, 0.0, 0.0, 0.0]),
             spawn=UsdFileCfg(
                 usd_path=f"omniverse://localhost/Library/Shelf/Object/SM_Cup_empty.usd",
                 scale=(0.9, 0.9, 1.0),
@@ -68,13 +121,11 @@ class TestEnvCfg(TestEnvCfg):
                 mass_props=MassPropertiesCfg(mass=0.3),
             ),
         )
-        
-        
-
+    
         # Set Cube as object
         self.scene.cup2 = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/Cup2",
-            init_state=RigidObjectCfg.InitialStateCfg(pos=[-0.7, 0.0, 0.97], rot=[1, 0, 0, 0]),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=[-0.7, 0.0, 0.98], rot=[1, 0, 0, 0]),
             spawn=UsdFileCfg(
                 usd_path=f"omniverse://localhost/Library/Shelf/Object/SM_PlasticCup.usd",
                 scale=(1.0, 1.0, 1.0),
@@ -91,9 +142,8 @@ class TestEnvCfg(TestEnvCfg):
         )
         
 
-
 @configclass
-class TestEnvCfg_PLAY(TestEnvCfg):
+class UR3ShelfEnvCfg_PLAY(UR3ShelfEnvCfg):
     def __post_init__(self):
         # post init of parent
         super().__post_init__()
