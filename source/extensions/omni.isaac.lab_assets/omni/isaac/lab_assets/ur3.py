@@ -71,8 +71,8 @@ UR3_CFG = ArticulationCfg(
             "right_outer_knuckle_joint"],
             effort_limit=200.0,
             velocity_limit=0.5,
-            stiffness=50,
-            damping=1
+            stiffness=200,
+            damping=20
         ),
     },
 )

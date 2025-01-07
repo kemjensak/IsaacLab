@@ -8,7 +8,7 @@ from omni.isaac.lab.managers import SceneEntityCfg
 from omni.isaac.lab.utils.math import combine_frame_transforms, transform_points
 from omni.isaac.lab.managers import SceneEntityCfg, ManagerTermBase
 from omni.isaac.lab.managers import TerminationTermCfg as DoneTerm
-from omni.isaac.lab.sensors import FrameTransformer
+from omni.isaac.lab.sensors import FrameTransformer, ContactSensor
 
 if TYPE_CHECKING:
     from omni.isaac.lab.envs import ManagerBasedRLEnv
@@ -71,7 +71,7 @@ class Object_drop_Termination(ManagerTermBase):
 
         # print("cup1: {}".format(offset_pos[:, 2]))
 
-        return offset_pos[:, 2] < condition #0.762
+        return offset_pos[..., 2] < condition #0.762
 
 
 class Object2_drop_Termination(ManagerTermBase):
@@ -95,11 +95,20 @@ class Object2_drop_Termination(ManagerTermBase):
 
     def object_drop(self, env: ManagerBasedRLEnv, condition: float)-> torch.Tensor:
         
+        ee_pos_w = self._ee.data.target_pos_w[..., 0, :]
+        obj_pos = self._target.data.root_pos_w.clone()
+        obj_pos[:, 0] = obj_pos[:, 0] 
+        obj_pos[:, 1] = obj_pos[:, 1]
+        obj_pos[:, 2] = obj_pos[:, 2] + 0.03
+        
+        distance = torch.norm((obj_pos - ee_pos_w), dim=-1, p=2)
+        
         offset_pos = transform_points(self._top_offset,self._target.data.root_pos_w, self._target.data.root_state_w[:, 3:7] )[..., 0 , :]
 
         # print("cup2: {}".format(offset_pos[:, 2]))
+        
 
-        return offset_pos[:, 2] < condition #0.762
+        return torch.where(distance < 0.03, False , offset_pos[..., 2] < condition) #0.762
     
 
 class Object_vel_Termination(ManagerTermBase):
@@ -107,6 +116,9 @@ class Object_vel_Termination(ManagerTermBase):
         super().__init__(cfg, env)
         object_cfg = SceneEntityCfg("cup")
         ee_frame_cfg = SceneEntityCfg("ee_frame")
+        contact_sensor = SceneEntityCfg("shelf_contact")
+        
+        self._shelf_contact: ContactSensor = env.scene[contact_sensor.name]
 
         self._target: RigidObject = env.scene[object_cfg.name]
         self._ee: FrameTransformer = env.scene[ee_frame_cfg.name]
@@ -123,7 +135,34 @@ class Object_vel_Termination(ManagerTermBase):
 
     def object_vel(self, env: ManagerBasedRLEnv,)-> torch.Tensor:
         
+
         object_vel = self._target.data.root_lin_vel_w.clone()
         velocity = torch.norm(object_vel, dim=-1, p=2)
 
         return velocity > 2.0
+    
+
+def shelf_collision_termination(
+    env: ManagerBasedRLEnv,
+    threshold: float = 10.0,
+    contact_sensor = SceneEntityCfg("shelf_contact")
+) -> torch.Tensor:
+    """Termination condition for the object reaching the goal position.
+
+    Args:
+        env: The environment.
+        command_name: The name of the command that is used to control the object.
+        threshold: The threshold for the object to reach the goal position. Defaults to 0.02.
+        robot_cfg: The robot configuration. Defaults to SceneEntityCfg("robot").
+        object_cfg: The object configuration. Defaults to SceneEntityCfg("object").
+
+    """
+    # extract the used quantities (to enable type-hinting)
+    shelf_contact: ContactSensor = env.scene[contact_sensor.name]
+
+    net_force = torch.norm(shelf_contact.data.net_forces_w[...,0,:], dim=1)
+    
+    # print(f"net_force: {net_force}")
+
+    # rewarded if the object is lifted above the threshold
+    return net_force > threshold

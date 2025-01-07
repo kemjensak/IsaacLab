@@ -7,7 +7,7 @@ from dataclasses import MISSING
 
 import omni.isaac.lab.sim as sim_utils
 from omni.isaac.lab.assets import ArticulationCfg, AssetBaseCfg, RigidObjectCfg
-from omni.isaac.lab.sensors import FrameTransformerCfg
+from omni.isaac.lab.sensors import FrameTransformerCfg, ContactSensorCfg
 from omni.isaac.lab.envs import ManagerBasedRLEnvCfg
 from omni.isaac.lab.managers import ActionTermCfg as ActionTerm
 from omni.isaac.lab.managers import CurriculumTermCfg as CurrTerm
@@ -56,10 +56,13 @@ class ShelfSceneCfg(InteractiveSceneCfg):
     
     shelf = RigidObjectCfg(
         prim_path="{ENV_REGEX_NS}/Shelf",
-        spawn=sim_utils.UsdFileCfg(usd_path=f"omniverse://localhost/Library/Shelf/Arena/gorilla_rack_ur3.usd", mass_props=MassPropertiesCfg(mass=100)),
+        spawn=sim_utils.UsdFileCfg(usd_path=f"omniverse://localhost/Library/Shelf/Arena/gorilla_rack_ur3.usd",
+                                   activate_contact_sensors= True, mass_props=MassPropertiesCfg(mass=100)),
         init_state=RigidObjectCfg.InitialStateCfg(pos=(-0.65, 0.0, 0.0), rot=(0.0, 0.0, 0.0, 1.0)),
         debug_vis=False,
     )
+    # contact sensor
+    shelf_contact = ContactSensorCfg(prim_path="{ENV_REGEX_NS}/Shelf", update_period=0.0, history_length=6, debug_vis=False)
 
     # robots
     robot: ArticulationCfg = MISSING
@@ -113,15 +116,15 @@ class EventCfg:
     """Configuration for events."""
 
     reset_all = EventTerm(func=mdp.reset_scene_to_default, mode="reset")
-    reset_object_position = EventTerm(
-        func=mdp.reset_root_state_uniform,
-        mode="reset",
-        params={
-            "pose_range": {"x":(-0.1, 0.1), "y": (-0.05, 0.05),"yaw":(-180, 180)},
-            "velocity_range": {},
-            "asset_cfg": SceneEntityCfg("cup", body_names="Cup"),
-        },
-    )
+    # reset_object_position = EventTerm(
+    #     func=mdp.reset_root_state_uniform,
+    #     mode="reset",
+    #     params={
+    #         "pose_range": {"x":(-0.1, 0.1), "y": (-0.05, 0.05),"yaw":(-180, 180)},
+    #         "velocity_range": {},
+    #         "asset_cfg": SceneEntityCfg("cup", body_names="Cup"),
+    #     },
+    # )
 
 @configclass
 class RewardsCfg:
@@ -130,6 +133,16 @@ class RewardsCfg:
     # task terms
     reaching_object = RewTerm(func=mdp.rewards_grasp.reaching_rew, params={}, weight=2.0)
     align_ee = RewTerm(func=mdp.rewards_grasp.align_ee_target, params={}, weight=2.0)
+    grasp_object = RewTerm(func=mdp.rewards_grasp.grasp_handle, weight=7.0,
+        params={
+            "threshold": 0.03,
+            "open_joint_pos": MISSING,
+            "asset_cfg": SceneEntityCfg("robot", joint_names=MISSING),
+        },
+    )
+    # lifting_object = RewTerm(func=mdp.rewards_grasp.object_lift, params={"threshold": 1.05}, weight=10.0)
+    homing_after_grasp = RewTerm(func=mdp.rewards_grasp.homing_reward, 
+                                 params={"gripper_cfg": SceneEntityCfg("robot", joint_names=MISSING)}, weight=10.0)
     
     # action penalty
     action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1e-4)
@@ -140,8 +153,8 @@ class RewardsCfg:
     )
     
     # collision penalty
-    shelf_collision = RewTerm(func=mdp.rewards_grasp.shelf_Collision, params={}, weight=-0.4)
-    object_drop = RewTerm(func=mdp.rewards_grasp.Object_drop, weight=-0.1)
+    shelf_collision = RewTerm(func=mdp.rewards_grasp.shelf_Collision, params={}, weight=-0.2)
+    object_drop = RewTerm(func=mdp.rewards_grasp.Object_drop, weight=-0.2)
 
 
 @configclass
@@ -152,6 +165,7 @@ class TerminationsCfg:
     object_drop = DoneTerm(func=mdp.Object_drop_Termination, time_out=True, params={"condition": 1.04})
     object_drop2 = DoneTerm(func=mdp.Object2_drop_Termination, time_out=True, params={"condition": 1.04})
     object_vel = DoneTerm(func = mdp.Object_vel_Termination, time_out=True)
+    # shelf_contact = DoneTerm(func=mdp.shelf_collision_termination, time_out=True, params={"threshold": 90.0})
 
 
 @configclass

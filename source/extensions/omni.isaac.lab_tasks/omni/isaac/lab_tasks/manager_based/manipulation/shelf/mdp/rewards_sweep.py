@@ -366,7 +366,7 @@ class Object_drop(ManagerTermBase):
 
 
         self._target: RigidObject = env.scene[object_cfg.name]
-        self._target2: RigidObject = env.scene[object_cfg.name]
+        self._target2: RigidObject = env.scene[object2_cfg.name]
         self._ee: FrameTransformer = env.scene[ee_frame_cfg.name]
 
         self._target_last_w = self._target.data.root_pos_w.clone()

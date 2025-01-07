@@ -45,8 +45,8 @@ class UR3ShelfEnvCfg(ShelfEnvCfg):
         self.actions.gripper_action = mdp.BinaryJointPositionActionCfg(
             asset_name="robot",
             joint_names=["left_outer_knuckle_joint","right_outer_knuckle_joint"],
-            open_command_expr={"left_outer_knuckle_joint": 0.0,"right_outer_knuckle_joint": 0.0},
-            close_command_expr={"left_outer_knuckle_joint":0.0,"right_outer_knuckle_joint": 0.5},
+            open_command_expr={"left_outer_knuckle_joint": 0.0, "right_outer_knuckle_joint": 0.0},
+            close_command_expr={"left_outer_knuckle_joint": 0.5, "right_outer_knuckle_joint": 0.5},
         )
         
         # Listens to the required transforms
@@ -61,7 +61,7 @@ class UR3ShelfEnvCfg(ShelfEnvCfg):
                 FrameTransformerCfg.FrameCfg(
                     prim_path="{ENV_REGEX_NS}/Robot/robotiq_arg2f_base_link_01",
                     name="ee_tcp",
-                    offset=OffsetCfg(pos=(0.0, 0.0, 0.14),),
+                    offset=OffsetCfg(pos=(0.0, 0.0, 0.12),),
                 ),
             ],
         )
@@ -97,7 +97,7 @@ class UR3ShelfEnvCfg(ShelfEnvCfg):
                     prim_path="{ENV_REGEX_NS}/Robot/robotiq_arg2f_base_link_01",
                     name="wrist",
                     offset=OffsetCfg(
-                        pos=(0.0, 0.0, -0.14),
+                        pos=(0.0, 0.0, -0.1),
                     ),
                 ),
             ],
@@ -106,7 +106,7 @@ class UR3ShelfEnvCfg(ShelfEnvCfg):
         # Set Cup as object
         self.scene.cup = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/Cup",
-            init_state=RigidObjectCfg.InitialStateCfg(pos=[-0.55, 0.0, 0.98], rot=[1.0, 0.0, 0.0, 0.0]),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=[-0.5, 0.15, 0.98], rot=[1.0, 0.0, 0.0, 0.0]),
             spawn=UsdFileCfg(
                 usd_path=f"omniverse://localhost/Library/Shelf/Object/SM_Cup_empty.usd",
                 scale=(0.9, 0.9, 1.0),
@@ -125,7 +125,7 @@ class UR3ShelfEnvCfg(ShelfEnvCfg):
         # Set Cube as object
         self.scene.cup2 = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/Cup2",
-            init_state=RigidObjectCfg.InitialStateCfg(pos=[-0.7, 0.0, 0.98], rot=[1, 0, 0, 0]),
+            init_state=RigidObjectCfg.InitialStateCfg(pos=[-0.65, 0.0, 0.98], rot=[1, 0, 0, 0]),
             spawn=UsdFileCfg(
                 usd_path=f"omniverse://localhost/Library/Shelf/Object/SM_PlasticCup.usd",
                 scale=(1.0, 1.0, 1.0),
@@ -141,7 +141,9 @@ class UR3ShelfEnvCfg(ShelfEnvCfg):
             ),
         )
         
-
+        self.rewards.grasp_object.params["open_joint_pos"] = 0.0
+        self.rewards.grasp_object.params["asset_cfg"].joint_names = ["left_outer_knuckle_joint", "right_outer_knuckle_joint"]
+        self.rewards.homing_after_grasp.params["gripper_cfg"].joint_names = ["left_outer_knuckle_joint", "right_outer_knuckle_joint"]
 @configclass
 class UR3ShelfEnvCfg_PLAY(UR3ShelfEnvCfg):
     def __post_init__(self):
