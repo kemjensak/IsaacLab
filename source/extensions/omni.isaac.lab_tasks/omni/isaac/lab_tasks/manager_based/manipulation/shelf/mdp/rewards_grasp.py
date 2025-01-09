@@ -55,7 +55,7 @@ def align_ee_target(env: ManagerBasedRLEnv,
     offset_pos = target.data.root_pos_w.clone()
     offset_pos[:,0] = offset_pos[:, 0] 
     offset_pos[:,1] = offset_pos[:, 1] 
-    offset_pos[:,2] = offset_pos[:, 2] + 0.05
+    offset_pos[:,2] = offset_pos[:, 2] + 0.03
 
     shelf_quat = shelf.data.root_quat_w[:, :4]
     ee_tcp_quat = ee.data.target_quat_w[..., 0, :]
@@ -80,7 +80,7 @@ def grasp_handle(
     
     offset_pos[:,0] = offset_pos[:, 0] 
     offset_pos[:,1] = offset_pos[:, 1] 
-    offset_pos[:,2] = offset_pos[:, 2] + 0.03
+    offset_pos[:,2] = offset_pos[:, 2] + 0.05
     
     distance = torch.norm(offset_pos - ee_tcp_pos, dim=-1, p=2)
 
@@ -131,7 +131,7 @@ def homing_reward(env: ManagerBasedRLEnv,
     # print(f"gripper_joint: {torch.sum(gripper_joint_pos, dim=-1)}")
     # print(f"distance: {distance}")
     
-    return torch.where(torch.sum(gripper_joint_pos, dim=-1) > 0.4,  (offset_pos[:, 2] > 1.05 )* reward_for_home_pose, 0)
+    return torch.where(torch.sum(gripper_joint_pos, dim=-1) > 0.4,  (offset_pos[:, 2] > 1.03 )* reward_for_home_pose, 0)
     
 class shelf_Collision(ManagerTermBase):
     def __init__(self, cfg: RewTerm, env: ManagerBasedRLEnv):

@@ -46,7 +46,7 @@ class UR3ShelfEnvCfg(ShelfEnvCfg):
             asset_name="robot",
             joint_names=["left_outer_knuckle_joint","right_outer_knuckle_joint"],
             open_command_expr={"left_outer_knuckle_joint": 0.0, "right_outer_knuckle_joint": 0.0},
-            close_command_expr={"left_outer_knuckle_joint": 0.5, "right_outer_knuckle_joint": 0.5},
+            close_command_expr={"left_outer_knuckle_joint": 0.4, "right_outer_knuckle_joint": 0.4},
         )
         
         # Listens to the required transforms
